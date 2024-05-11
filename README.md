@@ -327,3 +327,87 @@ Note: I'm currently preparing this repo, and I'll restructure it once I have don
 
   - View: View objects are the basic building blocks of User Interface(UI) elements in Android. View is a simple rectangle box which responds to the user’s actions. Examples are EditText, Button, CheckBox etc. View refers to the android.view.View class, which is the base class of all UI classes.
   - ViewGroup: ViewGroup is the invisible container. It holds View and ViewGroup. For example, LinearLayout is the ViewGroup that contains Button(View), and other Layouts also. ViewGroup is the base class for Layouts.
+
+## Kotlin
+- ### What is Kotlin?
+  Kotlin is a modern programming language developed by JetBrains. It is statically typed and runs on the Java Virtual Machine (JVM). The Kotlin language is designed to be interoperable with Java, so you can use Kotlin code alongside Java code seamlessly. Aside from Android app development, it is also used for server-side and web development.
+
+- ### How is Kotlin different from Java?
+  Kotlin and Java both programming languages that run on the Java Virtual Machine (JVM). but Kotlin is designed to be more concise and expressive, reducing unnecessary code. One notable feature is its built-in null safety, helping to avoid common programming errors related to null values. Kotlin also introduces modern language features like extension functions and coroutines, offering developers more flexibility and improved productivity compared to Java.
+
+- ### Explain the advantages of using Kotlin.
+  Some advantages of using Kotlin include:
+  - Concise Syntax: Kotlin’s syntax is more concise, reducing boilerplate code and making it easier to read and write.
+  - Null Safety: Kotlin’s null safety features help prevent null pointer exceptions, enhancing code reliability.
+  - Interoperability: Kotlin is fully interoperable with Java, allowing you to leverage existing Java libraries and frameworks in Kotlin projects.
+  - Coroutines: Kotlin’s built-in support for coroutines simplifies asynchronous programming and improves performance.
+  - Functional Programming: Kotlin supports functional programming constructs like higher-order functions and lambda expressions, making code more expressive and concise.
+  - Tooling and Community Support: Kotlin has excellent tooling support, including IDE plugins for popular development environments. It also has a growing and active community, with abundant learning resources and libraries available.
+
+- ### What are the basic data types in Kotlin?
+  The basic data types in Kotlin are:
+  - Numbers: This includes types like Int (for integers), Double (for double-precision floating-point numbers), Float (for single-precision floating-point numbers), Long (for long integers), Short (for short integers), and Byte (for bytes).
+  - Booleans: The Boolean type represents logical values, either true or false.
+  - Characters: The Char type represents a single character.
+  - Strings: The String type represents a sequence of characters.
+
+- ### What is the difference between val and var in Kotlin?
+  In Kotlin, `val` and `var` are used to declare variables, but they have different characteristics:
+  - `val` is used to declare read-only (immutable) variables. Once assigned, the value of a `val` cannot be changed.
+  - `var` is used to declare mutable variables. The value of a `var` can be reassigned multiple times.
+
+- ### Explain type inference in Kotlin.
+  Type inference in Kotlin allows the compiler to automatically determine the type of a variable based on its initialization value. Each time you use a variable, you don’t have to specify its type explicitly.
+
+- ### What are nullable types in Kotlin?
+  In Kotlin, nullable types allow variables to hold null values in addition to their regular data type values. This is in contrast to non-nullable types, which cannot hold null values by default. By using nullable types, the compiler enforces null safety and reduces the occurrence of null pointer exceptions.
+
+- ### How do you handle nullability in Kotlin?
+  In Kotlin, you can handle nullability using several techniques:
+  - Safe Calls: Use the safe call operator (?.) to safely access properties or call methods on a nullable object. If the object is null, the expression evaluates to null instead of throwing a null pointer exception.
+  - Elvis Operator: The Elvis operator (?:) allows you to provide a default value when accessing a nullable object. If the object is null, the expression after the Elvis operator is returned instead.
+  - Safe Casts: Use the safe cast operator (as?) to perform type casts on nullable objects. If the cast is unsuccessful, the result is null.
+  - Non-Null Assertion: When you are certain that a nullable variable is not null at a specific point, you can use the non-null assertion operator (!!) to bypass null safety checks. However, if the variable is actually null, a null pointer exception will occur.
+
+- ### What is the Elvis operator in Kotlin?
+  The Elvis operator (?:) is a shorthand notation in Kotlin that provides a default value when accessing a nullable object. It is useful in scenarios where you want to assign a default value if a nullable object is null.
+
+- ### Explain the concept of smart casts in Kotlin.
+  Smart casts in Kotlin allow the compiler to automatically cast a variable to a non-nullable type after a null check. As a result, type casting is no longer necessary, and code readability and safety are enhanced.
+When a variable is checked for null using an if or when statement, the compiler can automatically cast the variable to a non-nullable type within the corresponding block.
+
+- ### What are Kotlin collections?
+  Kotlin collections are used to store and manage groups of related data items. They provide a convenient way to work with multiple values as a single unit. Kotlin offers various collection types, such as lists, sets, and maps, each with its own characteristics and functionalities.
+
+- ### What is the difference between a list and an array in Kotlin?
+  In Kotlin, a list is an ordered collection that can store elements of any type, while an array is a fixed-size collection that stores elements of a specific type. Here are the main differences:
+  - Size: Lists can dynamically grow or shrink in size, whereas arrays have a fixed size that is determined at the time of creation.
+  - Type Flexibility: Lists can store elements of different types using generics, allowing for heterogeneity. Arrays, on the other hand, are homogeneous and can store elements of a single type.
+  - Modification: Lists provide convenient methods for adding, removing, or modifying elements. Arrays have fixed sizes, so adding or removing elements requires creating a new array or overwriting existing elements.
+  - Performance: Arrays generally offer better performance for direct element access and modification, as they use contiguous memory locations. Lists, being dynamic, involve some level of overhead for resizing and maintaining their internal structure.
+
+- ### How do you create an empty list in Kotlin?
+  In Kotlin, you can create an empty list using the listOf() function with no arguments. This creates a list with zero elements.
+
+- ### What is the difference between an immutable and a mutable list in Kotlin?
+  In Kotlin, an immutable list (read-only list) is created using the listOf() function, and its elements cannot be modified once the list is created. On the other hand, a mutable list can be modified by adding, removing, or modifying its elements using specific functions.
+
+- ### Explain the concepts of immutable and mutable variables in Kotlin.
+  In Kotlin, variables can be either immutable or mutable.
+  - Immutable Variables: Immutable variables are declared using the val keyword. Once assigned a value, its value cannot be changed or reassigned. They are read-only and provide a guarantee of immutability.
+  - Mutable Variables: Mutable variables are declared using the var keyword. They can be assigned a value initially and then modified or reassigned later. Mutable variables provide flexibility for value changes during program execution.
+
+- ### What is a lambda expression in Kotlin?
+  A lambda expression in Kotlin is a way to define a function-like construct without explicitly declaring a function. It allows you to create a block of code that can be passed around as an argument or stored in a variable.
+
+- ### Explain the concept of higher-order functions in Kotlin.
+  In Kotlin, higher-order functions are functions that can accept other functions as parameters or return functions as results. They treat functions as first-class citizens, allowing for functional programming paradigms.
+
+- ### What is the use of the lateinit modifier in Kotlin?
+  The lateinit modifier in Kotlin is used to declare properties that will be assigned a value later, but not at the time of declaration. It is specifically used with mutable properties of non-null types.
+
+- ### What is a data class in Kotlin?
+  In Kotlin, a data class is a special type of class that is primarily used to hold data/state rather than behavior. It is designed to automatically generate common methods such as equals(), hashCode(), toString(), and copy() based on the properties defined in the class.
+
+- ### Explain the concept of extension functions in Kotlin.
+  Extension functions in Kotlin allow you to add new functions to existing classes without modifying their source code. They provide a way to extend the functionality of a class without the need for inheritance or modifying the original class.
