@@ -22,19 +22,26 @@ Note: I'm currently preparing this repo, and I'll restructure it once I have don
 
 ## Android
 - ### What is Android?
-
+  <details>
+    <summary>Click for Answer:</summary>
   Android is an open-sourced operating system that is used on mobile devices, such as mobiles and tablets. The Android application executes within its own process and its own instance of Dalvik Virtual Machine(DVM) or Android RunTime(ART).
+  </details>
 
 - ### What is Android Runtime?
-
+  <details>
+    <summary>Click for Answer:</summary>
   Android Runtime (ART) is the managed runtime used by applications and some system services on the Android operating system. It's responsible for executing and managing Android applications and providing a set of core libraries that applications can use. ART replaces the older Dalvik runtime, offering improved performance and memory efficiency through ahead-of-time (AOT) compilation and other optimizations. This shift from Dalvik to ART occurred in Android 5.0 (Lollipop) and has been further refined in subsequent Android releases.
-
+ </details>
+ 
 - ### What is Dalvik Runtime?
-
+  <details>
+    <summary>Click for Answer:</summary>
   The Dalvik runtime is the former managed runtime used by applications on the Android operating system prior to Android 5.0 (Lollipop). It's named after the village of Dalvik in Iceland. Dalvik was responsible for executing and managing Android applications, employing a just-in-time (JIT) compilation approach where bytecode is translated into native machine code at runtime. While Dalvik served its purpose well, it had some limitations in terms of performance and memory efficiency. Consequently, it was replaced by the Android Runtime (ART) starting from Android 5.0, which brought improvements such as ahead-of-time (AOT) compilation for enhanced performance and reduced memory usage.
-
+ </details>
+ 
 - ### Just-in-Time (JIT) vs Android Runtime (AOT)?
-
+  <details>
+    <summary>Click for Answer:</summary>
   Just-in-Time (JIT) compilation and Ahead-of-Time (AOT) compilation are two different approaches to compiling and executing code, each with its advantages and disadvantages.
   
   #### Just-in-Time (JIT) Compilation:
@@ -52,9 +59,11 @@ Note: I'm currently preparing this repo, and I'll restructure it once I have don
   - However, AOT-compiled code may not be as optimized for the specific hardware it's running on, as optimizations are done without knowledge of the runtime environment.
   
   In summary, JIT compilation offers dynamic optimizations tailored to the runtime environment but incurs overhead during execution, while AOT compilation provides faster startup times and reduced runtime overhead but may lack some runtime-specific optimizations. The choice between JIT and AOT compilation depends on factors such as the target platform, performance requirements, and the characteristics of the application being compiled.
-
+ </details>
+ 
 - ### What is Garbage collector?
-
+  <details>
+    <summary>Click for Answer:</summary>
   In Android, the Garbage Collector (GC) is a key component of the Java Virtual Machine (JVM) responsible for automatic memory management. Its primary role is to reclaim memory occupied by objects that are no longer in use, thus preventing memory leaks and ensuring efficient memory usage within the application.
     
     Here's how the Garbage Collector works in Android:
@@ -64,10 +73,11 @@ Note: I'm currently preparing this repo, and I'll restructure it once I have don
     3. **Memory Reclamation**: The Garbage Collector releases the memory occupied by unreachable objects, making it available for new object allocations. This process prevents memory leaks and ensures that the application doesn't run out of memory over time.
     
     Android offers several types of garbage collectors, such as the Concurrent Mark-Sweep (CMS) collector, the Garbage First (G1) collector, and the default collector based on the generational Garbage Collector from the Java Virtual Machine (JVM). Each collector has its characteristics and trade-offs in terms of performance and memory overhead, allowing developers to choose the most suitable one based on their application's requirements and device constraints.
-    
+  </details> 
 
 - ### What is DEX?
-
+  <details>
+    <summary>Click for Answer:</summary>
   DEX stands for Dalvik Executable, and it's a file format used in Android for packaging and executing compiled bytecode. When you write an Android application in Java or Kotlin, the source code is compiled into bytecode, which is a set of instructions understood by the Java Virtual Machine (JVM). However, Android doesn't use the JVM; instead, it uses its own runtime environment called the Dalvik Virtual Machine (DVM) or, more recently, the Android Runtime (ART).
     
     The DEX format is optimized for Android's runtime environment and is generated from the bytecode produced by compiling your Java or Kotlin code. The main purpose of the DEX format is to efficiently package and execute bytecode on Android devices while minimizing memory usage and improving performance.
@@ -75,10 +85,11 @@ Note: I'm currently preparing this repo, and I'll restructure it once I have don
     DEX files contain executable code, resources, and metadata required by the Android system to run your application. They are typically generated during the build process of an Android application, and the final APK (Android Package) file contains one or more DEX files along with other resources.
     
     Overall, DEX files play a crucial role in the Android application development process, serving as the executable format for Android applications and enabling them to run efficiently on a wide range of devices.
-    
+  </details>   
 
 - ### What is multidex?
-
+  <details>
+    <summary>Click for Answer:</summary>
   Multidex, short for "multidexing," is a feature in Android that allows applications to surpass the method reference limit imposed by the Dalvik Executable (DEX) format. In Android, each DEX file has a method reference limit, which is the maximum number of methods that can be referenced within a single DEX file. This limitation can become a problem for large applications that exceed this limit due to the large number of methods generated from their code, dependencies, and libraries.
     
     Multidexing addresses this limitation by enabling an application to have multiple DEX files, hence the term "multidex." When multidexing is enabled, the build process generates multiple DEX files for the application, each containing a subset of the methods. This allows the application to reference more methods than would be possible with a single DEX file.
@@ -86,9 +97,11 @@ Note: I'm currently preparing this repo, and I'll restructure it once I have don
     Multidexing is particularly useful for large applications, such as those that use many libraries or have a substantial amount of code, including projects with extensive use of third-party dependencies. By enabling multidexing, developers can avoid hitting the method reference limit and ensure that their applications can run smoothly on Android devices.
     
     Multidexing can be enabled in an Android application by configuring the build process, typically through build.gradle configuration settings. While multidexing allows developers to overcome the method reference limit, it's important to note that it can slightly impact application startup time due to the additional overhead of loading multiple DEX files. However, for most applications, the performance impact is minimal and outweighed by the benefits of avoiding method reference limit issues.
-
+   </details>
+   
 - ### How does memory is managed in the OS?
-
+  <details>
+    <summary>Click for Answer:</summary>
   Memory management in an operating system (OS) involves several key tasks to efficiently allocate, utilize, and deallocate memory resources. Here's an overview of how memory is managed in an OS:
   
   1. **Memory Allocation**: When a process is created or requests memory, the OS allocates memory space to the process. This allocation can happen through various mechanisms such as fixed partitioning, dynamic partitioning, or paging.
@@ -100,8 +113,11 @@ Note: I'm currently preparing this repo, and I'll restructure it once I have don
   7. **Memory Monitoring and Optimization**: Operating systems often include tools and mechanisms for monitoring memory usage and performance. This may include memory usage statistics, memory leak detection, and memory profiling tools to help developers identify and address memory-related issues in applications.
   
   Overall, effective memory management is essential for maintaining system stability, performance, and resource utilization in an operating system. The OS employs various techniques and algorithms to manage memory efficiently and provide a reliable execution environment for applications running on the system.
-
+  </details>
 - ### Write code having memory leaks?
+  <details>
+    <summary>Click for Answer:</summary>
+    
   One common scenario for memory leaks is when objects are unintentionally kept in memory longer than necessary, preventing the garbage collector from reclaiming them. Here's a simple Java example that demonstrates a memory leak:
   ```java
   import java.util.ArrayList;
@@ -123,8 +139,12 @@ Note: I'm currently preparing this repo, and I'll restructure it once I have don
   In this example, a program creates an ArrayList list and continuously adds new Object instances to it within an infinite loop. However, it never removes objects from the list. As a result, the list keeps growing indefinitely, consuming more and more memory over time. This behavior constitutes a memory leak because objects are retained in memory unnecessarily, preventing the garbage collector from reclaiming memory used by those objects.
   
   To avoid memory leaks, it's essential to ensure that objects are removed from data structures like lists when they are no longer needed. In this example, uncommenting the line list.remove(obj); inside the loop would prevent the memory leak by removing objects from the list after they are added.
-
+  </details>
+  
 - ### what is LRU Cache?
+  <details>
+    <summary>Click for Answer:</summary>
+    
   LRU Cache stands for Least Recently Used Cache, and it's a type of caching mechanism used in computer science to store a fixed number of items (such as objects, data, or values) in memory. The key feature of an LRU Cache is that when the cache reaches its capacity limit and a new item needs to be added, the least recently used item in the cache is evicted to make room for the new item.
   
   Here's how an LRU Cache typically works:
@@ -135,9 +155,13 @@ Note: I'm currently preparing this repo, and I'll restructure it once I have don
   Put Operation: When a new item needs to be added to the cache (via a "put" operation), the cache checks if the cache is full. If the cache is not full, the new item is added to the cache. If the cache is full, the least recently used item in the cache is evicted (removed), and the new item is added.
   LRU Policy: The key aspect of an LRU Cache is its eviction policy, which is based on the principle of least recently used. Whenever an item is accessed (via a "get" operation), its access time is updated to indicate that it was recently used. When the cache is full and a new item needs to be added (via a "put" operation), the item that was accessed the least recently is evicted from the cache to make room for the new item.
   LRU Caches are commonly used in various applications and systems where efficient caching of frequently accessed data is required. They offer a balance between memory usage and performance by ensuring that frequently accessed items remain in the cache while evicting less frequently used items when the cache reaches its capacity limit.
-
+  
+  </details>
+  
 - ### Why does an Android App lag?
-
+  <details>
+    <summary>Click for Answer:</summary>
+    
   Android apps can lag due to various factors, including:
   
   1. **Inefficient Code**: Poorly optimized code, such as inefficient algorithms, excessive memory usage, or frequent garbage collection, can lead to performance issues and lag in the app.
@@ -150,9 +174,13 @@ Note: I'm currently preparing this repo, and I'll restructure it once I have don
   8. **Third-Party Libraries**: Integrating third-party libraries into an app without considering their performance impact can introduce overhead and potential lag, especially if the libraries are inefficiently implemented or not properly managed.
   
   To address lag issues in Android apps, developers can use various strategies such as optimizing code, offloading intensive tasks to background threads or services, implementing efficient caching mechanisms, profiling and analyzing app performance, and prioritizing responsiveness and resource efficiency in app design. Additionally, regularly testing the app on different devices and under various network conditions can help identify and address performance bottlenecks and improve the overall user experience.
-
+  
+  </details>
+  
 - ### What is Context? How is it used?
-
+  <details>
+    <summary>Click for Answer:</summary>
+    
   In Android, **`Context`** is an abstract class that provides information about the application environment and allows access to application-specific resources and functionalities. It serves as a handle to the Android system, enabling an application to interact with various system components and services.
   
   **`Context`** is a fundamental concept in Android development and is used in various scenarios, including:
@@ -171,9 +199,13 @@ Note: I'm currently preparing this repo, and I'll restructure it once I have don
   - **Receiver Context**: Broadcast receivers can obtain a context via the **`onReceive()`** method parameter.
   
   It's important to use the appropriate **`Context`** instance based on the context in which it's needed to avoid memory leaks and other issues. For example, using the application context is recommended for long-lived objects or when a **`Context`** is needed outside the scope of an activity or service.
-
+  
+  </details>
+  
 - ### Tell all the Android application components?
-
+  <details>
+    <summary>Click for Answer:</summary>
+    
   In Android, there are four main application components that serve as building blocks for constructing an Android application:
   
   1. **Activities**:
@@ -195,9 +227,13 @@ Note: I'm currently preparing this repo, and I'll restructure it once I have don
       - Examples include the Contacts Provider for accessing contact information or the MediaStore Provider for accessing media files.
   
   These four components work together to create the user interface, handle background tasks, respond to system events, and manage data in an Android application. By combining these components creatively, developers can build a wide range of applications with diverse functionalities and user experiences.
-
+  
+  </details>
+  
 - ### What is AndroidManifest.xml?
-
+  <details>
+    <summary>Click for Answer:</summary>
+    
   The **`AndroidManifest.xml`** file is a crucial configuration file in Android development that provides essential information about your Android application to the Android system. It serves as a blueprint for the Android system to understand various aspects of your application, including its components, permissions, hardware requirements, and metadata.
   
   Here are some key aspects of the **`AndroidManifest.xml`** file:
@@ -210,9 +246,13 @@ Note: I'm currently preparing this repo, and I'll restructure it once I have don
   6. **Permissions and Security**: The manifest file defines the security model for your application, specifying which permissions are required and which components are exposed to other applications.
   
   The **`AndroidManifest.xml`** file is located in the **`manifests/`** directory of your Android project and is typically the first file that the Android system reads when installing and launching your application. It's essential to maintain an accurate and up-to-date manifest file to ensure proper functionality and compatibility of your application with the Android platform.
-
+  
+  </details>
+  
 - ### List of android activity attributes.
-
+  <details>
+    <summary>Click for Answer:</summary>
+    
   Activities have various attributes that can be defined in the AndroidManifest.xml file or programmatically. Some common attributes include:
   
   1. **Name**: Specifies the Java class that implements the activity.
@@ -275,9 +315,13 @@ Note: I'm currently preparing this repo, and I'll restructure it once I have don
       - **`none`**: No specific UI options are set.
   
   These attributes provide a wide range of customization options for defining the behavior and appearance of Android activities.
-
+  
+  </details>
+  
 - ### Explain type of launch mode in activity with example?
-
+  <details>
+    <summary>Click for Answer:</summary>
+    
   In Android, the launch mode of an activity determines how the activity should behave when it's launched or when it's already in the activity stack. There are four main launch modes available for activities, each serving different purposes and providing different behavior. Here are the four launch modes along with explanations and examples:
   
   1. **Standard**:
@@ -298,20 +342,30 @@ Note: I'm currently preparing this repo, and I'll restructure it once I have don
       - Example: Suppose your app has a "Map" activity that handles map-related tasks. When the user navigates to the "Map" activity, it's launched in its own task. If the "Map" activity is already running, the existing instance is brought to the foreground instead of creating a new instance. This ensures that only one instance of the "Map" activity exists system-wide.
   
   These launch modes provide developers with flexibility in managing the behavior of activities and controlling their interaction with the activity stack and other tasks in the system.
-
-- ### What is the `Application` class?
-
-   The Application class in Android is the base class within an Android app that contains all other components such as activities and services. The Application class, or any subclass of the Application class, is instantiated before any other class when the process for your application/package is created.
-
-- ### What is onSaveInstanceState() and onRestoreInstanceState() in activity?
   
+  </details>
+  
+- ### What is the `Application` class?
+  <details>
+    <summary>Click for Answer:</summary>
+   The Application class in Android is the base class within an Android app that contains all other components such as activities and services. The Application class, or any subclass of the Application class, is instantiated before any other class when the process for your application/package is created.
+  </details>
+  
+- ### What is onSaveInstanceState() and onRestoreInstanceState() in activity?
+    <details>
+    <summary>Click for Answer:</summary>
+      
   - onSaveInstanceState() - This method is used to store data before pausing the activity.
   - onRestoreInstanceState() - This method is used to recover the saved state of an activity when the activity is recreated after destruction. So, the onRestoreInstanceState() receives the bundle that contains the instance state information.
-
+      
+  </details>
+  
 - ### We can recover saved data using **onRestoreInstanceState() or onCreate() then what is the difference in them?
-
+  <details>
+    <summary>Click for Answer:</summary>
   Yes, both approaches achieve the same goal of restoring the activity's state after a configuration change. However, it's important to note that **`onRestoreInstanceState()`** is called after **`onStart()`** whereas **`onCreate()`** is called before **`onStart()`**. Depending on your specific requirements and the timing of state restoration, you can choose the appropriate method to restore the activity's state. Both approaches are valid and commonly used in Android development.
-
+  </details>
+  
 - ### What is `Activity` and its lifecycle?
 
   [Learn from here](https://developer.android.com/guide/components/activities/activity-lifecycle)
@@ -321,112 +375,202 @@ Note: I'm currently preparing this repo, and I'll restructure it once I have don
   [Learn from here](https://developer.android.com/guide/fragments/lifecycle)
 
 - ### When should you use a Fragment rather than an Activity?
+   <details>
+    <summary>Click for Answer:</summary> 
+     
+    - When you have some UI components to be used across various activities
+    - When multiple views can be displayed side by side just like ViewPager
+     
+  </details>
   
-  - When you have some UI components to be used across various activities
-  - When multiple views can be displayed side by side just like ViewPager
-
 - ### What is the difference between FragmentPagerAdapter vs FragmentStatePagerAdapter?
-
-  - FragmentPagerAdapter: Each fragment visited by the user will be stored in the memory but the view will be destroyed. When the page is revisited, then the view will be created not the instance of the fragment.
-  - FragmentStatePagerAdapter: Here, the fragment instance will be destroyed when it is not visible to the user, except the saved state of the fragment.
-
+  <details>
+    <summary>Click for Answer:</summary>
+    
+    - FragmentPagerAdapter: Each fragment visited by the user will be stored in the memory but the view will be destroyed. When the page is revisited, then the view will be created not the instance of the fragment.
+    - FragmentStatePagerAdapter: Here, the fragment instance will be destroyed when it is not visible to the user, except the saved state of the fragment.
+    
+  </details>
+  
 - ### What is the difference between adding/replacing fragment in backstack?
-
+  <details>
+    <summary>Click for Answer:</summary>
   `replace` removes the existing fragment and adds a new fragment, but `add` retains the existing fragments and adds a new fragment that means existing fragment will be active and they wont be in 'paused' state hence when a back button is pressed `onCreateView()` is not called for the existing fragment(the fragment which was there before new fragment was added).
-
+  </details>
+  
 - ### What is retained `Fragment`?
-
-  By default, Fragments are destroyed and recreated along with their parent Activities when a configuration change occurs. Calling setRetainInstance(true) allows us to bypass this destroy-and-recreate cycle, signaling the system to retain the current instance of the fragment when the activity is recreated. It is deprecated now & with this onAttach() & onDetach() is also serves no purpose anymore.
-
+  <details>
+    <summary>Click for Answer:</summary>
+    By default, Fragments are destroyed and recreated along with their parent Activities when a configuration change occurs. Calling setRetainInstance(true) allows us to bypass this destroy-and-recreate cycle, signaling the system to retain the current instance of the fragment when the activity is recreated. It is deprecated now & with this onAttach() & onDetach() is also serves no purpose anymore.
+  </details>
+  
 - ### What is the purpose of `addToBackStack()` while commiting fragment transaction?
-
+  <details>
+    <summary>Click for Answer:</summary>
   By calling addToBackStack(), the replace transaction is saved to the back stack so the user can reverse the transaction and bring back the previous fragment by pressing the Back button.
-
+  </details>
+  
 - ### What are ViewGroups and how they are different from the Views?
-
-  - View: View objects are the basic building blocks of User Interface(UI) elements in Android. View is a simple rectangle box which responds to the user’s actions. Examples are EditText, Button, CheckBox etc. View refers to the android.view.View class, which is the base class of all UI classes.
-  - ViewGroup: ViewGroup is the invisible container. It holds View and ViewGroup. For example, LinearLayout is the ViewGroup that contains Button(View), and other Layouts also. ViewGroup is the base class for Layouts.
-
+  <details>
+    <summary>Click for Answer:</summary>
+    
+    - View: View objects are the basic building blocks of User Interface(UI) elements in Android. View is a simple rectangle box which responds to the user’s actions. Examples are EditText, Button, CheckBox etc. View refers to the android.view.View class, which is the base class of all UI classes.
+    - ViewGroup: ViewGroup is the invisible container. It holds View and ViewGroup. For example, LinearLayout is the ViewGroup that contains Button(View), and other Layouts also. ViewGroup is the base class for Layouts.
+    
+  </details>
+  
 ## Kotlin
 - ### What is Kotlin?
+  <details>
+    <summary>Click for Answer:</summary>
   Kotlin is a modern programming language developed by JetBrains. It is statically typed and runs on the Java Virtual Machine (JVM). The Kotlin language is designed to be interoperable with Java, so you can use Kotlin code alongside Java code seamlessly. Aside from Android app development, it is also used for server-side and web development.
-
+  </details>
+  
 - ### How is Kotlin different from Java?
+  <details>
+    <summary>Click for Answer:</summary>
   Kotlin and Java both programming languages that run on the Java Virtual Machine (JVM). but Kotlin is designed to be more concise and expressive, reducing unnecessary code. One notable feature is its built-in null safety, helping to avoid common programming errors related to null values. Kotlin also introduces modern language features like extension functions and coroutines, offering developers more flexibility and improved productivity compared to Java.
-
+  </details>
+  
 - ### Explain the advantages of using Kotlin.
-  Some advantages of using Kotlin include:
-  - Concise Syntax: Kotlin’s syntax is more concise, reducing boilerplate code and making it easier to read and write.
-  - Null Safety: Kotlin’s null safety features help prevent null pointer exceptions, enhancing code reliability.
-  - Interoperability: Kotlin is fully interoperable with Java, allowing you to leverage existing Java libraries and frameworks in Kotlin projects.
-  - Coroutines: Kotlin’s built-in support for coroutines simplifies asynchronous programming and improves performance.
-  - Functional Programming: Kotlin supports functional programming constructs like higher-order functions and lambda expressions, making code more expressive and concise.
-  - Tooling and Community Support: Kotlin has excellent tooling support, including IDE plugins for popular development environments. It also has a growing and active community, with abundant learning resources and libraries available.
-
+  <details>
+    <summary>Click for Answer:</summary>
+    
+    Some advantages of using Kotlin include:
+    - Concise Syntax: Kotlin’s syntax is more concise, reducing boilerplate code and making it easier to read and write.
+    - Null Safety: Kotlin’s null safety features help prevent null pointer exceptions, enhancing code reliability.
+    - Interoperability: Kotlin is fully interoperable with Java, allowing you to leverage existing Java libraries and frameworks in Kotlin projects.
+    - Coroutines: Kotlin’s built-in support for coroutines simplifies asynchronous programming and improves performance.
+    - Functional Programming: Kotlin supports functional programming constructs like higher-order functions and lambda expressions, making code more expressive and concise.
+    - Tooling and Community Support: Kotlin has excellent tooling support, including IDE plugins for popular development environments. It also has a growing and active community, with abundant learning resources and libraries available.
+    
+  </details>
+  
 - ### What are the basic data types in Kotlin?
-  The basic data types in Kotlin are:
-  - Numbers: This includes types like Int (for integers), Double (for double-precision floating-point numbers), Float (for single-precision floating-point numbers), Long (for long integers), Short (for short integers), and Byte (for bytes).
-  - Booleans: The Boolean type represents logical values, either true or false.
-  - Characters: The Char type represents a single character.
-  - Strings: The String type represents a sequence of characters.
-
+  <details>
+    <summary>Click for Answer:</summary>
+    
+    The basic data types in Kotlin are:
+    - Numbers: This includes types like Int (for integers), Double (for double-precision floating-point numbers), Float (for single-precision floating-point numbers), Long (for long integers), Short (for short integers), and Byte (for bytes).
+    - Booleans: The Boolean type represents logical values, either true or false.
+    - Characters: The Char type represents a single character.
+    - Strings: The String type represents a sequence of characters.
+    
+  </details>
+  
 - ### What is the difference between val and var in Kotlin?
-  In Kotlin, `val` and `var` are used to declare variables, but they have different characteristics:
-  - `val` is used to declare read-only (immutable) variables. Once assigned, the value of a `val` cannot be changed.
-  - `var` is used to declare mutable variables. The value of a `var` can be reassigned multiple times.
-
+  <details>
+    <summary>Click for Answer:</summary>
+    
+    In Kotlin, `val` and `var` are used to declare variables, but they have different characteristics:
+    - `val` is used to declare read-only (immutable) variables. Once assigned, the value of a `val` cannot be changed.
+    - `var` is used to declare mutable variables. The value of a `var` can be reassigned multiple times.
+    
+  </details>
+  
 - ### Explain type inference in Kotlin.
+  <details>
+    <summary>Click for Answer:</summary>
   Type inference in Kotlin allows the compiler to automatically determine the type of a variable based on its initialization value. Each time you use a variable, you don’t have to specify its type explicitly.
-
+  </details>
+  
 - ### What are nullable types in Kotlin?
+  <details>
+    <summary>Click for Answer:</summary>
   In Kotlin, nullable types allow variables to hold null values in addition to their regular data type values. This is in contrast to non-nullable types, which cannot hold null values by default. By using nullable types, the compiler enforces null safety and reduces the occurrence of null pointer exceptions.
-
+  </details>
+  
 - ### How do you handle nullability in Kotlin?
+  <details>
+    <summary>Click for Answer:</summary>
+    
   In Kotlin, you can handle nullability using several techniques:
   - Safe Calls: Use the safe call operator (?.) to safely access properties or call methods on a nullable object. If the object is null, the expression evaluates to null instead of throwing a null pointer exception.
   - Elvis Operator: The Elvis operator (?:) allows you to provide a default value when accessing a nullable object. If the object is null, the expression after the Elvis operator is returned instead.
   - Safe Casts: Use the safe cast operator (as?) to perform type casts on nullable objects. If the cast is unsuccessful, the result is null.
   - Non-Null Assertion: When you are certain that a nullable variable is not null at a specific point, you can use the non-null assertion operator (!!) to bypass null safety checks. However, if the variable is actually null, a null pointer exception will occur.
-
+    
+  </details>
+  
 - ### What is the Elvis operator in Kotlin?
+  <details>
+    <summary>Click for Answer:</summary>
   The Elvis operator (?:) is a shorthand notation in Kotlin that provides a default value when accessing a nullable object. It is useful in scenarios where you want to assign a default value if a nullable object is null.
-
+  </details>
+  
 - ### Explain the concept of smart casts in Kotlin.
-  Smart casts in Kotlin allow the compiler to automatically cast a variable to a non-nullable type after a null check. As a result, type casting is no longer necessary, and code readability and safety are enhanced.
-When a variable is checked for null using an if or when statement, the compiler can automatically cast the variable to a non-nullable type within the corresponding block.
-
+  <details>
+    <summary>Click for Answer:</summary>
+    Smart casts in Kotlin allow the compiler to automatically cast a variable to a non-nullable type after a null check. As a result, type casting is no longer necessary, and code readability and safety are enhanced.
+  When a variable is checked for null using an if or when statement, the compiler can automatically cast the variable to a non-nullable type within the corresponding block.
+  </details>
+  
 - ### What are Kotlin collections?
+  <details>
+    <summary>Click for Answer:</summary>
   Kotlin collections are used to store and manage groups of related data items. They provide a convenient way to work with multiple values as a single unit. Kotlin offers various collection types, such as lists, sets, and maps, each with its own characteristics and functionalities.
-
+  </details>
+  
 - ### What is the difference between a list and an array in Kotlin?
+  <details>
+    <summary>Click for Answer:</summary>
+    
   In Kotlin, a list is an ordered collection that can store elements of any type, while an array is a fixed-size collection that stores elements of a specific type. Here are the main differences:
   - Size: Lists can dynamically grow or shrink in size, whereas arrays have a fixed size that is determined at the time of creation.
   - Type Flexibility: Lists can store elements of different types using generics, allowing for heterogeneity. Arrays, on the other hand, are homogeneous and can store elements of a single type.
   - Modification: Lists provide convenient methods for adding, removing, or modifying elements. Arrays have fixed sizes, so adding or removing elements requires creating a new array or overwriting existing elements.
   - Performance: Arrays generally offer better performance for direct element access and modification, as they use contiguous memory locations. Lists, being dynamic, involve some level of overhead for resizing and maintaining their internal structure.
-
+    
+  </details>
+  
 - ### How do you create an empty list in Kotlin?
+  <details>
+    <summary>Click for Answer:</summary>
   In Kotlin, you can create an empty list using the listOf() function with no arguments. This creates a list with zero elements.
-
+  </details>
+  
 - ### What is the difference between an immutable and a mutable list in Kotlin?
+  <details>
+    <summary>Click for Answer:</summary>
   In Kotlin, an immutable list (read-only list) is created using the listOf() function, and its elements cannot be modified once the list is created. On the other hand, a mutable list can be modified by adding, removing, or modifying its elements using specific functions.
-
+  </details>
+  
 - ### Explain the concepts of immutable and mutable variables in Kotlin.
+  <details>
+    <summary>Click for Answer:</summary>
+    
   In Kotlin, variables can be either immutable or mutable.
-  - Immutable Variables: Immutable variables are declared using the val keyword. Once assigned a value, its value cannot be changed or reassigned. They are read-only and provide a guarantee of immutability.
-  - Mutable Variables: Mutable variables are declared using the var keyword. They can be assigned a value initially and then modified or reassigned later. Mutable variables provide flexibility for value changes during program execution.
-
+    - Immutable Variables: Immutable variables are declared using the val keyword. Once assigned a value, its value cannot be changed or reassigned. They are read-only and provide a guarantee of immutability.
+    - Mutable Variables: Mutable variables are declared using the var keyword. They can be assigned a value initially and then modified or reassigned later. Mutable variables provide flexibility for value changes during program execution.
+    
+  </details>
+  
 - ### What is a lambda expression in Kotlin?
+  <details>
+    <summary>Click for Answer:</summary>
   A lambda expression in Kotlin is a way to define a function-like construct without explicitly declaring a function. It allows you to create a block of code that can be passed around as an argument or stored in a variable.
-
+  </details>
+  
 - ### Explain the concept of higher-order functions in Kotlin.
+  <details>
+    <summary>Click for Answer:</summary>
   In Kotlin, higher-order functions are functions that can accept other functions as parameters or return functions as results. They treat functions as first-class citizens, allowing for functional programming paradigms.
-
+  </details>
+  
 - ### What is the use of the lateinit modifier in Kotlin?
+  <details>
+    <summary>Click for Answer:</summary>
   The lateinit modifier in Kotlin is used to declare properties that will be assigned a value later, but not at the time of declaration. It is specifically used with mutable properties of non-null types.
-
+  </details>
+  
 - ### What is a data class in Kotlin?
+  <details>
+    <summary>Click for Answer:</summary>
   In Kotlin, a data class is a special type of class that is primarily used to hold data/state rather than behavior. It is designed to automatically generate common methods such as equals(), hashCode(), toString(), and copy() based on the properties defined in the class.
-
+  </details>
+  
 - ### Explain the concept of extension functions in Kotlin.
+  <details>
+    <summary>Click for Answer:</summary>
   Extension functions in Kotlin allow you to add new functions to existing classes without modifying their source code. They provide a way to extend the functionality of a class without the need for inheritance or modifying the original class.
+  </details>
