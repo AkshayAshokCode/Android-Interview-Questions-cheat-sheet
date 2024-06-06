@@ -6,7 +6,7 @@ Note: I'm currently preparing this repo, and I'll restructure it once I have don
 - Design Patterns
 - Architecture Patterns
 - [Android](#android)
-- [Kotlin](kotlin)
+- [Kotlin](#kotlin)
 - Java
 - Dependency Injection
 - Unit Testing
