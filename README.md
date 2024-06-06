@@ -1,6 +1,25 @@
 # Android-Interview-Questions-cheat-sheet (WIP)
 Note: I'm currently preparing this repo, and I'll restructure it once I have done with basic preperation
 
+## Content:
+- SOLID principle
+- Design Patterns
+- Architecture Patterns
+- [Android](#android)
+- [Kotlin](kotlin)
+- Java
+- Dependency Injection
+- Unit Testing
+- Kotlin Coroutines
+- Viewmodel
+- Kotlin Flow
+- Jetpack Compose
+- Android System Design
+- Threading
+- XML layout Questions
+- ANR (Application not responding)
+- Exception Handling
+
 ## Android
 - ### What is Android?
 
