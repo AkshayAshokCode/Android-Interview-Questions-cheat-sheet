@@ -3,7 +3,7 @@ Note: I'm currently preparing this repo, and I'll restructure it once I have don
 
 ## Content:
 - SOLID principle
-- Design Patterns
+- [Design Patterns](#design-patterns)
 - Architecture Patterns
 - [Android](#android)
 - [Kotlin](#kotlin)
@@ -19,6 +19,148 @@ Note: I'm currently preparing this repo, and I'll restructure it once I have don
 - XML layout Questions
 - ANR (Application not responding)
 - Exception Handling
+
+## Design Patterns
+- What are software design patterns?
+  <details>
+      <summary>Click for Answer:</summary>
+    Software design patterns are general, reusable solutions to common problems that occur in software design. They are best practices that software developers can use to solve problems in a more efficient and standardized way. Design patterns provide templates or guidelines on how to solve specific design problems and organize code in a way that enhances code readability, reusability, and maintainability.
+  </details>
+
+- What are the main categories of design patterns?
+   <details>
+      <summary>Click for Answer:</summary>
+     
+  Design patterns are typically categorized into three main types:
+  - Creational Patterns: These patterns deal with object creation mechanisms, trying to create objects in a manner suitable to the situation. Examples include Singleton, Factory Method, Abstract Factory, Builder, and Prototype.
+  - Structural Patterns: These patterns deal with object composition or structure, helping to ensure that if one part of a system changes, the entire system doesn't need to change. Examples include Adapter, Composite, Proxy, Flyweight, Facade, Bridge, and Decorator.
+  - Behavioral Patterns: These patterns are concerned with algorithms and the assignment of responsibilities between objects. Examples include Observer, Strategy, Command, Chain of Responsibility, Iterator, Mediator, Memento, State, and Visitor.
+    
+  </details>
+
+- What is the Singleton pattern, and where is it used?
+    <details>
+      <summary>Click for Answer:</summary>
+      The Singleton pattern ensures that a class has only one instance and provides a global point of access to it. This pattern is useful when exactly one object is needed to coordinate actions across the system. It is commonly used in logging, configuration settings, or managing a connection to a database.
+    </details>
+    
+- How does the Factory Method pattern work?
+    <details>
+      <summary>Click for Answer:</summary>
+      The Factory Method pattern defines an interface for creating an object but allows subclasses to alter the type of objects that will be created. Instead of calling a constructor directly, a factory method is called to create an object. This pattern promotes loose coupling by reducing the dependency of the client code on the specific classes that need to be instantiated.
+    </details>
+    
+- Can you explain the Observer pattern with an example?
+    <details>
+      <summary>Click for Answer:</summary>
+      The Observer pattern defines a one-to-many dependency between objects so that when one object (the subject) changes state, all its dependents (observers) are notified and updated automatically. For example, in a news application, when a news item is published (subject), all registered users (observers) are notified about the new article.
+    </details>
+    
+- What is the difference between the Adapter and Facade patterns?
+    <details>
+      <summary>Click for Answer:</summary>
+      
+    - Adapter Pattern: The Adapter pattern allows incompatible interfaces to work together. It acts as a bridge between two incompatible interfaces by converting the interface of a class into another interface that a client expects. It is used to make existing classes work with others without modifying their source code.
+    - Facade Pattern: The Facade pattern provides a simplified interface to a complex subsystem. It offers a higher-level interface that makes the subsystem easier to use by hiding the complexities of the subsystem from the client. It is used to reduce the complexity of the system and to make the subsystem more approachable.
+      
+    </details>
+    
+- What is the Strategy pattern?
+    <details>
+      <summary>Click for Answer:</summary>
+      The Strategy pattern defines a family of algorithms, encapsulates each algorithm, and makes them interchangeable. The strategy pattern allows the algorithm to vary independently from the clients that use it. It is commonly used in scenarios where multiple algorithms are available to an application and one of them is selected at runtime.
+    </details>
+    
+- How does the Decorator pattern work?
+    <details>
+      <summary>Click for Answer:</summary>
+      The Decorator pattern allows behavior to be added to individual objects, dynamically, without affecting the behavior of other objects from the same class. It involves a set of decorator classes that are used to wrap concrete components. This pattern provides a flexible alternative to subclassing for extending functionality. For example, adding functionality like scrolling or borders to a window at runtime.
+    </details>
+    
+- What is the Command pattern used for?
+    <details>
+      <summary>Click for Answer:</summary>
+      The Command pattern encapsulates a request as an object, thereby allowing for parameterization of clients with different requests, queuing of requests, and logging of the requests. It also provides support for undoable operations. For example, in a text editor, each operation like typing a character or formatting text can be represented as a command object, allowing the operations to be undone or redone.
+    </details>
+    
+- Can you explain the difference between the Prototype and Builder patterns?
+    <details>
+      <summary>Click for Answer:</summary>
+      
+    - Prototype Pattern: The Prototype pattern involves creating new objects by copying an existing object, known as the prototype. It is used when the process of creating a new object is more expensive than copying an existing one.
+    - Builder Pattern: The Builder pattern separates the construction of a complex object from its representation. This pattern allows for creating different representations of a complex object using the same construction process. It is used when creating an object requires multiple steps and can have various representations.
+      
+    </details>
+    
+- What is the Singleton pattern, and how is it used in Android?
+    <details>
+      <summary>Click for Answer:</summary>
+      The Singleton pattern ensures that a class has only one instance and provides a global point of access to it. In Android, this pattern is often used for classes that need to be instantiated only once, such as managing network connections (e.g., a Retrofit instance), database access (e.g., a Room database instance), and shared preferences. Singletons help to ensure that these resources are not recreated unnecessarily, improving performance and reducing resource usage.
+    </details>
+    
+- How does the Adapter pattern work in Android?
+      <details>
+      <summary>Click for Answer:</summary>
+      The Adapter pattern is used to bridge the gap between a data source and a UI component that displays the data. Common implementations in Android include:
+    
+    - RecyclerView.Adapter: Adapts a list of data items to be displayed in a RecyclerView.
+    - ArrayAdapter: Adapts an array or a list of objects to be displayed in a ListView or Spinner.
+      The Adapter pattern helps to decouple the data source from the UI components, making it easier to manage and update the data.
+  
+  </details>
+    
+- What is the Observer pattern and how is it used in Android?
+    <details>
+      <summary>Click for Answer:</summary>
+      The Observer pattern creates a subscription mechanism to allow multiple objects (observers) to listen to events or changes in another object (subject). In Android, this pattern is commonly implemented using LiveData. When the data held by LiveData changes, all registered observers (such as UI components) are notified, and they can update the UI accordingly. This pattern is crucial for implementing reactive programming paradigms in Android applications.
+    </details>
+    
+- How does the Decorator pattern work in Android?
+    <details>
+      <summary>Click for Answer:</summary>
+      The Decorator pattern allows behavior to be added to individual objects, dynamically, without affecting the behavior of other objects from the same class. In Android, the Decorator pattern can be seen in classes like InputFilter for EditText, which can add constraints or modify user input without changing the EditText class itself. This pattern provides a flexible alternative to subclassing for extending functionality.
+    </details>
+    
+- What is the Command pattern, and where might it be used in Android?
+    <details>
+      <summary>Click for Answer:</summary>
+      The Command pattern encapsulates a request as an object, allowing for parameterization of clients with different requests, queuing of requests, and logging of requests. In Android, this pattern can be used to implement actions in a decoupled manner. For instance, in an editor app, you might use the Command pattern to encapsulate text editing actions, enabling the implementation of undo and redo functionalities.
+    </details>
+    
+- How does the Builder pattern help in Android development?
+      <details>
+      <summary>Click for Answer:</summary>
+      
+    The Builder pattern helps to construct complex objects step by step. In Android, it is commonly used in the creation of objects that require many parameters, such as:
+    - AlertDialog.Builder: To construct and display dialog boxes.
+    - NotificationCompat.Builder: To create notifications with various attributes.
+    - Retrofit.Builder: To configure and create Retrofit instances for network communication.
+    The Builder pattern provides a clear and readable way to set optional parameters, resulting in more maintainable code.
+
+  </details>
+    
+- Can you explain the Proxy pattern with an example in Android?
+    <details>
+      <summary>Click for Answer:</summary>
+      The Proxy pattern provides a surrogate or placeholder for another object to control access to it. In Android, an example of the Proxy pattern is using a ContentProvider to manage access to a structured set of data. The ContentProvider acts as a proxy, providing a standard interface for querying, inserting, updating, and deleting data, while managing the underlying data storage and retrieval mechanisms.
+
+- What is the Flyweight pattern and how can it be used in Android?
+    <details>
+      <summary>Click for Answer:</summary>
+      The Flyweight pattern is used to minimize memory usage by sharing as much data as possible with similar objects. In Android, this pattern can be useful when dealing with a large number of similar objects. For example, in a game development scenario, if there are many instances of a tree object with identical properties, the Flyweight pattern can be used to share common state (like texture and geometry data) among these instances, thus reducing memory consumption.
+    </details>
+    
+- How does the Facade pattern simplify complex subsystems in Android?
+    <details>
+      <summary>Click for Answer:</summary>
+      The Facade pattern provides a simplified interface to a complex subsystem. In Android, it can be used to simplify interactions with complex APIs. For example, if an app uses multiple libraries for networking, database access, and image loading, a Facade can provide a unified interface for these operations, hiding the complexities and making it easier for developers to perform common tasks without needing to understand the underlying details.
+    </details>
+    
+- What is the Chain of Responsibility pattern and how might it be used in Android?
+    <details>
+      <summary>Click for Answer:</summary>
+      The Chain of Responsibility pattern allows an event to be processed by one of a chain of handlers. Each handler decides either to process the event or to pass it to the next handler in the chain. In Android, this pattern can be used in event handling for UI components. For instance, touch events can be processed by a chain of ViewGroup and View objects, where each component in the chain gets a chance to handle the event, allowing for flexible event processing and delegation.
+    </details>
 
 ## Android
 - ### What is Android?
