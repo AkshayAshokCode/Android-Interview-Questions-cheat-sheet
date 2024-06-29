@@ -15,6 +15,7 @@ Note: I'm currently preparing this repo, and I'll restructure it once I have don
 - Kotlin Flow
 - Jetpack Compose
 - Android System Design
+- Permissions
 - Threading
 - XML layout Questions
 - ANR (Application not responding)
