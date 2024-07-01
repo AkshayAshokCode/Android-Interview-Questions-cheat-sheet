@@ -14,6 +14,7 @@ Note: I'm currently preparing this repo, and I'll restructure it once I have don
 - Viewmodel
 - Kotlin Flow
 - Jetpack Compose
+- RxJava
 - Android System Design
 - Permissions
 - Threading
