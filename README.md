@@ -13,6 +13,7 @@ Note: I'm currently preparing this repo, and I'll restructure it once I have don
 - Kotlin Coroutines
 - Viewmodel
 - Kotlin Flow
+- Retrofit
 - Jetpack Compose
 - RxJava
 - Android System Design
