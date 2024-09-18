@@ -866,3 +866,14 @@ Note: I'm currently preparing this repo, and I'll restructure it once I have don
     <summary>Click for Answer:</summary>
   Extension functions in Kotlin allow you to add new functions to existing classes without modifying their source code. They provide a way to extend the functionality of a class without the need for inheritance or modifying the original class.
   </details>
+  
+- ### Annotations in Kotlin (JvmStatic, JvmField, JvmOverloads).
+  <details>
+    <summary>Click for Answer:</summary>
+    
+    In Kotlin, annotations are used to add metadata to the code that can be processed by the compiler or runtime. These annotations help when interoperating with Java, where some behaviors differ from Kotlin. Let's explore the specific annotations you mentioned:
+  1. @JvmStatic: The @JvmStatic annotation is used to indicate that a method in Kotlin should be static when called from Java code. Normally, Kotlin doesn't generate static methods in classes, but in certain cases, you might want to expose a method as static for easier interop with Java. It’s primarily used in companion objects or singleton objects.
+  2. @JvmField: The @JvmField annotation is used to expose a Kotlin property as a public field in Java. Normally, Kotlin generates getter and setter methods for properties, but with @JvmField, Kotlin generates a direct field, which can be accessed directly from Java without getters or setters.
+  3. @JvmOverloads: The @JvmOverloads annotation generates multiple overloads of a Kotlin function to accommodate default parameter values when called from Java. Kotlin supports default arguments, but Java does not, so this annotation creates multiple method signatures for each combination of default parameters to make it accessible from Java.
+     
+  </details>
