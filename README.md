@@ -877,3 +877,93 @@ Note: I'm currently preparing this repo, and I'll restructure it once I have don
   3. @JvmOverloads: The @JvmOverloads annotation generates multiple overloads of a Kotlin function to accommodate default parameter values when called from Java. Kotlin supports default arguments, but Java does not, so this annotation creates multiple method signatures for each combination of default parameters to make it accessible from Java.
      
   </details>
+
+- ### Scope functions in Kotlin.
+  <details>
+    <summary>Click for Answer:</summary>
+
+  Kotlin scope functions are powerful tools that allow you to write more concise and readable code by creating a temporary scope for an object. These functions help in modifying or working with an object within a limited scope. The main Kotlin scope functions are:
+  
+  - let
+  - run
+  - with
+  - apply
+  - also
+
+  Each of these functions has a different use case, depending on whether you want to operate on the object itself, return a value, or chain calls.
+  
+    1. **let:**
+    Use Case: Perform operations on an object, mainly useful when the object is nullable or when you want to avoid repeating the object multiple times.
+    
+    The object is referred to by it.
+    Returns the result of the last expression inside the lambda.
+  
+    Example:
+    ```
+    val name: String? = "Kotlin"
+    name?.let {
+        println(it.length)  // Prints 6
+    
+    }
+    ```
+    If name is non-null, let is executed, allowing safe calls on nullable objects.
+    2. **run:**
+    Use Case: Execute multiple operations on an object and return the result of the last expression. Use when you want to initialize an object or perform a series of operations and return a value.
+    
+    The object is referred to by this.
+    Returns the result of the last expression inside the lambda.
+  
+    Example:
+    ```
+    val result = "Kotlin".run {
+        this.length
+    }  // result will be 6
+    ```
+    Here, run executes a block of code and returns the length of the string.
+    
+    3. **with:**
+    Use Case: Perform multiple operations on an object without returning the object itself. Typically used for configuring or initializing objects.
+    
+    The object is referred to by this.
+    Returns the result of the last expression inside the lambda.
+  
+    Example:
+    ```
+    val person = Person("John", 30)
+    val introduction = with(person) {
+        "Name: $name, Age: $age"
+    }
+    // introduction will be "Name: John, Age: 30"
+    ```
+    with is often used when the object isn't nullable and when you're working with properties or functions of the object.
+    
+    4. **apply:**
+    Use Case: Modify an object and return the object itself. Useful for object configuration and chaining multiple calls.
+    
+    The object is referred to by this.
+    Returns the object itself, not the result of the last expression.
+  
+    Example:
+    ```
+    val person = Person("John", 30).apply {
+        age = 31  // Modifies the age
+        name = "Johnny"
+    }
+    ```
+    apply is typically used when setting up an object (like a builder pattern).
+    
+    5. **also:**
+    Use Case: Perform additional operations on an object, such as logging or validation, without modifying the object itself. Mainly used for side-effects.
+    
+    The object is referred to by it.
+    Returns the object itself, allowing method chaining.
+  
+    Example:
+    ```
+    val name = "Kotlin".also {
+        println("The length of the string is ${it.length}")
+    }  // Returns "Kotlin" after printing
+    ```
+    also is used when you need to do something with the object without changing it, like logging.
+
+  </details>
