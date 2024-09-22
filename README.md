@@ -865,6 +865,43 @@ Note: I'm currently preparing this repo, and I'll restructure it once I have don
   <details>
     <summary>Click for Answer:</summary>
   Extension functions in Kotlin allow you to add new functions to existing classes without modifying their source code. They provide a way to extend the functionality of a class without the need for inheritance or modifying the original class.
+    
+  **Key Features of Extension Functions:**
+  - Add functionality to existing classes: You can add a new method to any class, even if you don't have access to the source code.
+  - Syntax: The function is defined outside of the class, but is called as if it were a member of that class.
+  - No modification required: You don't need to inherit from the class or modify its original code to add methods.
+
+    
+  **Syntax:**
+    
+  ```
+  fun ClassName.functionName(param: Type): ReturnType {
+      // function body
+  }
+  ```
+  - **ClassName** is the type to which you are adding the extension function.
+  - **functionName** is the new function you are adding.
+  - **param** is the function's parameter(s), if any.
+
+  
+  **Example:**
+  Let's add an extension function to the String class that counts the number of vowels in the string.
+  
+  ```
+  fun String.countVowels(): Int {
+      val vowels = "aeiouAEIOU"
+      return this.count { it in vowels }
+  }
+  ```
+  String is the class we are extending.
+  countVowels is the name of the new function.
+  this refers to the instance of the String class on which the function is called.
+  Now, you can use countVowels as if it were a part of the String class:
+  
+  ```
+  val text = "Hello, Kotlin!"
+  println(text.countVowels())  // Output: 4
+  ```
   </details>
   
 - ### Annotations in Kotlin (JvmStatic, JvmField, JvmOverloads).
