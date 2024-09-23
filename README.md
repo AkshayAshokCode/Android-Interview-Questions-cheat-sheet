@@ -1004,3 +1004,35 @@ Note: I'm currently preparing this repo, and I'll restructure it once I have don
     also is used when you need to do something with the object without changing it, like logging.
 
   </details>
+    
+- ### Infix function in Kotlin?
+  <details>
+    <summary>Click for Answer:</summary>
+    
+  In Kotlin, infix functions allow you to call functions in a more readable, natural way without using the dot and parentheses syntax. Infix functions are a type of function that can be called with infix notation, meaning they are called just like operators (e.g., a + b).
+  
+  **Syntax of an Infix Function:**
+  - To define an infix function, you need to use the infix keyword.
+  - The function must be a member function or an extension function.
+  - The function must take exactly one parameter.
+
+  
+  **Example**: Infix Function for Combining Strings
+  Let's define an infix function that combines two strings with a space in between.
+  ```
+  infix fun String.combineWith(other: String): String {
+      return "$this $other"
+  }
+  
+  val result = "Hello" combineWith "World"
+  println(result)  // Output: Hello World
+  ```
+  Here, combineWith is an extension infix function that combines two strings.
+  Notice that we can call combineWith without parentheses or a dot, making it look more like a natural language expression.
+  
+  **Infix Function Rules:**
+  - Infix functions must be member or extension functions.
+  - Infix functions must have exactly one parameter.
+  - Infix functions cannot take vararg parameters or default arguments.
+     
+  </details>
