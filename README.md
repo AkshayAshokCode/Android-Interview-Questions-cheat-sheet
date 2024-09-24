@@ -1036,3 +1036,45 @@ Note: I'm currently preparing this repo, and I'll restructure it once I have don
   - Infix functions cannot take vararg parameters or default arguments.
      
   </details>
+
+- ### Inline function in Kotlin?
+  <details>
+    <summary>Click for Answer:</summary>
+    
+  In Kotlin, an inline function is a function that requests the compiler to "inline" its code, meaning the function's body is copied directly into the places where the function is called, instead of the call itself. This can improve performance by eliminating the overhead of function calls, especially in higher-order functions (functions that take other functions as parameters).
+  
+  **Syntax:**
+  - define an inline function, use the inline keyword before the function declaration.
+     ```
+    inline fun functionName(params: Type): ReturnType {
+        // function body
+    }
+     ```
+     
+  **Key Use Cases:**
+  - Higher-order functions: Inline functions are primarily useful when you pass functions as arguments to other functions. They help avoid performance penalties caused by creating function objects and lambda allocations.
+  - Reduce overhead: Inline functions can reduce the cost of function calls, particularly in performance-critical code.
+  
+    **Example**: Here's an example of an inline function with a lambda as a parameter:
+    ```
+    inline fun performOperation(a: Int, b: Int, operation: (Int, Int) -> Int): Int {
+      return operation(a, b)
+    }
+    
+    fun main() {
+        val result = performOperation(5, 3) { x, y -> x + y }
+        println(result)  // Output: 8
+    }
+    ```
+   - The function performOperation is declared as inline, meaning the lambda passed to it will not result in the creation of an extra function object.
+   - The function's body will be inlined wherever it is called.
+  
+    **Benefits of Inline Functions:**
+    - Performance improvement: Inlining eliminates the overhead of the function call, especially useful in tight loops or frequently called functions.
+    - Reduced memory allocations: Since the lambda passed to an inline function does not require the creation of an extra object, it reduces memory usage.
+ 
+    
+    **Drawbacks:**
+    - Code size increase: Inlining can lead to code bloat if the function is large and used in many places because the function's body is copied wherever the function is called.
+    - Not all functions benefit from inlining: Simple or rarely called functions may not gain performance benefits from being inlined.
+  </details>
