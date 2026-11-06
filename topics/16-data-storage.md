@@ -253,6 +253,30 @@ Store a `lastUpdated` timestamp with each item (or per-query metadata) in Room. 
 
 </details>
 
+
+### 19. What is an ORM? How does Room relate to it?
+
+<details>
+<summary>Answer</summary>
+
+An **ORM (Object-Relational Mapper)** maps **objects ↔ database rows** automatically: classes are tables, fields are columns, and objects are rows. You work with objects instead of handwritten SQL and cursor parsing.
+
+**Room is a lightweight ORM-style abstraction**: it maps `@Entity` classes to tables and query results to objects, but you **still write SQL** in `@Query` (verified at compile time). It deliberately avoids heavy ORM features like lazy-loaded object references (which would trigger hidden queries on the main thread). Full ORMs on Android include ObjectBox, and historically greenDAO and OrmLite.
+
+</details>
+
+### 20. Database normalization vs denormalization on mobile?
+
+<details>
+<summary>Answer</summary>
+
+- **Normalization** – split data into related tables to **avoid duplication** (users, posts and comments linked by foreign keys). Gives consistent updates and less storage, at the cost of **more joins** on reads.
+- **Denormalization** – **duplicate or embed** data to make reads fast (store `authorName` directly on the post row, or cache a precomputed feed table). Reads are fast, but updates have to touch multiple places.
+
+On mobile, the local DB is usually a **read-optimized cache** of server data, so **moderate denormalization** is common (store what each screen needs in a shape that's cheap to query). Keep the data you edit normalized, and use `@Relation`/`@Embedded` and indices for joins.
+
+</details>
+
 ---
 
 [⬅ Previous: Networking](15-networking.md) · [⬅ Back to index](../README.md) · [Next: Threading & Background Work ➡](17-threading-background-work.md)

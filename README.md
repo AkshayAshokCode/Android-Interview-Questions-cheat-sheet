@@ -1,6 +1,6 @@
 # Android Interview Questions – Cheat Sheet
 
-A revision guide for Android developer interviews: **570+ questions with interview-ready answers**, split into 25 topics, from Kotlin basics to Compose, architecture, system design and what's new in Android.
+A revision guide for Android developer interviews: **660+ questions with interview-ready answers**, split into 26 topics, from Kotlin basics to Compose, architecture, system design and what's new in Android.
 
 Every answer is hidden in a collapsible block, so you can **test yourself first** and then click to check.
 
@@ -22,56 +22,57 @@ Every answer is hidden in a collapsible block, so you can **test yourself first*
 
 | # | Topic | Questions | Key areas |
 |---|---|---|---|
-| 01 | [Kotlin Fundamentals](topics/01-kotlin-basics.md) | 40 | val/var/const, null safety, data/sealed classes, object, lateinit vs lazy, collections, extension & infix functions |
-| 02 | [Kotlin Advanced](topics/02-kotlin-advanced.md) | 25 | Scope functions, inline/reified, generics & variance, delegation, Jvm annotations, DSLs, K2 |
-| 03 | [Kotlin Coroutines](topics/03-coroutines.md) | 30 | suspend internals, dispatchers, scopes, Job vs SupervisorJob, cancellation, exception handling |
-| 04 | [Kotlin Flow](topics/04-flow.md) | 20 | Cold vs hot, StateFlow vs SharedFlow vs LiveData, stateIn, operators, one-time events |
-| 05 | [Java for Android](topics/05-java.md) | 28 | String pool, equals/hashCode, HashMap internals, JVM memory, references, multithreading |
+| 01 | [Kotlin Fundamentals](topics/01-kotlin-basics.md) | 44 | val/var/const, null safety, data/sealed classes, object, lateinit vs lazy, collections, extension & infix functions |
+| 02 | [Kotlin Advanced](topics/02-kotlin-advanced.md) | 28 | Scope functions, inline/reified, generics & variance, delegation, Jvm annotations, DSLs, K2 |
+| 03 | [Kotlin Coroutines](topics/03-coroutines.md) | 34 | suspend internals, dispatchers, scopes, Job vs SupervisorJob, cancellation, exception handling |
+| 04 | [Kotlin Flow](topics/04-flow.md) | 23 | Cold vs hot, StateFlow vs SharedFlow vs LiveData, stateIn, operators, one-time events |
+| 05 | [Java for Android](topics/05-java.md) | 41 | String pool, equals/hashCode, HashMap internals, JVM memory, references, multithreading |
 
 ### 🟢 Fundamentals & Design
 
 | # | Topic | Questions | Key areas |
 |---|---|---|---|
 | 06 | [OOP & SOLID](topics/06-oop-solid.md) | 16 | OOP pillars, composition vs inheritance, SOLID with Android examples |
-| 07 | [Design Patterns](topics/07-design-patterns.md) | 25 | Creational/structural/behavioral patterns and where Android uses each one |
-| 08 | [Android Fundamentals](topics/08-android-fundamentals.md) | 30 | ART/Dalvik, JIT/AOT, GC, DEX, components, Context, Manifest, Intents, Binder, app launch flow |
-| 09 | [Activity, Fragment & Lifecycle](topics/09-activity-fragment.md) | 26 | Lifecycles, config change vs process death, launch modes, fragment transactions, back handling |
+| 07 | [Design Patterns](topics/07-design-patterns.md) | 26 | Creational/structural/behavioral patterns and where Android uses each one |
+| 08 | [Android Fundamentals](topics/08-android-fundamentals.md) | 37 | ART/Dalvik, JIT/AOT, GC, DEX, components, Context, Manifest, Intents, Binder, app launch flow |
+| 09 | [Activity, Fragment & Lifecycle](topics/09-activity-fragment.md) | 29 | Lifecycles, config change vs process death, launch modes, fragment transactions, back handling |
 
 ### 🔵 UI
 
 | # | Topic | Questions | Key areas |
 |---|---|---|---|
-| 10 | [UI – Views, XML & RecyclerView](topics/10-ui-views.md) | 28 | Measure/layout/draw, custom views, RecyclerView recycling & DiffUtil, touch events, insets |
-| 11 | [Jetpack Compose](topics/11-jetpack-compose.md) | 37 | Recomposition, state & hoisting, side effects, stability & strong skipping, lazy lists, navigation |
+| 10 | [UI – Views, XML & RecyclerView](topics/10-ui-views.md) | 32 | Measure/layout/draw, custom views, RecyclerView recycling & DiffUtil, touch events, insets |
+| 11 | [Jetpack Compose](topics/11-jetpack-compose.md) | 42 | Recomposition, state & hoisting, side effects, stability & strong skipping, lazy lists, navigation |
+| 26 | [Accessibility & Localization](topics/26-accessibility-localization.md) | 10 | TalkBack, Compose semantics, touch targets, font scaling, plurals, RTL, per-app language, formatting |
 
 ### 🟠 Architecture & Libraries
 
 | # | Topic | Questions | Key areas |
 |---|---|---|---|
 | 12 | [App Architecture](topics/12-architecture.md) | 20 | MVVM vs MVI vs MVP, Clean Architecture, UDF, SSOT, offline-first, modularization |
-| 13 | [Jetpack Components](topics/13-jetpack-components.md) | 20 | ViewModel internals, SavedStateHandle, LiveData, Navigation, Paging 3 |
-| 14 | [Dependency Injection](topics/14-dependency-injection.md) | 16 | Dagger, Hilt components & scopes, qualifiers, assisted injection, Koin |
-| 15 | [Networking](topics/15-networking.md) | 20 | Retrofit internals, OkHttp interceptors, token refresh, error handling, caching, WebSockets |
-| 16 | [Data Storage](topics/16-data-storage.md) | 18 | DataStore vs SharedPreferences, Room, migrations, relations, scoped storage, secure storage |
-| 17 | [Threading & Background Work](topics/17-threading-background-work.md) | 21 | Looper/Handler, ANR, Services, foreground services, WorkManager, Doze, alarms |
-| 18 | [RxJava](topics/18-rxjava.md) | 16 | Observable types, schedulers, flatMap vs switchMap, Subjects, backpressure, migration to Flow |
+| 13 | [Jetpack Components](topics/13-jetpack-components.md) | 21 | ViewModel internals, SavedStateHandle, LiveData, Navigation, Paging 3 |
+| 14 | [Dependency Injection](topics/14-dependency-injection.md) | 18 | Dagger, Hilt components & scopes, qualifiers, assisted injection, Koin |
+| 15 | [Networking](topics/15-networking.md) | 24 | Retrofit internals, OkHttp interceptors, token refresh, error handling, caching, WebSockets |
+| 16 | [Data Storage](topics/16-data-storage.md) | 20 | DataStore vs SharedPreferences, Room, migrations, relations, scoped storage, secure storage |
+| 17 | [Threading & Background Work](topics/17-threading-background-work.md) | 26 | Looper/Handler, ANR, Services, foreground services, WorkManager, Doze, alarms |
+| 18 | [RxJava](topics/18-rxjava.md) | 19 | Observable types, schedulers, flatMap vs switchMap, Subjects, backpressure, migration to Flow |
 
 ### 🔴 Quality, Security & Delivery
 
 | # | Topic | Questions | Key areas |
 |---|---|---|---|
-| 19 | [Performance & Memory](topics/19-performance-memory.md) | 20 | Memory leaks, LRU cache, bitmaps, jank, startup, Baseline Profiles, app size, vitals |
-| 20 | [Testing](topics/20-testing.md) | 18 | Test pyramid, fakes vs mocks, ViewModel/coroutine/Flow tests, Espresso, Compose tests |
-| 21 | [Security & Permissions](topics/21-security-permissions.md) | 19 | Runtime permissions by version, Keystore, pinning, Play Integrity, passkeys |
-| 22 | [Build, Gradle & Release](topics/22-build-gradle-release.md) | 19 | Build variants, api vs implementation, version catalogs, KSP, AAB, CI/CD, 16 KB pages |
+| 19 | [Performance & Memory](topics/19-performance-memory.md) | 23 | Memory leaks, LRU cache, bitmaps, jank, startup, Baseline Profiles, app size, vitals |
+| 20 | [Testing](topics/20-testing.md) | 19 | Test pyramid, fakes vs mocks, ViewModel/coroutine/Flow tests, Espresso, Compose tests |
+| 21 | [Security & Permissions](topics/21-security-permissions.md) | 22 | Runtime permissions by version, Keystore, pinning, Play Integrity, passkeys |
+| 22 | [Build, Gradle & Release](topics/22-build-gradle-release.md) | 22 | Build variants, api vs implementation, version catalogs, KSP, AAB, CI/CD, 16 KB pages |
 
 ### ⭐ Interview Rounds
 
 | # | Topic | Questions | Key areas |
 |---|---|---|---|
-| 23 | [Android System Design](topics/23-system-design.md) | 15 | Framework + designs: image loader, chat, feed, offline sync, downloader, analytics SDK |
-| 24 | [What's New & Trending](topics/24-whats-new-trending.md) | 20 | Android 14/15/16 changes, edge-to-edge, predictive back, KMP, Compose updates, on-device AI |
-| 25 | [Coding, Scenarios & Behavioral](topics/25-coding-scenarios.md) | 23 | LRU cache, debounce, pagination, debugging scenarios, STAR answers |
+| 23 | [Android System Design](topics/23-system-design.md) | 22 | Framework + designs: image loader, chat, feed, offline sync, downloader, analytics SDK |
+| 24 | [What's New & Trending](topics/24-whats-new-trending.md) | 21 | Android 14/15/16 changes, edge-to-edge, predictive back, KMP, Compose updates, on-device AI |
+| 25 | [Coding, Scenarios & Behavioral](topics/25-coding-scenarios.md) | 25 | LRU cache, debounce, pagination, debugging scenarios, STAR answers |
 
 ---
 
@@ -87,7 +88,7 @@ Every answer is hidden in a collapsible block, so you can **test yourself first*
 | 4 | 04 Flow + 18 RxJava (if the job uses it) |
 | 5 | 08 Android Fundamentals |
 | 6 | 09 Activity & Fragment + 10 Views |
-| 7 | 11 Jetpack Compose |
+| 7 | 11 Jetpack Compose + 26 Accessibility & Localization |
 | 8 | 12 Architecture + 13 Jetpack Components |
 | 9 | 14 DI + 15 Networking |
 | 10 | 16 Storage + 17 Background Work |

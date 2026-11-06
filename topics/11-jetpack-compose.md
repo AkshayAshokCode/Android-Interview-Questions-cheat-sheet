@@ -565,6 +565,94 @@ JetBrains' framework that brings the Compose UI API to **iOS (stable since 2025)
 
 </details>
 
+
+---
+
+## More Compose Questions
+
+### 38. What is the lifecycle of a composable?
+
+<details>
+<summary>Answer</summary>
+
+Composables don't have Activity-style callbacks. Their lifecycle has three stages:
+1. **Enter the composition** – the composable is called for the first time and its `remember`ed values are created.
+2. **Recompose 0..N times** – it re-runs when the state it reads changes (or it's skipped if its inputs are unchanged).
+3. **Leave the composition** – it's no longer called (e.g. hidden by an `if`, or the screen is popped). Its remembered state is **forgotten** and its effects are **disposed**.
+
+Hooks: `LaunchedEffect`/`DisposableEffect` run on enter (and restart when their keys change), and `onDispose` runs on leave. Each call site has its own instance (identity comes from the position in the composition tree, or from `key()`).
+
+To react to **Activity/Fragment lifecycle** events inside Compose, use `LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { }` / `LifecycleResumeEffect` / `LifecycleStartEffect` (lifecycle-runtime-compose), or a `DisposableEffect` that observes `LocalLifecycleOwner.current.lifecycle`.
+
+</details>
+
+### 39. What are Semantics in Compose?
+
+<details>
+<summary>Answer</summary>
+
+Composables emit a parallel **semantics tree** that describes the UI's **meaning**: text, content descriptions, roles, states, actions. **Accessibility services** (TalkBack) and **UI tests** use it.
+
+```kotlin
+Icon(Icons.Default.Favorite, contentDescription = "Add to favorites")
+Row(Modifier.semantics(mergeDescendants = true) { }) { Icon(...); Text("4.5 rating") }
+Box(Modifier.clickable(onClickLabel = "Open details") { }.semantics { role = Role.Button; stateDescription = "Selected" })
+Modifier.testTag("login_button")   // for tests
+Modifier.clearAndSetSemantics { contentDescription = "Custom" }
+```
+
+The **merged tree** groups children for TalkBack; the **unmerged tree** (`useUnmergedTree = true` in tests) shows each node.
+
+</details>
+
+### 40. How do you handle user input and gestures in Compose?
+
+<details>
+<summary>Answer</summary>
+
+- **Clicks:** `Modifier.clickable {}`, `combinedClickable(onLongClick = …, onDoubleClick = …)`, `Button(onClick = …)`.
+- **Text input:** `TextField(value, onValueChange)` (state hoisted), or the newer **`TextFieldState`**-based `TextField(state = rememberTextFieldState())`. Configure it with `KeyboardOptions` and `KeyboardActions`.
+- **Scroll/drag/swipe:** `Modifier.verticalScroll`, `draggable`, `swipeToDismiss`/`SwipeToDismissBox`, `anchoredDraggable`, `transformable` (pinch, zoom, rotate).
+- **Low-level:** `Modifier.pointerInput(key) { detectTapGestures(...); detectDragGestures { change, drag -> } }`.
+- **Focus:** `FocusRequester`, `Modifier.onFocusChanged`, `LocalFocusManager.current.clearFocus()`.
+
+Events flow **up** through lambdas to the state holder (UDF).
+
+</details>
+
+### 41. How do you handle orientation and configuration changes in Compose?
+
+<details>
+<summary>Answer</summary>
+
+- By default the **Activity is recreated**, which rebuilds the composition: `remember` state is **lost**, while `rememberSaveable` and **ViewModel** state survive. Keep screen state in a ViewModel, and UI state in `rememberSaveable`.
+- In fully Compose apps you can opt out of recreation (`android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|uiMode|..."`). Compose then **recomposes** with the new `LocalConfiguration`. Process death still requires saveable state.
+- Build **adaptive layouts** from window size classes (`currentWindowAdaptiveInfo()`), not from orientation checks: `if (widthSizeClass == Expanded) TwoPane() else SinglePane()`.
+
+</details>
+
+### 42. How do you convert non-Compose state (Flow, LiveData, callbacks) into Compose state?
+
+<details>
+<summary>Answer</summary>
+
+- `Flow` → `collectAsStateWithLifecycle()` (or `collectAsState()`).
+- `LiveData` → `observeAsState()`. RxJava → `subscribeAsState()`.
+- Any suspend/callback source → **`produceState`**:
+
+```kotlin
+@Composable
+fun loadUser(id: String, repo: Repo): State<Result<User>?> =
+    produceState<Result<User>?>(initialValue = null, id) {
+        value = runCatching { repo.getUser(id) }
+        awaitDispose { /* unregister listeners if any */ }
+    }
+```
+
+- Compose state → Flow: `snapshotFlow { state.value }`.
+
+</details>
+
 ---
 
 [⬅ Previous: UI – Views](10-ui-views.md) · [⬅ Back to index](../README.md) · [Next: Architecture ➡](12-architecture.md)

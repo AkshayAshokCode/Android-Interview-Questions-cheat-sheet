@@ -263,6 +263,25 @@ Mention concrete sources: the **Android Developers Blog**, the *Now in Android* 
 
 </details>
 
+
+### 21. Native vs Flutter vs React Native vs Kotlin Multiplatform?
+
+<details>
+<summary>Answer</summary>
+
+| | Native (Kotlin/Swift) | Flutter | React Native | KMP (+ Compose Multiplatform) |
+|---|---|---|---|---|
+| Language | Kotlin / Swift | Dart | JavaScript/TypeScript | Kotlin |
+| UI | Platform UI (Compose/SwiftUI) | Its own rendering engine (Impeller), same pixels everywhere | Native components through the new architecture (Fabric/JSI) | Native UI per platform, **or** shared Compose UI |
+| Shared code | None | UI + logic | UI + logic | **Logic first**, UI optional |
+| Performance | Best | Very good | Good (JSI improved it) | Native |
+| Access to new platform APIs | Day one | Plugins/platform channels | Native modules | Direct (expect/actual) |
+| Adoption | — | Full app rewrite | Full app or brownfield | **Incremental**: add a shared module to existing apps |
+
+A good interview answer: "It depends on team skills, the performance and UX bar, how much code can really be shared, and whether you're starting fresh or adding to existing native apps. KMP is attractive for sharing business logic while keeping native UX."
+
+</details>
+
 ---
 
 [⬅ Previous: System Design](23-system-design.md) · [⬅ Back to index](../README.md) · [Next: Coding & Scenario Questions ➡](25-coding-scenarios.md)

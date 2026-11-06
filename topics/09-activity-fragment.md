@@ -363,6 +363,46 @@ In Compose, use `BackHandler { }` (or `PredictiveBackHandler` for progress event
 
 </details>
 
+
+---
+
+## More Activity Questions
+
+### 27. Why do we call `setContentView()` in `onCreate()`?
+
+<details>
+<summary>Answer</summary>
+
+`onCreate()` is called **once per Activity instance**, so it's the right place for one-time setup. `setContentView()` **inflates the layout** (parses the XML and creates the view hierarchy), which is expensive. Doing it in `onStart`/`onResume` would rebuild the UI every time the Activity becomes visible, losing view state and wasting work. Views also have to exist before you can find them or bind them in `onCreate`, and before the first frame is drawn. (In Compose, `setContent {}` plays the same role.)
+
+</details>
+
+### 28. What is the difference between `onCreate()` and `onStart()`?
+
+<details>
+<summary>Answer</summary>
+
+| `onCreate()` | `onStart()` |
+|---|---|
+| Called **once** when the Activity is created | Called **every time** the Activity becomes **visible** (after `onCreate` and after `onRestart`) |
+| One-time init: layout, ViewModel, bindings, restore the saved Bundle | Start things that only matter while visible: register receivers or listeners, start UI-related collection (`repeatOnLifecycle(STARTED)`) |
+| Matched by `onDestroy()` | Matched by `onStop()` |
+
+</details>
+
+### 29. What is the relationship between an Activity and a Fragment?
+
+<details>
+<summary>Answer</summary>
+
+- An **Activity** is an app **entry point** (it's in the manifest and can be started by the system or other apps) that owns a **window**.
+- A **Fragment** is a **modular piece of UI and behaviour** that must be **hosted** by an Activity (or by another Fragment). It can't exist on its own.
+- The fragment's lifecycle is **tied to its host**: it can never be in a "higher" state than the Activity. If the Activity is stopped, so are its fragments.
+- One Activity can host many fragments (single-Activity architecture), and fragments can be reused across activities.
+- Fragments have their own back stack (managed by the `FragmentManager`), and a separate **view lifecycle**.
+
+</details>
+
 ---
 
 [⬅ Previous: Android Fundamentals](08-android-fundamentals.md) · [⬅ Back to index](../README.md) · [Next: UI – Views & XML ➡](10-ui-views.md)

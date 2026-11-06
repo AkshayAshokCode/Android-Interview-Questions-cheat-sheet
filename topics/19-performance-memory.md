@@ -300,6 +300,50 @@ Crash reporting (**Crashlytics**, Sentry) with breadcrumbs and custom keys, stag
 
 </details>
 
+
+---
+
+## More Performance Questions
+
+### 21. `HashMap` vs `ArrayMap` vs `SparseArray`?
+
+<details>
+<summary>Answer</summary>
+
+- **`HashMap`** – an array of buckets plus an entry object per mapping. O(1) operations, but **memory-heavy** (an `Entry` object per item, and **autoboxing** for primitive keys).
+- **`ArrayMap`** (Android) – two compact arrays: sorted hash codes plus interleaved keys and values. **Binary search**, O(log n). Much less memory, and no Entry objects. Best for **small maps (up to a few hundred items)**. Used internally by `Bundle`.
+- **`SparseArray`** family (`SparseArray<E>`, `SparseIntArray`, `SparseBooleanArray`, `LongSparseArray`) – **int (or long) keys without boxing**, with sorted key arrays and binary search. Ideal for `Map<Int, X>` with a modest number of items (view IDs, positions).
+
+Trade-off: binary search and array shifting on insert make them **slower than HashMap for large collections** (thousands of items). Use them for memory-sensitive, small collections.
+
+</details>
+
+### 22. How do you measure method execution time on Android?
+
+<details>
+<summary>Answer</summary>
+
+- **Quick check in code:** Kotlin `measureTimeMillis { }` / `measureNanoTime { }` / `measureTime { }`, or `SystemClock.elapsedRealtimeNanos()` deltas. Debug only, since a single run is noisy.
+- **Trace sections:** `Trace.beginSection("loadFeed")` … `endSection()` (or `trace("loadFeed") { }` from androidx.tracing), then look at them in a **Perfetto / Android Studio system trace**.
+- **CPU Profiler** method tracing (instrumented, which adds overhead) or sampling.
+- **Microbenchmark** (`BenchmarkRule`) for reliable numbers: warm-up, many iterations, a locked clock.
+- Measure on **release-like builds** (R8, no debuggable flag). Debug builds are much slower.
+
+</details>
+
+### 23. Which app metrics should you monitor continuously?
+
+<details>
+<summary>Answer</summary>
+
+- **Stability:** crash-free users and sessions, **user-perceived crash rate** and **ANR rate** (Play vitals thresholds).
+- **Performance:** **cold/warm start time** (TTID/TTFD), **slow and frozen frames** (jank), screen load times, network latency and error rates.
+- **Resources:** memory (OOMs, low-memory kills via `ApplicationExitInfo`), **battery** (excessive wake-ups, wake locks, background usage), app **size** (download and install).
+- **Business/UX:** retention, funnel conversion, feature adoption, ratings.
+- **Tools:** Play Console vitals, Firebase Crashlytics + Performance Monitoring, JankStats, Macrobenchmark in CI (regressions), custom traces, and `ApplicationExitInfo` for why the process died.
+
+</details>
+
 ---
 
 [⬅ Previous: RxJava](18-rxjava.md) · [⬅ Back to index](../README.md) · [Next: Testing ➡](20-testing.md)

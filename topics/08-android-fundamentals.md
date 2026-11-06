@@ -73,7 +73,7 @@ The GC automatically frees memory used by objects that are **no longer reachable
 1. **Mark** – starting from **GC roots** (thread stacks, static fields, JNI references), mark every reachable object.
 2. **Sweep/Compact** – reclaim unreachable objects, and compact the heap to reduce fragmentation.
 
-ART's collector is **concurrent** (it mostly runs alongside app threads with very short pauses). It's **generational**: young objects are collected more often, since most objects die young. Recent versions use a **Concurrent Copying (CC)** collector.
+ART's collector is **concurrent** (it mostly runs alongside app threads with very short pauses). It's **generational**: young objects are collected more often, since most objects die young. Android 8–13 use the **Concurrent Copying (CC)** collector. Newer devices (Android 14+, delivered through ART mainline updates) are moving to **Concurrent Mark-Compact (CMC)**, which compacts the heap concurrently using userfaultfd and has lower memory overhead.
 
 > Note: Android does **not** use the JVM's CMS/G1 collectors. ART has its own GC.
 
@@ -423,6 +423,130 @@ Resources (`res/`) are kept separate from code: layouts, strings, drawables, dim
 - **px** – actual screen pixels.
 - **dp** – density-independent pixels. 1 dp = 1 px on a 160 dpi (mdpi) screen. Use it for sizes and margins.
 - **sp** – scale-independent pixels: like dp, but it also scales with the user's **font size** setting. Use it for text. (Android 14+ scales fonts non-linearly.)
+
+</details>
+
+
+---
+
+## More Platform Questions
+
+### 31. What is the project structure of an Android app?
+
+<details>
+<summary>Answer</summary>
+
+```
+MyApp/
+├── settings.gradle.kts          // modules + repositories
+├── build.gradle.kts             // root build config
+├── gradle/libs.versions.toml    // version catalog
+├── gradle.properties
+└── app/
+    ├── build.gradle.kts         // android {}, dependencies
+    ├── proguard-rules.pro
+    └── src/
+        ├── main/
+        │   ├── AndroidManifest.xml
+        │   ├── java/ (or kotlin/) com/example/app/...   // source code
+        │   └── res/                                     // resources
+        │       ├── layout/  drawable/  mipmap-*/ (launcher icons)
+        │       ├── values/ (strings, colors, themes, dimens)
+        │       ├── xml/ (network_security_config, backup rules)
+        │       └── raw/  font/  navigation/  menu/
+        │   └── assets/                                  // raw files, accessed via AssetManager
+        ├── test/                // local JVM unit tests
+        └── androidTest/         // instrumented tests
+```
+
+Additional source sets exist per build type or flavor (`src/debug/`, `src/prod/`). In multi-module apps, the same structure repeats in each module.
+
+</details>
+
+### 32. What is AndroidX / the Support Library / Jetpack?
+
+<details>
+<summary>Answer</summary>
+
+- The **Support Library** (`com.android.support:*`) backported new APIs to old Android versions. It's **deprecated**; its last version was 28.
+- **AndroidX** (`androidx.*`) replaced it in 2018. It has a consistent namespace, **independent semantic versioning per library**, and it's updated separately from the OS.
+- **Jetpack** is the umbrella name for the libraries, tools and guidance built on AndroidX: Architecture Components (ViewModel, LiveData, Room, Lifecycle, Paging, WorkManager, Navigation, DataStore), Compose, CameraX, Media3, and so on.
+
+The goal is to help developers follow best practices, write less boilerplate, and work consistently across Android versions.
+
+</details>
+
+### 33. Why use a `Bundle` instead of a plain `Map` to pass data?
+
+<details>
+<summary>Answer</summary>
+
+Data passed between components often **crosses process boundaries** (through Binder to `system_server`, and it's saved for process death). A `Bundle` is a type-safe key-value container **optimized for Parcel serialization** (it's `Parcelable`), restricted to types that can be marshalled (primitives, Strings, Parcelables, Serializables, arrays and lists of these). A general `Map<String, Any>` can hold arbitrary objects that **can't be parcelled**, and `HashMap` serialization is slow. Bundles are also backed by the memory-efficient `ArrayMap` and unparcel lazily.
+
+</details>
+
+### 34. Can an app run in multiple processes? How can two different apps communicate?
+
+<details>
+<summary>Answer</summary>
+
+**Multiple processes:** set `android:process=":remote"` (private to the app) or `"com.example.shared"` on a component in the manifest. Each process has its **own memory, its own `Application` instance** and its own singletons (static state isn't shared!), and they communicate through IPC. It's used for isolation (a crash-prone WebView or media), to get more memory, or for a long-running service.
+
+**App-to-app communication:**
+- **Intents** (explicit with a package, or implicit) and `startActivityForResult`-style result contracts.
+- **Bound services with AIDL or a Messenger** (Binder IPC).
+- **Content Providers** (with permissions or `grantUriPermissions`).
+- **Broadcasts** (with signature permissions).
+- `FileProvider` URIs for files, shared accounts (AccountManager).
+
+Protect exported entry points with **signature-level permissions** when both apps are yours.
+
+</details>
+
+### 35. What is the NDK / JNI? When would you use native code?
+
+<details>
+<summary>Answer</summary>
+
+- The **NDK (Native Development Kit)** lets you write parts of the app in **C/C++**, built into `.so` libraries per ABI (arm64-v8a, armeabi-v7a, x86_64) with CMake.
+- **JNI (Java Native Interface)** is the bridge: `external fun nativeProcess(...)` in Kotlin + `System.loadLibrary("mylib")`, and a matching `Java_com_example_..._nativeProcess` C function.
+
+**When:** performance-critical computation (audio/video/image processing, games, physics), **reusing existing C/C++ libraries** (OpenCV, FFmpeg, SQLite extensions, crypto), and low-latency audio (Oboe).
+**Costs:** more complexity, harder debugging, JNI call overhead, per-ABI builds (larger APKs), manual memory management, and **16 KB page-size alignment** requirements.
+*RenderScript* (for GPU compute) is **deprecated**. Use Vulkan, OpenGL compute shaders or the RenderScript Intrinsics Replacement Toolkit.
+
+</details>
+
+### 36. Can you force garbage collection in Android?
+
+<details>
+<summary>Answer</summary>
+
+You can **request** it with `System.gc()` / `Runtime.getRuntime().gc()`, but it's only a **hint**: the runtime may ignore it. Calling it is almost always a bad idea, because it can cause pauses and jank, and the GC already knows better when to run. Fix the **leak or allocation pattern** instead. The Memory Profiler's "Force GC" button is only for diagnostics (to see what's really retained before taking a heap dump).
+
+</details>
+
+### 37. What is ADB? Which commands are useful?
+
+<details>
+<summary>Answer</summary>
+
+**Android Debug Bridge** is a CLI to communicate with devices and emulators (client → adb server → adbd daemon on the device).
+
+```bash
+adb devices                                    # list connected devices
+adb install -r app.apk / adb uninstall com.app
+adb logcat -s MyTag                            # filtered logs
+adb shell am start -n com.app/.MainActivity     # start activity
+adb shell am start -a android.intent.action.VIEW -d "myapp://product/1"   # test deep links
+adb shell am kill com.app                       # simulate process death (app in background)
+adb shell pm clear com.app                      # clear app data
+adb shell pm grant com.app android.permission.CAMERA
+adb shell dumpsys meminfo com.app / dumpsys activity activities / dumpsys battery
+adb shell cmd jobscheduler run -f com.app 1     # force-run a job
+adb shell screencap / screenrecord
+adb push / pull, adb reverse tcp:8080 tcp:8080, adb pair (wireless debugging)
+```
 
 </details>
 

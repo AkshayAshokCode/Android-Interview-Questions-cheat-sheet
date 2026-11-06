@@ -296,6 +296,67 @@ Ktor client is JetBrains' **multiplatform HTTP client**, coroutine-based, with p
 
 </details>
 
+
+---
+
+## More Networking Questions
+
+### 21. TCP vs UDP? What are sockets? WebSocket vs Socket.IO?
+
+<details>
+<summary>Answer</summary>
+
+- **TCP** – connection-oriented, **reliable and ordered** delivery (retransmission, flow control). Higher latency. Used by HTTP/1.1, HTTP/2 and WebSockets.
+- **UDP** – connectionless, **no delivery or order guarantees**, low latency. Used for real-time audio/video (WebRTC), DNS, gaming, and **QUIC/HTTP/3** (which adds reliability on top of UDP).
+- A **socket** is an endpoint (IP + port) for sending and receiving data over TCP or UDP.
+- **WebSocket** – a standard protocol (RFC 6455) that upgrades an HTTP connection to a **full-duplex** TCP channel.
+- **Socket.IO** – a **library/protocol built on top of** WebSocket (with HTTP long-polling fallback) that adds automatic reconnection, rooms, events and acknowledgements. A Socket.IO client can't talk to a plain WebSocket server, and vice versa.
+
+</details>
+
+### 22. JSON vs Protocol Buffers vs FlatBuffers?
+
+<details>
+<summary>Answer</summary>
+
+| JSON | Protobuf | FlatBuffers |
+|---|---|---|
+| Text, human-readable | Binary, schema (`.proto`) | Binary, schema |
+| Larger payloads, slower parsing | **Smaller and faster** to parse; backward and forward compatible schemas | **Zero-copy**: read fields directly from the buffer **without parsing or unpacking** |
+| Easy to debug, universal | Needs code generation; used with gRPC and Proto DataStore | Best for huge or very performance-critical data (games, large offline datasets); less convenient API |
+
+Most REST APIs use JSON. Use Protobuf (or gRPC) when payload size and speed matter, and FlatBuffers when you need near-instant access to big data without deserialization.
+
+</details>
+
+### 23. What options exist for network optimization in a mobile app?
+
+<details>
+<summary>Answer</summary>
+
+- **Fewer requests**: batch them, use BFF or GraphQL endpoints shaped for each screen, and avoid N+1 calls.
+- **Smaller payloads**: gzip/brotli compression (OkHttp handles gzip transparently), pagination, field filtering, Protobuf, and **appropriately sized images** (request size-specific URLs, WebP/AVIF).
+- **Caching**: HTTP cache with ETags, offline cache in Room, in-memory caches. Don't refetch unchanged data.
+- **Connection reuse**: one OkHttpClient, HTTP/2 multiplexing, keep-alive.
+- **Prefetching** on Wi-Fi or while charging, and deferring non-urgent work to WorkManager with constraints.
+- **Adapting to network quality**: lower image quality on metered or slow networks (`ConnectivityManager.isActiveNetworkMetered`, `NetworkCapabilities` bandwidth).
+- **Push instead of polling**, debouncing user-triggered calls, and cancelling stale requests (`flatMapLatest`).
+
+</details>
+
+### 24. How do you get accurate time in an Android app?
+
+<details>
+<summary>Answer</summary>
+
+The device clock (`System.currentTimeMillis()`) **can be changed by the user** or drift, so don't trust it for security-sensitive logic (trials, OTP expiry, ordering events).
+- Use **server time**: from the `Date` HTTP response header or an API field. Store the offset `serverTime - SystemClock.elapsedRealtime()` at sync time, then compute `now = offset + elapsedRealtime()`. **`elapsedRealtime()`** is monotonic since boot (it counts deep sleep too) and the user can't change it.
+- **NTP/SNTP** queries to a time server, or Google's TrueTime-style libraries.
+- **`SystemClock.uptimeMillis()`** doesn't count deep sleep. Use it for measuring short intervals in the app.
+- For durations, **never** subtract wall-clock timestamps. Use `elapsedRealtime()`.
+
+</details>
+
 ---
 
 [⬅ Previous: Dependency Injection](14-dependency-injection.md) · [⬅ Back to index](../README.md) · [Next: Data Storage ➡](16-data-storage.md)

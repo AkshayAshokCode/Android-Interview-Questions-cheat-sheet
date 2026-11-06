@@ -225,6 +225,18 @@ Find the cause: timing (replace sleeps with idling resources or test dispatchers
 
 </details>
 
+
+### 19. What are the disadvantages of Robolectric? Why use Mockito/MockK at all?
+
+<details>
+<summary>Answer</summary>
+
+**Robolectric drawbacks:** it **simulates** the framework with "shadows", so behaviour can **differ from real devices** (rendering, hardware, some OEM behaviour). The first run is slow (it downloads android-all jars), shadows may lag behind new API levels, and it can't verify real UI rendering or performance. Use it for fast framework-touching unit tests, and keep a few instrumented tests for real-device confidence.
+
+**Why mocking libraries:** they create **test doubles quickly** for dependencies that are hard to construct, to **stub** return values and **verify interactions** ("was `analytics.track()` called once with X?"). The downside is over-mocking, which creates brittle tests coupled to implementation details. Prefer **fakes** for your own interfaces, and use mocks for verifying side effects or for third-party types.
+
+</details>
+
 ---
 
 [⬅ Previous: Performance & Memory](19-performance-memory.md) · [⬅ Back to index](../README.md) · [Next: Security & Permissions ➡](21-security-permissions.md)

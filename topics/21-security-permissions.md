@@ -234,6 +234,49 @@ Set `window.setFlags(FLAG_SECURE, FLAG_SECURE)` on the Activity. It blocks scree
 
 </details>
 
+
+---
+
+## Cryptography Basics & OTP
+
+### 20. Hashing vs encryption vs encoding?
+
+<details>
+<summary>Answer</summary>
+
+| | Purpose | Reversible? | Key? | Examples |
+|---|---|---|---|---|
+| **Encoding** | Represent data in another format for transport or storage | **Yes**, by anyone | No | Base64, URL encoding, UTF-8 |
+| **Encryption** | **Confidentiality**: only key holders can read | **Yes**, with the key | Yes | AES-GCM, RSA |
+| **Hashing** | **Integrity / fingerprint**: a fixed-size digest | **No** (one-way) | No (HMAC uses one) | SHA-256, bcrypt/Argon2 for passwords |
+
+Base64 is **not security**. Passwords are stored as **salted, slow hashes** (bcrypt/scrypt/Argon2) on the server, never encrypted. Use **HMAC** for message authentication, and hashes for checksums (verifying downloaded files).
+
+</details>
+
+### 21. Symmetric vs asymmetric encryption?
+
+<details>
+<summary>Answer</summary>
+
+- **Symmetric** (AES) – the **same secret key** encrypts and decrypts. **Fast**, so it's used for bulk data (local file and DB encryption with an AES key kept in the Android Keystore). The problem is distributing the key securely.
+- **Asymmetric** (RSA, ECC) – a **public key** encrypts or verifies, and a **private key** decrypts or signs. Slower, but it solves key exchange and enables **digital signatures** (APK signing, JWT verification, passkeys).
+- **In practice they're combined:** TLS uses asymmetric crypto (ECDHE + certificates) to **agree on a symmetric session key**, then AES for the data. End-to-end encrypted chats (Signal protocol) work the same way.
+
+</details>
+
+### 22. How do you read OTPs automatically? (SMS Retriever API)
+
+<details>
+<summary>Answer</summary>
+
+Apps **can't** use `READ_SMS` for OTPs (it's a restricted Play policy permission). Use:
+- **SMS Retriever API** (Play services) – **no permission needed**. The app calls `SmsRetriever.getClient(ctx).startSmsRetriever()`. The server sends an SMS that ends with the app's **11-character hash** (derived from the package name and signing certificate). Play services delivers it through a broadcast (`SMS_RETRIEVED_ACTION`) within 5 minutes. Fully automatic.
+- **SMS User Consent API** – for when you can't control the SMS format. The system shows a **one-tap consent prompt** for one message containing a code.
+- Compose and Views also support **autofill** hints (`ContentType.SmsOtpCode` / `autofillHints="smsOTPCode"`).
+
+</details>
+
 ---
 
 [⬅ Previous: Testing](20-testing.md) · [⬅ Back to index](../README.md) · [Next: Build, Gradle & Release ➡](22-build-gradle-release.md)

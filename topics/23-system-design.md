@@ -227,6 +227,133 @@ Use **Firebase Remote Config** (or LaunchDarkly, or an in-house service), with d
 
 </details>
 
+
+---
+
+## More System Design Problems
+
+### 16. Design Instagram Stories.
+
+<details>
+<summary>Answer</summary>
+
+**Requirements:** a horizontal tray of users with stories; a full-screen viewer that auto-advances (~5 s per image, video length for video); tap left/right to go back or forward, hold to pause, swipe between users; seen/unseen state; stories expire after 24 h; fast start with no spinners.
+
+**Design:**
+- **API:** `GET /stories/tray` → users + story metadata (IDs, media URLs in multiple resolutions, duration, `seen`, expiry). Media is served from a **CDN**.
+- **Data:** cache the tray in Room (so it's instant on launch). Keep a seen state table, synced with `POST /stories/{id}/seen` in batches through WorkManager (it works offline).
+- **Preloading is the key:** when the viewer opens, **prefetch the next 1–2 stories' media** (images with Coil, the first segments of video with ExoPlayer's `CacheDataSource`/preload). Preload the first story of the next user too.
+- **Viewer:** a `HorizontalPager` across users; within a user, a progress bar segment per story, driven by a timer (`Animatable`) that pauses on press and when the app goes to the background. A **single reused ExoPlayer**.
+- **Memory:** downsample images to screen size, release players off-screen, and use bounded caches.
+- **Expiry:** filter by `expiresAt` on the client and the server; clean up old media in a periodic job.
+- **Analytics:** view events, completion rate, tap-through; batched.
+
+</details>
+
+### 17. Design a networking library (like Retrofit/Volley).
+
+<details>
+<summary>Answer</summary>
+
+**Goals:** a simple API, async (coroutines), request/response transformation, interceptors, caching, retries, cancellation, testability.
+
+**Components:**
+1. **Request model** – method, URL, headers, body, priority, tag; built with a builder or an annotated interface (generated through a **dynamic proxy** or KSP).
+2. **Dispatcher / executor** – a thread pool with **max concurrent requests** (per host as well), priority queues, and **cancellation** by tag or coroutine Job.
+3. **Interceptor chain** (Chain of Responsibility) – auth headers, logging, retries with backoff, metrics.
+4. **Transport** – HTTP client with **connection pooling**, HTTP/2, TLS, timeouts (in practice, wrap OkHttp).
+5. **Cache layer** – a memory + disk cache honouring `Cache-Control`/ETag.
+6. **Converters** – pluggable serialization (JSON, Protobuf) through a factory interface.
+7. **Response delivery** – suspend functions/Flow, and delivering on the main thread when needed; typed errors (`HttpError`, `NetworkError`, `ParseError`).
+8. **Request deduplication** – merge identical in-flight GET requests.
+
+Also consider: lifecycle-aware cancellation, mock/fake mode for tests, minimal dependencies, and R8 consumer rules.
+
+</details>
+
+### 18. Design a ride-hailing app like Uber (rider side), and "nearby friends".
+
+<details>
+<summary>Answer</summary>
+
+**Core flows:** pick-up/drop-off selection on a map → fare estimate → request a ride → match a driver → **live driver tracking** → trip in progress → payment and rating.
+
+- **Location:** Fused Location Provider. Higher frequency only during active states (requesting or on a trip), and a **foreground service of type `location`** on the driver side.
+- **Real-time:** **WebSocket** (or MQTT) channel during an active ride for driver location (every 2–5 s), ETA and trip state. Fall back to polling with backoff. **FCM** for trip events while the app is in the background.
+- **Map rendering:** Google Maps SDK. **Interpolate/animate** the marker between location updates (smooth movement, bearing rotation). Snap to roads on the server.
+- **State machine** for the trip (`Idle → Searching → DriverAssigned → Arriving → OnTrip → Completed`), persisted so the app **resumes correctly after process death** or a crash. The server is authoritative.
+- **Reliability:** idempotent ride requests (a client request ID), handling network drops mid-trip, and showing the last known state.
+- **Battery:** stop high-frequency updates when idle, batch analytics.
+- **Nearby friends** variant: devices periodically upload a coarse location (geohash) with privacy controls; the server returns friends in nearby geohash cells; use **geofencing** and significant-motion updates instead of continuous GPS.
+
+</details>
+
+### 19. How do voice and video calls work in a mobile app?
+
+<details>
+<summary>Answer</summary>
+
+- **WebRTC** is the standard: peer-to-peer **media over UDP** (SRTP, encrypted) with audio/video codecs (Opus, VP8/VP9/H.264/AV1), jitter buffers and echo cancellation.
+- **Signaling** (not part of WebRTC): your server, usually over **WebSocket**, exchanges **SDP offers and answers** (capabilities) and **ICE candidates** (network paths).
+- **NAT traversal:** **STUN** servers discover public IPs. **TURN** servers relay media when a direct P2P connection fails (corporate or symmetric NATs).
+- **Group calls** use an **SFU** (Selective Forwarding Unit) server that forwards streams, because full-mesh P2P doesn't scale beyond a few people.
+- **Android specifics:** incoming calls arrive through a **high-priority FCM** message that shows a full-screen notification or uses **`ConnectionService` / the Telecom (Core-Telecom) API** for system call integration; a **foreground service** of type `phoneCall`/`microphone`/`camera`; audio focus and routing (speaker, Bluetooth); handling network switches (ICE restart).
+- Commercial SDKs (Agora, Twilio, Stream) wrap all of this.
+
+</details>
+
+### 20. Design a caching library and a logging library.
+
+<details>
+<summary>Answer</summary>
+
+**Caching library:**
+- An API like `get(key)`, `put(key, value, ttl)`, `getOrFetch(key) { loader }`.
+- **Tiers:** memory (LRU, size-bounded by count or bytes) → disk (files or SQLite, LRU with a size cap and a journal for crash safety, like DiskLruCache).
+- **Policies:** TTL/expiry, max size, eviction (LRU/LFU), invalidation by key or prefix, stale-while-revalidate.
+- **Concurrency:** thread-safe (Mutex/actor), with **single-flight** loading (concurrent misses for the same key trigger one load).
+- **Serialization:** pluggable serializers; versioning so the cache is invalidated when the format changes.
+
+**Logging library:**
+- An API like `Log.d/i/w/e(tag, msg, throwable)` with **levels** and pluggable **sinks/trees** (Logcat, file, remote), similar to Timber.
+- **Non-blocking:** enqueue log records to a background writer (Channel or HandlerThread). Buffer and batch them to a file with **rotation** (max file size and count).
+- **Remote upload:** compress and upload periodically or on demand (WorkManager, Wi-Fi/charging constraints).
+- **Privacy:** PII scrubbing and redaction; release builds drop debug levels.
+- **Crash integration:** attach the recent logs to crash reports (breadcrumbs).
+
+</details>
+
+### 21. How do you handle data syncing when the network is unstable?
+
+<details>
+<summary>Answer</summary>
+
+- **Offline-first:** writes go to the **local DB first** with a `syncStatus`. The UI never waits on the network.
+- An **outbox queue** of pending operations, processed by **WorkManager** (unique work, `NetworkType.CONNECTED` constraint, exponential backoff).
+- **Idempotency keys** (client-generated UUIDs), so retries after timeouts don't create duplicates.
+- **Small, resumable units:** batch small changes; use chunked or resumable uploads for large files (`Range` headers, multipart chunks).
+- **Delta sync:** pull changes since `lastSyncToken` instead of full refreshes.
+- **Conflict resolution:** version numbers or timestamps, last-write-wins or merge rules.
+- Monitor connectivity (`NetworkCallback`) to trigger sync when the network returns, and show sync status in the UI.
+- Timeouts, circuit breakers (pause after repeated failures), and respecting metered networks for large transfers.
+
+</details>
+
+### 22. How does an app like "Where Is My Train" work without the internet?
+
+<details>
+<summary>Answer</summary>
+
+It combines **offline data** with **on-device signals**:
+- The **timetable and route data** (stations, schedules, distances) is downloaded once and stored locally (a compact DB), updated occasionally.
+- **Location without data:** **cell tower IDs** (from `TelephonyManager`, available without internet) are mapped to known locations along the tracks using a crowdsourced offline **cell-tower → location database**. GPS also works without internet, but it's battery-heavy and poor inside trains.
+- **Inference:** given the train's schedule, the last known position and the elapsed time, it **estimates the current position and delay** on the device.
+- When connectivity is available, it syncs live running status and uploads anonymized crowdsourced data to improve the tower mapping.
+
+The design lesson: an **offline-first architecture**, preloaded reference data, and on-device inference from cheap signals.
+
+</details>
+
 ---
 
 [⬅ Previous: Build, Gradle & Release](22-build-gradle-release.md) · [⬅ Back to index](../README.md) · [Next: What's New & Trending ➡](24-whats-new-trending.md)

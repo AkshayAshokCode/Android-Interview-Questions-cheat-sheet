@@ -212,6 +212,60 @@ Migrate **incrementally, layer by layer** with `kotlinx-coroutines-rx3` (`.await
 
 </details>
 
+
+### 17. `just` vs `fromCallable` vs `create` vs `defer`?
+
+<details>
+<summary>Answer</summary>
+
+- **`just(x)`** – emits a value that's **already computed** (evaluated **eagerly** when the Observable is built, even if nobody subscribes). `Observable.just(db.query())` runs the query immediately, possibly on the main thread.
+- **`fromCallable { }`** – computes the value **lazily on subscribe**, on the `subscribeOn` thread. Exceptions become `onError`. The best choice for wrapping a single blocking call.
+- **`create { emitter -> }`** – full manual control: emit many values, complete or fail, wrap **listener/callback APIs**, and register cleanup with `emitter.setCancellable { }`. You must respect the Observable contract yourself.
+- **`defer { Observable.just(x) }`** – creates a **fresh Observable for each subscriber** at subscribe time, so each subscriber gets current data. It's useful to make an eager source lazy.
+
+</details>
+
+### 18. How are `timer`, `delay` and `interval` used?
+
+<details>
+<summary>Answer</summary>
+
+- **`Observable.timer(2, SECONDS)`** – emits a **single** `0L` after the delay, then completes (one-shot delayed actions, splash timeouts).
+- **`.delay(2, SECONDS)`** – an operator that **shifts each emission** of an existing stream by the given time. (Errors aren't delayed by default.)
+- **`Observable.interval(1, SECONDS)`** – emits `0, 1, 2…` **repeatedly** at a fixed period (polling, countdowns; combine with `take(n)`). Dispose it, or it runs forever.
+
+All of them run on `Schedulers.computation()` by default. Coroutine equivalents: `delay()`, and loops with `delay` inside `flow {}`.
+
+</details>
+
+### 19. How do you make parallel network calls and implement search with RxJava?
+
+<details>
+<summary>Answer</summary>
+
+```kotlin
+// Parallel calls → combine
+Single.zip(api.getProfile().subscribeOn(Schedulers.io()),
+           api.getFeed().subscribeOn(Schedulers.io())) { profile, feed -> Home(profile, feed) }
+    .observeOn(AndroidSchedulers.mainThread())
+    .subscribe(::render, ::showError)
+    .addTo(disposables)
+
+// Instant search
+searchSubject
+    .debounce(300, TimeUnit.MILLISECONDS)
+    .map { it.trim() }
+    .filter { it.isNotEmpty() }
+    .distinctUntilChanged()
+    .switchMapSingle { q -> api.search(q).subscribeOn(Schedulers.io()).onErrorReturnItem(emptyList()) }
+    .observeOn(AndroidSchedulers.mainThread())
+    .subscribe(::showResults)
+```
+
+Each source needs its own `subscribeOn(io())`; otherwise `zip` subscribes to them sequentially on the same thread. `switchMap` cancels stale searches. Errors are handled **inside** the inner stream so the search stream survives.
+
+</details>
+
 ---
 
 [⬅ Previous: Threading & Background Work](17-threading-background-work.md) · [⬅ Back to index](../README.md) · [Next: Performance & Memory ➡](19-performance-memory.md)

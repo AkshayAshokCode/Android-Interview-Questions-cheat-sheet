@@ -309,6 +309,76 @@ A `PowerManager.WakeLock` keeps the **CPU awake** (partial wake lock) while the 
 
 </details>
 
+
+---
+
+## More Background & Notifications
+
+### 22. How does WorkManager guarantee task execution?
+
+<details>
+<summary>Answer</summary>
+
+1. **Persistence:** every enqueued `WorkRequest` (with its input data, constraints and state) is stored in WorkManager's **internal Room database** before `enqueue()` returns.
+2. **System schedulers:** it delegates to **JobScheduler** (API 23+), which survives app death and is **rescheduled after reboot** (WorkManager listens for `BOOT_COMPLETED` through its own receivers). In-process execution happens while the app is alive (the `GreedyScheduler`).
+3. **Constraint tracking:** work runs only when the network, charging or storage constraints are met.
+4. **Retries:** `Result.retry()` with exponential or linear **backoff**. Failures are recorded.
+5. **Force-stop caveat:** if the user **force-stops** the app, all of its jobs and alarms are cancelled until the app is opened again. Some OEM battery optimizations can delay work too.
+
+"Guaranteed" means **eventually executed while the constraints hold**, not executed at an exact time.
+
+</details>
+
+### 23. What is JobScheduler? JobScheduler vs WorkManager?
+
+<details>
+<summary>Answer</summary>
+
+**JobScheduler** (API 21+) is the **system service** for scheduling background jobs with constraints (network, charging, idle). It batches jobs across apps to save battery. You implement a `JobService` with `onStartJob`/`onStopJob`.
+
+**WorkManager** is the Jetpack library **built on top of** JobScheduler. It adds a Kotlin/coroutine API (`CoroutineWorker`), **chaining**, **unique work**, observable state (Flow/LiveData), input and output data, persistence, testing tools and backward compatibility. Use **WorkManager** unless you need a platform-only feature (e.g. user-initiated data transfer jobs on Android 14+, which are JobScheduler APIs).
+
+</details>
+
+### 24. How do notifications work in Android? (Channels, importance, styles, permission)
+
+<details>
+<summary>Answer</summary>
+
+- **Notification channels** (required since Android 8.0): every notification belongs to a channel (e.g. "Messages", "Promotions") with an **importance** (`IMPORTANCE_HIGH` = heads-up, `DEFAULT` = sound, `LOW` = silent, `MIN`). **Users control each channel** in settings. After a channel is created, the app can't change its importance.
+- **Runtime permission:** `POST_NOTIFICATIONS` on **Android 13+**.
+- **Building:** `NotificationCompat.Builder(context, CHANNEL_ID)` with a small icon, title, text and a `PendingIntent` (immutable) for the tap action, plus **action buttons**, **direct reply** (`RemoteInput`), styles (`BigTextStyle`, `BigPictureStyle`, `InboxStyle`, **`MessagingStyle`** for chats, `MediaStyle`), **groups** (`setGroup` + a summary), progress, and full-screen intents (calls and alarms; restricted on Android 14+).
+- **Show:** `NotificationManagerCompat.from(ctx).notify(id, notification)`.
+- **Exact-time local notifications:** schedule an **AlarmManager** alarm (`setExactAndAllowWhileIdle`, which needs the exact-alarm permission) whose receiver posts the notification. For approximate timing, use a WorkManager `OneTimeWorkRequest` with `setInitialDelay`.
+- **Android 16** adds progress-centric notifications (`Notification.ProgressStyle`) for Live Updates.
+
+</details>
+
+### 25. How do you run parallel tasks and get a callback when all of them complete?
+
+<details>
+<summary>Answer</summary>
+
+- **Coroutines (preferred):** `val results = ids.map { async { load(it) } }.awaitAll()`, or launch them and call `joinAll()`.
+- **Flow:** `combine`/`zip`, or `merge` + `toList`.
+- **RxJava:** `Single.zip(a, b) { … }` or `Observable.merge(…).toList()`.
+- **Java/Executors:** `invokeAll(callables)`, **`CountDownLatch`** (`countDown()` in each task, `await()` in the waiter), or `CompletableFuture.allOf(...)`.
+- **WorkManager:** `beginWith(listOf(workA, workB)).then(combineWork).enqueue()`. The next work runs when all the parallel ones succeed (input merging with an `InputMerger`).
+
+</details>
+
+### 26. Can you detect that a user uninstalled your app?
+
+<details>
+<summary>Answer</summary>
+
+**Not from the app itself**: it isn't notified of its own uninstall (`ACTION_PACKAGE_REMOVED` goes to *other* apps). Detection happens **on the server**:
+- **FCM**: sending a message to an uninstalled app's token returns an **`UNREGISTERED` / `NotRegistered`** error, so you can mark the user as uninstalled (with some delay).
+- **Firebase Analytics** logs an `app_remove` event (Android only), which is reported from Google Play services.
+- Silent "heartbeat" pushes, or a lack of activity, as weaker signals.
+
+</details>
+
 ---
 
 [⬅ Previous: Data Storage](16-data-storage.md) · [⬅ Back to index](../README.md) · [Next: RxJava ➡](18-rxjava.md)

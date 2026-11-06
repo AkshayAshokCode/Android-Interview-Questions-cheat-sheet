@@ -253,6 +253,42 @@ Yes. Create an `AppContainer` class in your Application that builds and holds th
 
 </details>
 
+
+### 17. Dagger: Component vs Subcomponent vs component dependencies? How do custom scopes work?
+
+<details>
+<summary>Answer</summary>
+
+- A **Component** is the injector/graph. It exposes provision methods and `inject(target)` methods.
+- A **Subcomponent** is a **child graph** that inherits **all bindings** of its parent and adds its own (e.g. a `LoginSubcomponent` living as long as the login flow). It's created through a factory method on the parent.
+- **Component dependencies** – a component depends on another component's **explicitly exposed** bindings only. Looser coupling, used across modules.
+
+**Custom scopes:**
+```kotlin
+@Scope @Retention(AnnotationRetention.RUNTIME) annotation class ActivityScope
+
+@ActivityScope @Subcomponent(modules = [CartModule::class])
+interface CartComponent { fun inject(a: CartActivity) }
+
+@ActivityScope class CartManager @Inject constructor()
+```
+
+A scope annotation means "**one instance per component instance**". The scope's lifetime is the lifetime of the component object **you** create and hold: create it in `onCreate` and drop it when the Activity is destroyed. Dagger doesn't know about Android lifecycles, which is exactly what Hilt adds.
+
+</details>
+
+### 18. How do you choose between Dagger and Hilt?
+
+<details>
+<summary>Answer</summary>
+
+- **Hilt** – for most Android apps. It has standard components tied to Android lifecycles, far less boilerplate, Jetpack integrations (ViewModel, WorkManager, Navigation, Compose), and built-in testing support. Its trade-off is a **fixed component hierarchy**.
+- **Plain Dagger** – when you need **custom component hierarchies** that Hilt doesn't model, non-Android/pure-JVM modules, SDKs/libraries (don't force Hilt on library consumers), or highly customized multi-module graphs.
+
+You can mix them: Hilt is Dagger, so `@EntryPoint`s and custom components (`@DefineComponent`) cover most edge cases.
+
+</details>
+
 ---
 
 [⬅ Previous: Jetpack Components](13-jetpack-components.md) · [⬅ Back to index](../README.md) · [Next: Networking ➡](15-networking.md)

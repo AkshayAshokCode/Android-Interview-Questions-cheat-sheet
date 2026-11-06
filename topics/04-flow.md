@@ -330,6 +330,58 @@ class SearchViewModel(private val repo: SearchRepo) : ViewModel() {
 
 </details>
 
+
+---
+
+## More Flow Questions
+
+### 21. `collect` vs `collectLatest`?
+
+<details>
+<summary>Answer</summary>
+
+- **`collect { }`** processes **every** value **sequentially**. While the block for value N is running, the producer is suspended (with no buffer). Nothing is skipped.
+- **`collectLatest { }`** – when a new value arrives while the block is still running, the current block is **cancelled** and restarted with the new value.
+
+```kotlin
+queryFlow.collectLatest { q -> showResults(api.search(q)) }   // stale searches cancelled
+```
+
+Use `collectLatest` when only the latest value matters (search, UI rendering of heavy work). Use `collect` when every value must be handled (saving events, analytics).
+
+</details>
+
+### 22. What are flow builders, intermediate operators and terminal operators?
+
+<details>
+<summary>Answer</summary>
+
+- **Builders** create flows: `flow { emit(x) }`, `flowOf(1, 2, 3)`, `list.asFlow()`, `channelFlow {}`, `callbackFlow {}`, `MutableStateFlow(…)`.
+- **Intermediate operators** (`map`, `filter`, `onEach`, `debounce`, `flatMapLatest`, `flowOn`…) return a **new Flow** and are **lazy**: nothing runs until something collects.
+- **Terminal operators** **start the collection**. They're suspend functions: `collect`, `collectLatest`, `first`, `firstOrNull`, `single`, `toList`, `toSet`, `reduce`, `fold`, `count`, plus `launchIn(scope)`.
+
+A cold flow with only intermediate operators and no terminal operator **does nothing**.
+
+</details>
+
+### 23. How do you make parallel network calls and combine the results with Flow?
+
+<details>
+<summary>Answer</summary>
+
+```kotlin
+val usersFlow = flow { emit(api.getUsers()) }.flowOn(Dispatchers.IO)
+val moreUsersFlow = flow { emit(api.getMoreUsers()) }.flowOn(Dispatchers.IO)
+
+usersFlow.zip(moreUsersFlow) { a, b -> a + b }
+    .catch { emit(emptyList()) }
+    .collect { render(it) }
+```
+
+`zip` and `combine` collect both upstream flows **concurrently**, so the two calls run in parallel. For many long-running tasks, use `merge(flowA, flowB)` to handle results as they arrive, or `flatMapMerge(concurrency = 4)` over a list of IDs. For one-shot calls, plain `async/await` is simpler. Use Flow when the sources are streams.
+
+</details>
+
 ---
 
 [⬅ Previous: Coroutines](03-coroutines.md) · [⬅ Back to index](../README.md) · [Next: Java for Android ➡](05-java.md)

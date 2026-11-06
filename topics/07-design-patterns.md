@@ -353,6 +353,19 @@ Explain **why** you chose each one (testability, decoupling), not just what it i
 
 </details>
 
+
+### 26. Which design patterns are used in Retrofit, OkHttp, Glide and the Android framework?
+
+<details>
+<summary>Answer</summary>
+
+- **Retrofit:** **Proxy** (`create()` returns a dynamic proxy of your interface), **Builder** (`Retrofit.Builder`), **Factory / Abstract Factory** (`Converter.Factory`, `CallAdapter.Factory`), **Adapter** (CallAdapter adapts `Call<T>` to suspend/Rx), **Facade** (a simple API over OkHttp + serialization), **Strategy** (pluggable converters).
+- **OkHttp:** **Chain of Responsibility** (the interceptor chain), **Builder** (`OkHttpClient.Builder`, `Request.Builder`), object pooling (`ConnectionPool`).
+- **Glide:** **Builder/Fluent interface** (`Glide.with().load().into()`), **Facade**, **Flyweight/Object pool** (`BitmapPool`), **Strategy** (`DiskCacheStrategy`, transformations), **Observer** (lifecycle-aware requests through a headless fragment / `RequestManager`), **Singleton** (the `Glide` instance).
+- **AOSP / Android framework:** **Observer** (listeners, LiveData), **Adapter** (`RecyclerView.Adapter`), **Composite** (View/ViewGroup), **Builder** (`AlertDialog`, `Notification`), **Chain of Responsibility** (touch dispatch), **Template Method** (lifecycle callbacks), **Proxy** (Binder/AIDL), **Singleton** (system services), **Factory** (`LayoutInflater.Factory`, `ViewModelProvider.Factory`), **Command** (`Runnable`/`Message` in Handler), **Memento** (`onSaveInstanceState`).
+
+</details>
+
 ---
 
 [⬅ Previous: OOP & SOLID](06-oop-solid.md) · [⬅ Back to index](../README.md) · [Next: Android Fundamentals ➡](08-android-fundamentals.md)

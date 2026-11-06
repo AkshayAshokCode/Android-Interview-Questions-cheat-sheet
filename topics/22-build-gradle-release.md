@@ -231,6 +231,61 @@ Newer Android devices (Android 15+) can use a **16 KB memory page size** instead
 
 </details>
 
+
+### 20. How do you create a custom Gradle task?
+
+<details>
+<summary>Answer</summary>
+
+```kotlin
+// build.gradle.kts
+tasks.register("printVersion") {
+    group = "custom"
+    description = "Prints the app version"
+    doLast { println("Version: ${android.defaultConfig.versionName}") }
+}
+
+// Typed, cacheable task with inputs/outputs
+abstract class GenerateConfigTask : DefaultTask() {
+    @get:Input abstract val apiUrl: Property<String>
+    @get:OutputFile abstract val outputFile: RegularFileProperty
+    @TaskAction fun generate() { outputFile.get().asFile.writeText("API=${apiUrl.get()}") }
+}
+tasks.register<GenerateConfigTask>("generateConfig") {
+    apiUrl.set("https://api.example.com")
+    outputFile.set(layout.buildDirectory.file("config.txt"))
+}
+```
+
+Key points: use `tasks.register` (**lazy**, configuration avoidance) instead of `create`; put work in `doLast`/`@TaskAction` (not at configuration time); declare **inputs/outputs** so the task is **up-to-date checked and cacheable**; wire dependencies with `dependsOn`/`finalizedBy` or task outputs. For reusable logic, put it in a convention plugin.
+
+</details>
+
+### 21. What's on your production release checklist?
+
+<details>
+<summary>Answer</summary>
+
+- **Build:** `isMinifyEnabled`/`isShrinkResources` on, R8 keep rules verified, `debuggable false`, logging stripped, correct `versionCode`/`versionName`, signed **AAB**, `mapping.txt` and native symbols uploaded (Play/Crashlytics).
+- **Quality:** all tests green; smoke-tested the **release build** on low-end and latest devices; process-death, rotation, dark mode, large font, RTL and offline checks; **Baseline Profile** included; no StrictMode violations; size check.
+- **Config:** production endpoints and keys, feature flags or kill switches ready, analytics events verified, crash reporting enabled.
+- **Compliance:** target SDK requirement met, permissions justified, Data safety form, privacy policy, 16 KB native alignment.
+- **Rollout:** internal → closed testing → **staged rollout** (1% → …) while monitoring crash/ANR vitals; release notes; rollback plan (halt the rollout, hotfix, remote config).
+
+</details>
+
+### 22. What Git workflow questions come up? (merge vs rebase, branching)
+
+<details>
+<summary>Answer</summary>
+
+- **Merge vs rebase:** `merge` keeps history as it happened (with a merge commit), and it's safe on shared branches. `rebase` **rewrites** your commits on top of the target for a linear history. **Never rebase commits others have already pulled.** Squash-merging PRs keeps `main` clean.
+- **Branching strategies:** **trunk-based** (short-lived branches + feature flags, common with CI/CD), **GitHub Flow** (feature branch → PR → main), **Git Flow** (develop/release/hotfix branches, heavier, suited to versioned releases).
+- **Useful commands:** `git stash`, `cherry-pick` (hotfixes to release branches), `bisect` (find the commit that introduced a bug), `reflog` (recover lost commits), `revert` (undo safely on shared history) vs `reset` (local only).
+- **Mobile specifics:** release branches per version, tags per store build, and protected main branches with required CI checks.
+
+</details>
+
 ---
 
 [⬅ Previous: Security & Permissions](21-security-permissions.md) · [⬅ Back to index](../README.md) · [Next: Android System Design ➡](23-system-design.md)

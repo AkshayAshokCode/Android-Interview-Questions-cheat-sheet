@@ -393,7 +393,7 @@ A **backing property** pattern exposes a read-only view: `private val _state = M
 <details>
 <summary>Answer</summary>
 
-`@JvmInline value class UserId(val value: String)` wraps exactly one value. It gives you **type safety** (you can't pass an `Email` where a `UserId` is expected), and the wrapper is **erased at runtime** in most cases, so there's no allocation overhead. It gets boxed when used as a nullable type, a generic or an interface.
+`@JvmInline value class UserId(val value: String)` wraps exactly one value. It gives you **type safety** (you can't pass an `Email` where a `UserId` is expected), and the wrapper is **erased at runtime** in most cases, so there's no allocation overhead. It gets boxed when used as a generic type argument or through an interface it implements, and when it's nullable and wraps a primitive (e.g. `UInt?`). A nullable value class over a non-null reference type such as `String` is still represented by the underlying reference, so it isn't boxed.
 
 </details>
 
@@ -575,6 +575,83 @@ Standard library examples: `to` (`1 to "one"`), `until`, `downTo`, `step`, `and`
 <summary>Answer</summary>
 
 A typealias gives an existing type an alternative name, with no new type and no runtime cost: `typealias OnItemClick = (Item) -> Unit`. It improves readability of long function and generic types. If you need real type safety, use a value class.
+
+</details>
+
+
+---
+
+## More Kotlin Essentials
+
+### 41. What are labels in Kotlin?
+
+<details>
+<summary>Answer</summary>
+
+A label (`name@`) marks a loop or lambda, so `break`, `continue` and `return` can target it:
+
+```kotlin
+outer@ for (i in 1..3) {
+    for (j in 1..3) { if (j == 2) continue@outer; if (i == 3) break@outer }
+}
+listOf(1, 2, 3).forEach { if (it == 2) return@forEach; print(it) }   // prints 13
+```
+
+Lambdas get an **implicit label** with the function's name (`return@forEach`). Without a label, `return` inside an inline lambda returns from the enclosing function.
+
+</details>
+
+### 42. What is `vararg` and the spread operator?
+
+<details>
+<summary>Answer</summary>
+
+`vararg` lets a function take a variable number of arguments, received as an array. The **spread operator `*`** passes an existing array as individual varargs:
+
+```kotlin
+fun log(vararg messages: String) = messages.forEach(::println)
+val arr = arrayOf("a", "b")
+log("start", *arr, "end")
+```
+
+Only one parameter can be `vararg`. If it isn't the last one, the parameters after it must be passed by name.
+
+</details>
+
+### 43. How do you remove duplicates, or convert a list to a map, in Kotlin? (`distinct`, `associateBy`, `groupBy`, `partition`)
+
+<details>
+<summary>Answer</summary>
+
+```kotlin
+val nums = listOf(1, 2, 2, 3, 3, 3)
+nums.distinct()                         // [1, 2, 3]
+nums.toSet()                            // {1, 2, 3}
+users.distinctBy { it.email }           // unique by key
+
+users.associateBy { it.id }             // Map<Id, User> (last wins on duplicate keys)
+users.associate { it.id to it.name }    // Map<Id, String>
+users.groupBy { it.city }               // Map<City, List<User>>
+val (adults, minors) = users.partition { it.age >= 18 }   // Pair<List, List>
+```
+
+To remove duplicates from an array **without** library functions, iterate and keep a `HashSet` of seen elements: O(n) time, O(n) space.
+
+</details>
+
+### 44. Write a higher-order function that returns a function.
+
+<details>
+<summary>Answer</summary>
+
+```kotlin
+fun multiplier(factor: Int): (Int) -> Int = { number -> number * factor }
+
+val triple = multiplier(3)
+println(triple(5))   // 15
+```
+
+The returned lambda **captures** `factor` (a closure). Other common examples: building validators (`fun minLength(n: Int): (String) -> Boolean`) and function composition (`fun <A, B, C> compose(f: (B) -> C, g: (A) -> B): (A) -> C = { f(g(it)) }`).
 
 </details>
 

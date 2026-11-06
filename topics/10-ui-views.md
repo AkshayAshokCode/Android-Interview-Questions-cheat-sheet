@@ -353,9 +353,75 @@ A Spannable is text with **styling spans** applied to ranges (bold, color, click
 <details>
 <summary>Answer</summary>
 
-- **Toast** – a brief system message with no interaction. Limited on Android 11+ (text-only toasts from the background).
+- **Toast** – a brief system message with no interaction. Since Android 11, **custom-view toasts are blocked when the app is in the background** (only plain text toasts are shown), and `setView()` is deprecated.
 - **Snackbar** (Material) – shown at the bottom, can have an **action** (Undo), and can be swiped away. Tied to a view, or to `SnackbarHost` in Compose.
 - **Dialog** – modal; requires a user decision.
+
+</details>
+
+
+---
+
+## More UI Questions
+
+### 29. What are Canvas and Paint?
+
+<details>
+<summary>Answer</summary>
+
+- **`Canvas`** is the drawing surface API passed to `onDraw(canvas)`. It provides drawing **calls** (`drawRect`, `drawCircle`, `drawPath`, `drawText`, `drawBitmap`) and **transformations** (`translate`, `rotate`, `scale`, `save()`/`restore()`, `clipRect`).
+- **`Paint`** describes **how** to draw: color, style (fill/stroke), stroke width, anti-aliasing, text size, shaders (gradients), shadow layers.
+
+```kotlin
+private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.RED; style = Paint.Style.FILL }
+override fun onDraw(canvas: Canvas) {
+    super.onDraw(canvas)
+    canvas.drawCircle(width / 2f, height / 2f, width / 4f, paint)
+}
+```
+
+Create the `Paint`, `Path` and `RectF` objects **once**, not inside `onDraw` (it runs every frame). In Compose, the equivalent is the `Canvas` composable / `DrawScope`.
+
+</details>
+
+### 30. What RecyclerView optimizations should you know? (`setHasFixedSize`, payloads, nested lists, SnapHelper)
+
+<details>
+<summary>Answer</summary>
+
+- **`setHasFixedSize(true)`** – tells the RecyclerView that adapter content changes **don't change its own size**, so it can skip a full `requestLayout()` on item changes.
+- **Update a single item:** change the data, then `notifyItemChanged(position)`, or better, `submitList(newList)` with DiffUtil.
+- **Payloads for partial binding:** `notifyItemChanged(pos, PAYLOAD_LIKE)` or `getChangePayload()` in DiffUtil, then handle `onBindViewHolder(holder, pos, payloads)` to update only the like icon, with no full rebind or flicker.
+- **Nested RecyclerViews** (horizontal rows in a vertical list): share a **`RecycledViewPool`** across inner lists, set `initialPrefetchItemCount` on the inner `LinearLayoutManager`, keep inner adapters stable, and save or restore the inner scroll state.
+- **`SnapHelper`** (`LinearSnapHelper`, `PagerSnapHelper`) snaps items to a position after a fling (carousels, page-like behaviour).
+- Others: `setItemViewCacheSize`, stable IDs, avoiding `wrap_content` heights inside scrolling parents, image size requests, and `RecyclerView.setRecycledViewPool`.
+
+</details>
+
+### 31. What is overdraw and how do you reduce it?
+
+<details>
+<summary>Answer</summary>
+
+**Overdraw** is when the same pixel is drawn **multiple times in a frame** (window background, then layout background, then card background, then content). It wastes GPU time and causes jank on low-end devices.
+
+Detect it with **Developer Options → Debug GPU Overdraw** (blue = 1×, green = 2×, pink = 3×, red = 4×+).
+Fix it by removing unnecessary backgrounds (especially when a parent and child are both opaque), setting `android:windowBackground` once and not repeating it, flattening hierarchies, using `clipRect` in custom views, and avoiding transparent layers stacked on top of each other.
+
+</details>
+
+### 32. What are best practices for text in Android?
+
+<details>
+<summary>Answer</summary>
+
+- Use **`sp`** for text sizes (respects the user's font scale). Test at 200% (Android 14 uses non-linear scaling).
+- Put all user-facing text in **`strings.xml`** (localization), with placeholders (`%1$s`) and **plurals** (`<plurals>`).
+- Avoid fixed heights on text containers. Allow wrapping, `maxLines` + `ellipsize`.
+- Use **downloadable fonts** / `res/font` and **TextAppearance** styles (or Material typography).
+- Use **`PrecomputedText`** (`PrecomputedTextCompat`) to measure long text off the main thread in lists.
+- Use spans for styled text, and `AnnotatedString` in Compose.
+- Use `TextView` autosizing only when it's really needed (it's expensive).
 
 </details>
 

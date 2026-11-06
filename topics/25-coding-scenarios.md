@@ -405,6 +405,34 @@ Good stories to prepare: a hard production crash or ANR you fixed, a performance
 
 </details>
 
+
+### 24. How do you do code reviews?
+
+<details>
+<summary>Answer</summary>
+
+**As a reviewer:**
+1. Understand the **intent** (ticket, PR description), then check **correctness** (edge cases, nulls, error paths, concurrency, lifecycle and process death).
+2. **Architecture fit** (layering, no Context in the ViewModel, reuse of existing components), **readability** (naming, small functions), **tests** (new logic covered, meaningful assertions).
+3. **Android-specific:** main-thread I/O, leaks (listeners, scopes), recomposition and performance hot spots, permissions, accessibility, strings in resources, R8 rules, security (logging PII, exported components).
+4. Be **kind and specific**: ask questions instead of dictating, explain the *why*, separate blocking issues from nits, and praise good work. Automate style checks (ktlint/Detekt/Lint) so reviews can focus on substance.
+
+**As an author:** small, focused PRs, a clear description with screenshots or videos, self-review first, and respond to all comments.
+
+</details>
+
+### 25. Agile vs Waterfall? How does your team work?
+
+<details>
+<summary>Answer</summary>
+
+- **Waterfall** – sequential phases (requirements → design → build → test → release). Predictable for fixed scope, but changes are expensive and feedback comes late.
+- **Agile** – **iterative**, small increments, continuous feedback and adaptation. **Scrum** uses fixed sprints (planning, daily stand-up, review, retrospective) with roles (Product Owner, Scrum Master, team). **Kanban** uses a continuous flow with WIP limits.
+
+For mobile teams, mention: sprint cadence vs **release trains** (e.g. a weekly or bi-weekly store release), feature flags so unfinished work can ship dark, and the definition of done (tests, code review, QA sign-off, analytics added).
+
+</details>
+
 ---
 
-[⬅ Previous: What's New & Trending](24-whats-new-trending.md) · [⬅ Back to index](../README.md)
+[⬅ Previous: What's New & Trending](24-whats-new-trending.md) · [⬅ Back to index](../README.md) · [Next: Accessibility & Localization ➡](26-accessibility-localization.md)

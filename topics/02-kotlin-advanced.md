@@ -370,6 +370,62 @@ In new projects, prefer kotlinx.serialization (or Moshi).
 
 </details>
 
+
+---
+
+## Annotations & Lazy Internals
+
+### 26. What are annotations? How do you create a custom annotation?
+
+<details>
+<summary>Answer</summary>
+
+Annotations attach **metadata** to code. That metadata is read by the compiler (e.g. `@Deprecated`), by annotation processors at build time (`@Entity`, `@Inject`), or by reflection at runtime.
+
+```kotlin
+@Target(AnnotationTarget.FUNCTION)
+@Retention(AnnotationRetention.RUNTIME)     // SOURCE | BINARY | RUNTIME
+annotation class TrackEvent(val name: String)
+
+class Checkout { @TrackEvent("purchase_clicked") fun buy() { } }
+```
+
+- **`@Target`** – where the annotation can be applied (class, function, property, field, parameter…).
+- **`@Retention`** – `SOURCE` (discarded by the compiler; used by lint), `BINARY` (kept in the class file but not visible to reflection), `RUNTIME` (readable through reflection).
+- Use-site targets: `@field:SerializedName`, `@get:JvmName`, `@param:Inject`.
+
+Android-specific ones: `@IntDef`/`@StringDef` (type-safe constants checked by lint), `@MainThread`, `@WorkerThread`, `@RequiresApi`, `@Keep` (prevents R8 from removing the code).
+
+</details>
+
+### 27. What is annotation processing? How do kapt and KSP generate code?
+
+<details>
+<summary>Answer</summary>
+
+An **annotation processor** runs at **compile time**, finds annotated elements, and **generates source code**. Dagger/Hilt generate factories and components, Room generates DAO implementations, and Moshi/Glide generate adapters.
+
+- **kapt** generates Java stubs from the Kotlin code so that Java processors (JSR-269) can run. That makes it slow.
+- **KSP** gives processors a Kotlin-aware symbol API directly, so it's faster, multiplatform-friendly and incremental.
+
+Generated code removes the need for **runtime reflection**, which keeps things fast and R8-friendly, and turns mistakes into **compile-time errors** (a missing Dagger binding, invalid SQL in Room).
+
+</details>
+
+### 28. What are the thread-safety modes of `lazy`?
+
+<details>
+<summary>Answer</summary>
+
+`by lazy(mode) { }`:
+- **`SYNCHRONIZED`** (default) – a lock guarantees the initializer runs **exactly once**, even with multiple threads.
+- **`PUBLICATION`** – several threads may run the initializer concurrently, but only the **first returned value** is stored. There's no lock.
+- **`NONE`** – no synchronization at all. Fastest, but only safe when the value is accessed from a single thread (e.g. a UI-only property).
+
+Use `NONE` for main-thread-only lazies in Views and Fragments to avoid the cost of locking.
+
+</details>
+
 ---
 
 [⬅ Previous: Kotlin Fundamentals](01-kotlin-basics.md) · [⬅ Back to index](../README.md) · [Next: Coroutines ➡](03-coroutines.md)

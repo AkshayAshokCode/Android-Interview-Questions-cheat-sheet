@@ -269,6 +269,19 @@ Libraries often initialize themselves through their own `ContentProvider`, and *
 
 </details>
 
+
+### 21. LiveData vs ObservableField (DataBinding)?
+
+<details>
+<summary>Answer</summary>
+
+- **`ObservableField<T>`** (DataBinding) is a simple observable holder for binding expressions. It's **not lifecycle-aware**: observers must be removed manually or they leak or update dead views. It's only practical with DataBinding.
+- **`LiveData`** is **lifecycle-aware** (it delivers only to active owners and cleans up automatically), and it works with or without DataBinding (`binding.lifecycleOwner = viewLifecycleOwner` enables LiveData in layouts).
+
+Today, prefer **StateFlow** (or LiveData) exposed from a ViewModel. `ObservableField` is mostly legacy.
+
+</details>
+
 ---
 
 [⬅ Previous: Architecture](12-architecture.md) · [⬅ Back to index](../README.md) · [Next: Dependency Injection ➡](14-dependency-injection.md)

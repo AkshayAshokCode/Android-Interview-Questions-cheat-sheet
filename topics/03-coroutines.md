@@ -436,6 +436,78 @@ Inside an Activity, use `lifecycleScope.launch {}`. For work that must **survive
 
 </details>
 
+
+---
+
+## More Coroutine Questions
+
+### 31. `job.cancel()` vs `scope.cancel()` vs `cancelChildren()`?
+
+<details>
+<summary>Answer</summary>
+
+- **`job.cancel()`** – cancels **one coroutine** (and its children). The scope stays active, so you can launch new coroutines in it.
+- **`scope.cancel()`** – cancels the scope's Job and therefore **every coroutine in it**. The scope is now **dead**: anything launched in it afterwards is cancelled immediately. `viewModelScope` is cancelled this way in `onCleared()`.
+- **`scope.coroutineContext.cancelChildren()`** – cancels all running children **but keeps the scope usable**. Use it when you want to "reset" work, e.g. on a new search.
+
+</details>
+
+### 32. What happens if a coroutine started with `async` throws but `await()` is never called?
+
+<details>
+<summary>Answer</summary>
+
+It depends on the parent:
+- **Child of a regular `Job`** (e.g. inside `coroutineScope` or `viewModelScope.launch { async { … } }`): the exception **still propagates to the parent immediately** and cancels it and its siblings. With no handler at the root, the app **crashes**, even without `await()`.
+- **Root `async`** (`scope.async {}` directly) or a child of a **`SupervisorJob`/`supervisorScope`**: the exception is **stored in the `Deferred`**. If nobody calls `await()`, it's **silently lost**. `CoroutineExceptionHandler` doesn't handle `async` exceptions.
+
+Takeaway: always `await()` async results (or use `launch` for fire-and-forget work), and catch exceptions where you await.
+
+</details>
+
+### 33. How do you run coroutines in series vs in parallel?
+
+<details>
+<summary>Answer</summary>
+
+```kotlin
+// Series: second starts after first finishes (total ≈ t1 + t2)
+viewModelScope.launch {
+    val user = repo.getUser()
+    val posts = repo.getPosts(user.id)     // depends on user
+}
+
+// Parallel: both start immediately (total ≈ max(t1, t2))
+viewModelScope.launch {
+    val profile = async { repo.getProfile() }
+    val feed = async { repo.getFeed() }
+    render(profile.await(), feed.await())
+}
+
+// Parallel fire-and-forget, wait for all
+coroutineScope {
+    val jobs = listOf(launch { syncA() }, launch { syncB() })
+    jobs.joinAll()
+}
+```
+
+Common mistake: `async { a() }.await(); async { b() }.await()` runs **sequentially**, because each await blocks before the next async starts. Start all the asyncs first, then await them.
+
+</details>
+
+### 34. `suspendCoroutine` vs `suspendCancellableCoroutine`?
+
+<details>
+<summary>Answer</summary>
+
+Both turn a callback into a suspend function by giving you a continuation to `resume` later.
+- **`suspendCoroutine`** – **not cancellable**. If the caller's coroutine is cancelled, it keeps waiting until the callback fires.
+- **`suspendCancellableCoroutine`** – supports cancellation. Use `cont.invokeOnCancellation { request.cancel() }` to clean up the underlying operation. **Always prefer it.**
+
+Resume exactly once. Resuming twice throws `IllegalStateException`.
+
+</details>
+
 ---
 
 [⬅ Previous: Kotlin Advanced](02-kotlin-advanced.md) · [⬅ Back to index](../README.md) · [Next: Kotlin Flow ➡](04-flow.md)

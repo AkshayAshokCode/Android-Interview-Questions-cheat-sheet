@@ -328,6 +328,177 @@ Lambdas, method references, the Stream API, `Optional`, default interface method
 
 </details>
 
+
+---
+
+## More Core Java
+
+### 29. What are the 8 primitive types? `int` vs `Integer`?
+
+<details>
+<summary>Answer</summary>
+
+Primitives: `byte`, `short`, `int`, `long`, `float`, `double`, `char`, `boolean`.
+
+| `int` | `Integer` |
+|---|---|
+| Primitive value, stored directly | Object wrapper on the heap |
+| Can't be `null` | Can be `null` (unboxing a null throws an NPE) |
+| Default value `0` | Default `null` |
+| Usable in arrays and math directly | Needed for generics/collections (`List<Integer>`) |
+
+**Autoboxing/unboxing** converts between them automatically. That has a cost (allocations in loops).
+**Integer cache:** `Integer.valueOf()` caches values from **-128 to 127**, so `Integer a = 127, b = 127; a == b` is `true`, but with 128 it's `false`. Always compare wrappers with `equals()`.
+
+</details>
+
+### 30. Can static methods be overridden? When does a static block run?
+
+<details>
+<summary>Answer</summary>
+
+- **No.** Static methods are resolved at **compile time** based on the reference type. A subclass declaring the same static method **hides** the parent's method (method hiding); it doesn't override it, so there's no polymorphism.
+- A **static initializer block** (`static { … }`) runs **once, when the class is loaded/initialized** (on first use: creating an instance, accessing a static member), before any constructor.
+- Instance initializer blocks run on every object creation, before the constructor body.
+
+</details>
+
+### 31. Shallow copy vs deep copy?
+
+<details>
+<summary>Answer</summary>
+
+- **Shallow copy** copies the object's fields. Referenced objects are **shared**, so mutating a nested list in the copy changes the original too. Examples: `Object.clone()` by default, Kotlin `data class copy()`, `ArrayList(other)`.
+- **Deep copy** recursively copies the referenced objects as well, so the copy is fully independent. Done manually (copy constructors), through serialization, or with immutable data structures (where sharing is safe).
+
+Interview tip: prefer **immutability**. Then shallow copies are safe, and that's why data classes plus immutable lists work well.
+
+</details>
+
+### 32. What is serialization? What do `transient` and `serialVersionUID` do?
+
+<details>
+<summary>Answer</summary>
+
+**Serialization** converts an object into a byte stream (to store it or send it), and **deserialization** rebuilds it. In Java, implement `Serializable` (a marker interface).
+- **`transient`** – this field is **not serialized** (passwords, caches, non-serializable references). It's restored with its default value.
+- **`serialVersionUID`** – a version ID. If the class changes and the IDs don't match, deserialization throws `InvalidClassException`. Declare it explicitly.
+
+On Android, use **Parcelable** for IPC/Bundles, and JSON/Protobuf (kotlinx.serialization) for storage and network.
+
+</details>
+
+### 33. What is reflection? Why is it discouraged on Android?
+
+<details>
+<summary>Answer</summary>
+
+Reflection is **inspecting and invoking classes, methods and fields at runtime** (`Class.forName`, `getDeclaredMethod`, `field.setAccessible(true)`). Gson, older DI libraries and some test tools use it.
+
+Downsides: **slow**, no compile-time safety, it **breaks with R8 obfuscation/shrinking** unless you add keep rules, and it can access private APIs (non-SDK interface restrictions since Android 9). Prefer **code generation** (KSP).
+
+</details>
+
+### 34. What are anonymous classes, inner classes and lambdas in Java?
+
+<details>
+<summary>Answer</summary>
+
+- **Static nested class** – no reference to the outer instance.
+- **Inner (non-static) class** – holds an implicit reference to the outer instance, which is a **leak risk** on Android.
+- **Anonymous class** – an inline one-off implementation (`new Runnable() { … }`). It also captures the outer instance when declared in an instance context.
+- **Lambda** (Java 8) – shorter syntax for functional interfaces. It only captures `this` if it uses outer members, and it can only capture **effectively final** local variables.
+
+</details>
+
+### 35. `throw` vs `throws`?
+
+<details>
+<summary>Answer</summary>
+
+- **`throw`** – a statement that **actually throws** an exception instance: `throw new IllegalArgumentException("bad id");`.
+- **`throws`** – part of a method **signature** that **declares** the checked exceptions the method may throw: `void read() throws IOException`.
+
+</details>
+
+### 36. Fail-fast vs fail-safe iterators?
+
+<details>
+<summary>Answer</summary>
+
+- **Fail-fast** (`ArrayList`, `HashMap` iterators) – they detect structural modification during iteration (through a `modCount` check) and throw **`ConcurrentModificationException`**.
+- **Fail-safe / weakly consistent** (`CopyOnWriteArrayList`, `ConcurrentHashMap`) – they iterate over a **snapshot** or tolerate concurrent changes and **don't throw**. The iteration may not reflect the latest updates.
+
+</details>
+
+### 37. Object-level lock vs class-level lock? What is a monitor?
+
+<details>
+<summary>Answer</summary>
+
+Every Java object has an intrinsic lock (**monitor**). `synchronized` acquires it.
+- **Object-level lock**: `synchronized` instance methods or `synchronized(this)`. Threads using **different instances** don't block each other.
+- **Class-level lock**: `static synchronized` methods or `synchronized(MyClass.class)`. **One lock for the whole class**, shared across all instances. It protects static state.
+
+The monitor also provides `wait()`/`notify()` for thread coordination.
+
+</details>
+
+### 38. Concurrency vs parallelism?
+
+<details>
+<summary>Answer</summary>
+
+- **Concurrency** – dealing with **multiple tasks that make progress over overlapping periods**. They may interleave on one core (task switching). It's about *structure*.
+- **Parallelism** – tasks literally **run at the same time** on multiple cores. It's about *execution*.
+
+Coroutines give you concurrency. Running them on `Dispatchers.Default` with several cores gives you parallelism.
+
+</details>
+
+### 39. What is `ThreadPoolExecutor`? Why use thread pools?
+
+<details>
+<summary>Answer</summary>
+
+`ThreadPoolExecutor` is the configurable implementation behind `Executors.*`:
+- **corePoolSize** – threads kept alive; **maximumPoolSize** – the upper bound.
+- **workQueue** – holds tasks waiting for a thread (bounded or unbounded).
+- **keepAliveTime** – how long extra (non-core) threads stay idle before they're removed.
+- **RejectedExecutionHandler** – what happens when the queue and pool are full (`AbortPolicy`, `CallerRunsPolicy`, `DiscardPolicy`, `DiscardOldestPolicy`).
+
+**Advantages of pools:** they reuse threads (no creation cost per task), **bound concurrency** (no resource exhaustion), and give you queuing, scheduling and lifecycle management (`shutdown()`).
+
+</details>
+
+### 40. What are atomic classes and CAS?
+
+<details>
+<summary>Answer</summary>
+
+`AtomicInteger`, `AtomicLong`, `AtomicBoolean` and `AtomicReference` provide **lock-free thread-safe** operations using **Compare-And-Swap (CAS)** CPU instructions:
+- `get()` / `set()` – volatile read and write.
+- `compareAndSet(expected, new)` – atomically sets the value **only if** the current value equals `expected`, and returns whether it succeeded.
+- `incrementAndGet()`, `getAndUpdate {}` – atomic read-modify-write (CAS retry loops).
+- `lazySet()` – an eventual write with weaker ordering (cheaper; other threads may see it slightly later).
+- `weakCompareAndSet()` – may fail spuriously; for use in retry loops.
+
+They're faster than locks for single variables under low or medium contention.
+
+</details>
+
+### 41. `Runnable` vs `Thread` vs `Callable`? Daemon vs user threads?
+
+<details>
+<summary>Answer</summary>
+
+- **`Runnable`** – a **task** (`run()`, no result, can't throw checked exceptions).
+- **`Callable<V>`** – a task that **returns a value** and can throw; submitted to an executor, it gives back a `Future<V>`.
+- **`Thread`** – the **execution context** that runs a task. Prefer passing Runnables to executors over subclassing Thread (separate the task from the mechanism).
+- **User threads** keep the JVM alive until they finish. **Daemon threads** (`setDaemon(true)`) don't. The JVM exits when only daemon threads remain (used for background housekeeping like GC). On Android, the process lifecycle is controlled by the system anyway.
+
+</details>
+
 ---
 
 [⬅ Previous: Kotlin Flow](04-flow.md) · [⬅ Back to index](../README.md) · [Next: OOP & SOLID ➡](06-oop-solid.md)
