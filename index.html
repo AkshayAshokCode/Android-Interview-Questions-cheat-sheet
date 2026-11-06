@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Interview Prep Tracker</title>
+<meta name="description" content="Study the interview questions in this repo and track your progress per topic.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✅</text></svg>">
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<style>
+:root {
+  --bg: #f7f7f5; --surface: #ffffff; --surface-2: #f0f0ed; --text: #1c1c1a; --muted: #6b6b66;
+  --border: #e2e2dd; --accent: #2f6fde; --done: #1f9d55; --done-bg: #e5f5ec; --revise: #c9781a;
+  --revise-bg: #fbf0e1; --code-bg: #f3f3f0; --bar-bg: #e7e7e2; --shadow: 0 1px 2px rgba(0,0,0,.05);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #131312; --surface: #1c1c1b; --surface-2: #252523; --text: #ececea; --muted: #9c9c96;
+    --border: #2f2f2c; --accent: #6c9cf0; --done: #4cc184; --done-bg: #1b3326; --revise: #e3a04f;
+    --revise-bg: #3a2a16; --code-bg: #232321; --bar-bg: #2c2c29; --shadow: none;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #131312; --surface: #1c1c1b; --surface-2: #252523; --text: #ececea; --muted: #9c9c96;
+  --border: #2f2f2c; --accent: #6c9cf0; --done: #4cc184; --done-bg: #1b3326; --revise: #e3a04f;
+  --revise-bg: #3a2a16; --code-bg: #232321; --bar-bg: #2c2c29; --shadow: none;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--text);
+  font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+.wrap { max-width: 880px; margin: 0 auto; padding: 20px 16px 80px; }
+header.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+header.top h1 { font-size: 1.35rem; margin: 0; }
+header.top h1 a { color: var(--text); }
+.tools { display: flex; gap: 8px; flex-wrap: wrap; }
+button, .btn { font: inherit; font-size: .88rem; border: 1px solid var(--border); background: var(--surface);
+  color: var(--text); border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+button:hover, .btn:hover { border-color: var(--muted); text-decoration: none; }
+button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; box-shadow: var(--shadow); }
+.summary { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; margin-bottom: 20px; }
+.big { font-size: 2rem; font-weight: 700; line-height: 1.1; }
+.muted { color: var(--muted); }
+.small { font-size: .85rem; }
+.bar { height: 8px; background: var(--bar-bg); border-radius: 99px; overflow: hidden; display: flex; }
+.bar > .d { background: var(--done); }
+.bar > .r { background: var(--revise); }
+.stats { display: flex; gap: 14px; flex-wrap: wrap; font-size: .88rem; margin-top: 8px; }
+.dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+input[type=search] { width: 100%; font: inherit; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border);
+  background: var(--surface); color: var(--text); margin-bottom: 20px; }
+h2.cat { font-size: 1.02rem; margin: 26px 0 10px; }
+.topics { display: grid; gap: 10px; }
+.topic { display: block; color: var(--text); }
+.topic:hover { text-decoration: none; border-color: var(--accent); }
+.topic .row { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; margin-bottom: 6px; }
+.topic .name { font-weight: 600; }
+.topic .areas { font-size: .82rem; color: var(--muted); margin-top: 6px; }
+.complete { color: var(--done); font-weight: 600; }
+.crumbs { margin-bottom: 10px; font-size: .9rem; }
+.topic-head h2 { margin: 0 0 4px; font-size: 1.4rem; }
+.filters { display: flex; gap: 6px; flex-wrap: wrap; margin: 16px 0; }
+.filters button[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
+h3.section { font-size: .95rem; color: var(--muted); margin: 22px 0 8px; text-transform: none; }
+.q { margin-bottom: 10px; scroll-margin-top: 16px; }
+.q.done { border-left: 4px solid var(--done); }
+.q.revise { border-left: 4px solid var(--revise); }
+.q.focus { outline: 2px solid var(--accent); }
+.q .qt { display: flex; gap: 10px; align-items: flex-start; }
+.q .num { color: var(--muted); font-variant-numeric: tabular-nums; min-width: 2.2em; }
+.q .title { flex: 1; font-weight: 600; }
+.q .title code { font-size: .88em; }
+.q .actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; padding-left: calc(2.2em + 10px); }
+.q .actions .done-btn[aria-pressed="true"] { background: var(--done-bg); color: var(--done); border-color: var(--done); }
+.q .actions .rev-btn[aria-pressed="true"] { background: var(--revise-bg); color: var(--revise); border-color: var(--revise); }
+.q .src { font-size: .8rem; color: var(--muted); padding-left: calc(2.2em + 10px); margin-top: 4px; }
+.answer { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border); overflow-wrap: anywhere; }
+.answer :first-child { margin-top: 0; }
+.answer pre { background: var(--code-bg); padding: 12px; border-radius: 8px; overflow-x: auto; font-size: .85rem; line-height: 1.45; }
+.answer code { background: var(--code-bg); padding: 1px 5px; border-radius: 4px; font-size: .9em; }
+.answer pre code { background: none; padding: 0; }
+.answer table { border-collapse: collapse; width: 100%; font-size: .88rem; display: block; overflow-x: auto; }
+.answer th, .answer td { border: 1px solid var(--border); padding: 6px 8px; text-align: left; vertical-align: top; }
+.answer th { background: var(--surface-2); }
+.answer blockquote { margin: 0; padding-left: 12px; border-left: 3px solid var(--border); color: var(--muted); }
+.pager { display: flex; justify-content: space-between; gap: 10px; margin-top: 24px; flex-wrap: wrap; }
+.empty { text-align: center; padding: 30px; color: var(--muted); }
+.toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--text); color: var(--bg);
+  padding: 8px 14px; border-radius: 8px; font-size: .9rem; opacity: 0; transition: opacity .2s; pointer-events: none; }
+.toast.show { opacity: 1; }
+footer { margin-top: 40px; font-size: .82rem; color: var(--muted); text-align: center; }
+@media (max-width: 520px) { .summary { grid-template-columns: 1fr; } .big { font-size: 1.7rem; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1><a href="#/" id="site-title">Interview Prep Tracker</a></h1>
+    <div class="tools">
+      <a class="btn" href="#/revise">↻ Revise list</a>
+      <button id="export-btn" title="Download your progress as a file">Export</button>
+      <button id="import-btn" title="Load progress from an exported file">Import</button>
+      <button id="theme-btn" title="Toggle dark mode">◐</button>
+      <input type="file" id="import-file" accept="application/json" hidden>
+    </div>
+  </header>
+  <main id="app"><div class="empty">Loading questions…</div></main>
+  <footer>Progress is saved in this browser. Use Export / Import to move it to another device.
+    · <a id="repo-link" href="./">View repo</a></footer>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ---------- Parsing (pure functions) ----------
+// PARSE-START
+function parseReadme(md) {
+  const lines = md.split("\n");
+  const title = (lines.find(l => /^# /.test(l)) || "# Interview Prep").replace(/^# /, "").trim();
+  const categories = [];
+  let current = null;
+  for (const line of lines) {
+    const cat = line.match(/^### (.+)$/);
+    if (cat) { current = { name: cat[1].trim(), topics: [] }; categories.push(current); continue; }
+    if (/^## /.test(line)) { current = null; continue; }
+    const row = line.match(/^\|\s*(\d+)\s*\|\s*\[([^\]]+)\]\((topics\/[^)]+\.md)\)\s*\|\s*\d+\s*\|\s*(.*?)\s*\|\s*$/);
+    if (row && current) current.topics.push({ num: row[1], name: row[2], file: row[3], areas: row[4] });
+  }
+  return { title, categories: categories.filter(c => c.topics.length) };
+}
+
+function parseTopic(md) {
+  const lines = md.split("\n");
+  const title = (lines.find(l => /^# /.test(l)) || "").replace(/^# /, "").trim();
+  const coversLine = lines.find(l => /^Covers:|^Many companies|^Interviewers/.test(l)) || "";
+  const questions = [];
+  let section = "", q = null, body = [];
+  const flush = () => {
+    if (!q) return;
+    let text = body.join("\n");
+    const start = text.indexOf("<summary>Answer</summary>");
+    const end = text.lastIndexOf("</details>");
+    q.answer = (start >= 0 && end > start) ? text.slice(start + "<summary>Answer</summary>".length, end).trim() : text.trim();
+    questions.push(q); q = null; body = [];
+  };
+  for (const line of lines) {
+    const qm = line.match(/^### (\d+)\. (.+)$/);
+    if (qm) { flush(); q = { n: Number(qm[1]), title: qm[2].trim(), section }; continue; }
+    const sm = line.match(/^## (.+)$/);
+    if (sm) { flush(); section = sm[1].trim(); continue; }
+    if (/^\[⬅/.test(line)) { flush(); continue; }
+    if (q) body.push(line);
+  }
+  flush();
+  return { title, covers: coversLine.replace(/^Covers:\s*/, ""), questions };
+}
+
+function questionKey(file, title) {
+  return file.replace(/^topics\//, "") + "::" + title.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+// PARSE-END
+
+// ---------- Storage ----------
+const STORE = "iq-tracker::" + location.pathname.replace(/index\.html$/, "");
+function loadState() {
+  try { const s = JSON.parse(localStorage.getItem(STORE)); if (s && s.status) return s; } catch (e) {}
+  return { status: {}, last: null };
+}
+function saveState() {
+  try { localStorage.setItem(STORE, JSON.stringify(state)); }
+  catch (e) { toast("Couldn't save progress in this browser (storage blocked)."); }
+}
+let state = loadState();
+
+// ---------- Theme ----------
+(function initTheme() {
+  let t = null; try { t = localStorage.getItem("iq-theme"); } catch (e) {}
+  if (t) document.documentElement.dataset.theme = t;
+  document.getElementById("theme-btn").onclick = () => {
+    const dark = matchMedia("(prefers-color-scheme: dark)").matches;
+    const cur = document.documentElement.dataset.theme || (dark ? "dark" : "light");
+    const next = cur === "dark" ? "light" : "dark";
+    document.documentElement.dataset.theme = next;
+    try { localStorage.setItem("iq-theme", next); } catch (e) {}
+  };
+})();
+
+// ---------- Data loading ----------
+let site = null;           // { title, categories }
+const topics = {};         // file -> parsed topic
+let topicOrder = [];       // [{file,name,...}]
+
+async function loadAll() {
+  const res = await fetch("README.md", { cache: "no-cache" });
+  if (!res.ok) throw new Error("Couldn't load README.md");
+  site = parseReadme(await res.text());
+  topicOrder = site.categories.flatMap(c => c.topics).sort((a, b) => Number(a.num) - Number(b.num));
+  document.getElementById("site-title").textContent = site.title.replace(/ – Cheat Sheet$/, "") + " · Tracker";
+  document.title = site.title.replace(/ – Cheat Sheet$/, "") + " · Tracker";
+  await Promise.all(topicOrder.map(async t => {
+    const r = await fetch(t.file, { cache: "no-cache" });
+    topics[t.file] = r.ok ? parseTopic(await r.text()) : { title: t.name, covers: "", questions: [] };
+  }));
+}
+
+// ---------- Helpers ----------
+const esc = s => s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const inline = s => marked.parseInline(s);
+function topicStats(file) {
+  const qs = (topics[file] || { questions: [] }).questions;
+  let done = 0, revise = 0;
+  for (const q of qs) { const s = state.status[questionKey(file, q.title)]; if (s === "done") done++; else if (s === "revise") revise++; }
+  return { total: qs.length, done, revise };
+}
+function bar(st) {
+  const d = st.total ? (st.done / st.total * 100) : 0, r = st.total ? (st.revise / st.total * 100) : 0;
+  return `<div class="bar" role="img" aria-label="${st.done} done, ${st.revise} to revise, of ${st.total}"><div class="d" style="width:${d}%"></div><div class="r" style="width:${r}%"></div></div>`;
+}
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById("toast"); el.textContent = msg; el.classList.add("show");
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove("show"), 1800);
+}
+function setStatus(file, q, value) {
+  const k = questionKey(file, q.title);
+  if (state.status[k] === value) delete state.status[k]; else state.status[k] = value;
+  state.last = { file, n: q.n, at: Date.now() };
+  saveState();
+}
+
+// ---------- Views ----------
+const app = document.getElementById("app");
+
+function renderHome() {
+  let total = 0, done = 0, revise = 0;
+  for (const t of topicOrder) { const s = topicStats(t.file); total += s.total; done += s.done; revise += s.revise; }
+  const pct = total ? Math.round(done / total * 100) : 0;
+  const last = state.last && topics[state.last.file] ? state.last : null;
+  const lastTopic = last && topicOrder.find(t => t.file === last.file);
+  const firstUndone = (() => {
+    for (const t of topicOrder) for (const q of topics[t.file].questions)
+      if (!state.status[questionKey(t.file, q.title)]) return { file: t.file, n: q.n, name: t.name };
+    return null;
+  })();
+  let html = `
+  <section class="card summary">
+    <div>
+      <div class="big">${pct}% <span class="small muted">mastered</span></div>
+      <div style="margin-top:10px">${bar({ total, done, revise })}</div>
+      <div class="stats">
+        <span><span class="dot" style="background:var(--done)"></span>${done} done</span>
+        <span><span class="dot" style="background:var(--revise)"></span>${revise} to revise</span>
+        <span class="muted">${total - done - revise} not started · ${total} total</span>
+      </div>
+    </div>
+    <div style="display:grid;gap:8px">
+      ${lastTopic ? `<a class="btn primary" style="background:var(--accent);color:#fff;border-color:var(--accent)" href="#/t/${encodeURIComponent(last.file)}/${last.n}">▶ Continue: ${esc(lastTopic.name)} Q${last.n}</a>` : ""}
+      ${firstUndone ? `<a class="btn" href="#/t/${encodeURIComponent(firstUndone.file)}/${firstUndone.n}">Next unstarted: ${esc(firstUndone.name)} Q${firstUndone.n}</a>` : `<span class="complete">🎉 Every question is marked!</span>`}
+    </div>
+  </section>
+  <input type="search" id="search" placeholder="Search all questions…" aria-label="Search all questions">
+  <div id="search-results"></div>
+  <div id="cats">`;
+  for (const c of site.categories) {
+    html += `<h2 class="cat">${esc(c.name)}</h2><div class="topics">`;
+    for (const t of c.topics) {
+      const s = topicStats(t.file);
+      const status = s.total && s.done === s.total ? `<span class="complete">✓ Complete</span>` : `<span class="small muted">${s.done}/${s.total}${s.revise ? ` · ${s.revise} revise` : ""}</span>`;
+      html += `<a class="card topic" href="#/t/${encodeURIComponent(t.file)}">
+        <div class="row"><span class="name">${esc(t.num)} · ${esc(t.name)}</span>${status}</div>
+        ${bar(s)}<div class="areas">${esc(t.areas)}</div></a>`;
+    }
+    html += `</div>`;
+  }
+  html += `</div>`;
+  app.innerHTML = html;
+  const input = document.getElementById("search");
+  input.addEventListener("input", () => renderSearch(input.value));
+}
+
+function renderSearch(query) {
+  const out = document.getElementById("search-results"), cats = document.getElementById("cats");
+  const q = query.trim().toLowerCase();
+  if (!q) { out.innerHTML = ""; cats.hidden = false; return; }
+  cats.hidden = true;
+  const hits = [];
+  for (const t of topicOrder) for (const item of topics[t.file].questions) {
+    if (item.title.toLowerCase().includes(q) || item.answer.toLowerCase().includes(q))
+      hits.push({ t, item, inTitle: item.title.toLowerCase().includes(q) });
+  }
+  hits.sort((a, b) => b.inTitle - a.inTitle);
+  out.innerHTML = hits.length ? `<p class="small muted">${hits.length} matching question${hits.length > 1 ? "s" : ""}</p>` + hits.slice(0, 80).map(h => {
+    const s = state.status[questionKey(h.t.file, h.item.title)];
+    return `<a class="card topic" style="margin-bottom:8px" href="#/t/${encodeURIComponent(h.t.file)}/${h.item.n}">
+      <div class="row"><span class="name">${inline(h.item.title)}</span>${s === "done" ? '<span class="complete">✓</span>' : s === "revise" ? '<span style="color:var(--revise)">↻</span>' : ""}</div>
+      <div class="areas">${esc(h.t.name)} · Q${h.item.n}</div></a>`;
+  }).join("") : `<div class="empty">No questions match “${esc(query)}”.</div>`;
+}
+
+let topicFilter = "all";
+function questionCard(file, q, showSource) {
+  const k = questionKey(file, q.title), s = state.status[k] || "";
+  return `<article class="card q ${s}" id="q-${q.n}" data-file="${esc(file)}" data-n="${q.n}">
+    <div class="qt"><span class="num">${q.n}.</span><div class="title">${inline(q.title)}</div></div>
+    ${showSource ? `<div class="src">${esc(topicOrder.find(t => t.file === file).name)}</div>` : ""}
+    <div class="actions">
+      <button class="show-btn" aria-expanded="false">Show answer</button>
+      <button class="done-btn" aria-pressed="${s === "done"}">✓ Done</button>
+      <button class="rev-btn" aria-pressed="${s === "revise"}">↻ Revise</button>
+    </div>
+    <div class="answer" hidden></div>
+  </article>`;
+}
+
+function bindCards(onChange) {
+  app.querySelectorAll("article.q").forEach(card => {
+    const file = card.dataset.file, n = Number(card.dataset.n);
+    const q = topics[file].questions.find(x => x.n === n);
+    const ans = card.querySelector(".answer"), show = card.querySelector(".show-btn");
+    show.onclick = () => {
+      if (!ans.dataset.rendered) { ans.innerHTML = marked.parse(q.answer); ans.dataset.rendered = "1"; }
+      ans.hidden = !ans.hidden;
+      show.textContent = ans.hidden ? "Show answer" : "Hide answer";
+      show.setAttribute("aria-expanded", String(!ans.hidden));
+      state.last = { file, n, at: Date.now() }; saveState();
+    };
+    card.querySelector(".done-btn").onclick = () => { setStatus(file, q, "done"); onChange(card, file, q); };
+    card.querySelector(".rev-btn").onclick = () => { setStatus(file, q, "revise"); onChange(card, file, q); };
+  });
+}
+
+function refreshCard(card, file, q) {
+  const s = state.status[questionKey(file, q.title)] || "";
+  card.classList.remove("done", "revise"); if (s) card.classList.add(s);
+  card.querySelector(".done-btn").setAttribute("aria-pressed", String(s === "done"));
+  card.querySelector(".rev-btn").setAttribute("aria-pressed", String(s === "revise"));
+}
+
+function renderTopic(file, focusN) {
+  const t = topics[file], meta = topicOrder.find(x => x.file === file);
+  if (!t || !meta) { app.innerHTML = `<div class="empty">Topic not found. <a href="#/">Go home</a></div>`; return; }
+  const idx = topicOrder.indexOf(meta), prev = topicOrder[idx - 1], next = topicOrder[idx + 1];
+  const st = topicStats(file);
+  const match = q => { const s = state.status[questionKey(file, q.title)];
+    return topicFilter === "all" || (topicFilter === "todo" && !s) || topicFilter === s; };
+  let html = `<div class="crumbs"><a href="#/">← All topics</a></div>
+    <section class="card topic-head"><h2>${esc(meta.num)} · ${esc(t.title || meta.name)}</h2>
+      <div class="small muted">${inline(t.covers || meta.areas)}</div>
+      <div style="margin-top:12px">${bar(st)}</div>
+      <div class="stats"><span>${st.done}/${st.total} done</span><span>${st.revise} to revise</span>
+        <a href="https://github.com${repoPath()}/blob/main/${encodeURI(file)}" target="_blank" rel="noopener">Open on GitHub ↗</a></div>
+    </section>
+    <div class="filters" role="group" aria-label="Filter questions">
+      ${[["all", "All"], ["todo", "Not started"], ["revise", "Revise"], ["done", "Done"]].map(([v, l]) =>
+        `<button data-f="${v}" aria-pressed="${topicFilter === v}">${l}</button>`).join("")}
+      <button id="expand-all">Expand all answers</button>
+    </div>`;
+  let section = null, shown = 0;
+  for (const q of t.questions) {
+    if (!match(q)) continue;
+    if (q.section !== section) { section = q.section; if (section) html += `<h3 class="section">${esc(section)}</h3>`; }
+    html += questionCard(file, q, false); shown++;
+  }
+  if (!shown) html += `<div class="empty">No questions in this filter.</div>`;
+  html += `<nav class="pager">
+    ${prev ? `<a class="btn" href="#/t/${encodeURIComponent(prev.file)}">← ${esc(prev.name)}</a>` : "<span></span>"}
+    ${next ? `<a class="btn" href="#/t/${encodeURIComponent(next.file)}">${esc(next.name)} →</a>` : ""}</nav>`;
+  app.innerHTML = html;
+  app.querySelectorAll(".filters button[data-f]").forEach(b => b.onclick = () => { topicFilter = b.dataset.f; renderTopic(file); });
+  document.getElementById("expand-all").onclick = e => {
+    const open = e.target.textContent.startsWith("Expand");
+    app.querySelectorAll("article.q").forEach(c => { const a = c.querySelector(".answer"); if (a.hidden === open) c.querySelector(".show-btn").click(); });
+    e.target.textContent = open ? "Collapse all answers" : "Expand all answers";
+  };
+  bindCards((card, f, q) => {
+    refreshCard(card, f, q);
+    const s = topicStats(file);
+    app.querySelector(".topic-head .bar").outerHTML = bar(s);
+    app.querySelector(".topic-head .stats span").textContent = `${s.done}/${s.total} done`;
+    app.querySelectorAll(".topic-head .stats span")[1].textContent = `${s.revise} to revise`;
+    if (s.total && s.done === s.total) toast("🎉 Topic complete!");
+  });
+  if (focusN) {
+    const el = document.getElementById("q-" + focusN);
+    if (el) { el.classList.add("focus"); el.scrollIntoView({ block: "start" }); setTimeout(() => el.classList.remove("focus"), 2500); }
+  } else window.scrollTo(0, 0);
+}
+
+function renderRevise() {
+  let html = `<div class="crumbs"><a href="#/">← All topics</a></div><h2>↻ Questions to revise</h2>`, count = 0;
+  for (const t of topicOrder) for (const q of topics[t.file].questions)
+    if (state.status[questionKey(t.file, q.title)] === "revise") { html += questionCard(t.file, q, true); count++; }
+  if (!count) html += `<div class="empty">Nothing marked for revision. Use the ↻ Revise button on any question you want to come back to.</div>`;
+  app.innerHTML = html;
+  bindCards(refreshCard);
+  window.scrollTo(0, 0);
+}
+
+function repoPath() {
+  // https://<user>.github.io/<repo>/ → /<user>/<repo>
+  const user = location.hostname.split(".")[0];
+  const repo = location.pathname.split("/").filter(Boolean)[0] || "";
+  return location.hostname.endsWith("github.io") ? `/${user}/${repo}` : "";
+}
+
+// ---------- Router ----------
+function route() {
+  const h = decodeURIComponent(location.hash.replace(/^#/, "")) || "/";
+  const m = h.match(/^\/t\/(topics\/[^/]+\.md)(?:\/(\d+))?$/);
+  if (m) renderTopic(m[1], m[2] ? Number(m[2]) : null);
+  else if (h === "/revise") renderRevise();
+  else renderHome();
+}
+
+// ---------- Export / import ----------
+document.getElementById("export-btn").onclick = () => {
+  const blob = new Blob([JSON.stringify({ app: STORE, exportedAt: new Date().toISOString(), ...state }, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "interview-progress-" + new Date().toISOString().slice(0, 10) + ".json";
+  a.click(); URL.revokeObjectURL(a.href);
+};
+document.getElementById("import-btn").onclick = () => document.getElementById("import-file").click();
+document.getElementById("import-file").onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const data = JSON.parse(await f.text());
+    if (!data.status) throw new Error("bad file");
+    state.status = { ...state.status, ...data.status };
+    if (data.last && (!state.last || data.last.at > state.last.at)) state.last = data.last;
+    saveState(); route(); toast("Progress imported");
+  } catch (err) { toast("That file isn't a valid progress export."); }
+  e.target.value = "";
+};
+
+// ---------- Boot ----------
+const repoLink = document.getElementById("repo-link");
+if (repoPath()) repoLink.href = "https://github.com" + repoPath();
+window.addEventListener("hashchange", route);
+loadAll().then(route).catch(err => {
+  app.innerHTML = `<div class="empty">Couldn't load the questions (${esc(err.message)}).<br>If you opened this file directly, serve the repo folder instead, e.g. <code>python3 -m http.server</code>.</div>`;
+});
+</script>
+</body>
+</html>
