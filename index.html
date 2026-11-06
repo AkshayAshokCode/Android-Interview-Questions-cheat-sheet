@@ -2,28 +2,34 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Interview Prep Tracker</title>
-<meta name="description" content="Study the interview questions in this repo and track your progress per topic.">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✅</text></svg>">
+<meta name="description" content="Study the interview questions in this repo and track your progress per topic. No account needed.">
+<meta name="theme-color" content="#2f6fde">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<script src="tracker-config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
 <style>
 :root {
   --bg: #f7f7f5; --surface: #ffffff; --surface-2: #f0f0ed; --text: #1c1c1a; --muted: #6b6b66;
-  --border: #e2e2dd; --accent: #2f6fde; --done: #1f9d55; --done-bg: #e5f5ec; --revise: #c9781a;
-  --revise-bg: #fbf0e1; --code-bg: #f3f3f0; --bar-bg: #e7e7e2; --shadow: 0 1px 2px rgba(0,0,0,.05);
+  --border: #e2e2dd; --accent: #2f6fde; --accent-bg: #e8f0fd; --done: #1f9d55; --done-bg: #e5f5ec;
+  --revise: #b86b12; --revise-bg: #fbf0e1; --danger: #c43d3d; --code-bg: #f3f3f0; --bar-bg: #e7e7e2;
+  --shadow: 0 1px 2px rgba(0,0,0,.05);
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #131312; --surface: #1c1c1b; --surface-2: #252523; --text: #ececea; --muted: #9c9c96;
-    --border: #2f2f2c; --accent: #6c9cf0; --done: #4cc184; --done-bg: #1b3326; --revise: #e3a04f;
-    --revise-bg: #3a2a16; --code-bg: #232321; --bar-bg: #2c2c29; --shadow: none;
+    --border: #2f2f2c; --accent: #6c9cf0; --accent-bg: #1c2a42; --done: #4cc184; --done-bg: #1b3326;
+    --revise: #e3a04f; --revise-bg: #3a2a16; --danger: #ef7676; --code-bg: #232321; --bar-bg: #2c2c29; --shadow: none;
   }
 }
 :root[data-theme="dark"] {
   --bg: #131312; --surface: #1c1c1b; --surface-2: #252523; --text: #ececea; --muted: #9c9c96;
-  --border: #2f2f2c; --accent: #6c9cf0; --done: #4cc184; --done-bg: #1b3326; --revise: #e3a04f;
-  --revise-bg: #3a2a16; --code-bg: #232321; --bar-bg: #2c2c29; --shadow: none;
+  --border: #2f2f2c; --accent: #6c9cf0; --accent-bg: #1c2a42; --done: #4cc184; --done-bg: #1b3326;
+  --revise: #e3a04f; --revise-bg: #3a2a16; --danger: #ef7676; --code-bg: #232321; --bar-bg: #2c2c29; --shadow: none;
 }
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
@@ -33,14 +39,24 @@ a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
 .wrap { max-width: 880px; margin: 0 auto; padding: 20px 16px 80px; }
 header.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
-header.top h1 { font-size: 1.35rem; margin: 0; }
+header.top h1 { font-size: 1.3rem; margin: 0; }
 header.top h1 a { color: var(--text); }
-.tools { display: flex; gap: 8px; flex-wrap: wrap; }
+.tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 button, .btn { font: inherit; font-size: .88rem; border: 1px solid var(--border); background: var(--surface);
-  color: var(--text); border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+  color: var(--text); border-radius: 8px; padding: 6px 12px; cursor: pointer; display: inline-block; }
 button:hover, .btn:hover { border-color: var(--muted); text-decoration: none; }
-button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+button:disabled { opacity: .6; cursor: default; }
+.primary { background: var(--accent) !important; color: #fff !important; border-color: var(--accent) !important; }
+.linkish { background: none; border: none; color: var(--accent); padding: 0; font-size: .88rem; }
+.danger { color: var(--danger); }
+.chip { border-radius: 99px; font-size: .82rem; }
+.chip.synced { border-color: var(--done); color: var(--done); }
+.chip.warn { border-color: var(--revise); color: var(--revise); }
 .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; box-shadow: var(--shadow); }
+.notice { background: var(--accent-bg); border-color: transparent; margin-bottom: 16px; }
+.notice h2 { font-size: 1.05rem; margin: 0 0 6px; }
+.notice p { margin: 0 0 12px; }
+.row-btns { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .summary { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; margin-bottom: 20px; }
 .big { font-size: 2rem; font-weight: 700; line-height: 1.1; }
 .muted { color: var(--muted); }
@@ -50,8 +66,11 @@ button.primary { background: var(--accent); color: #fff; border-color: var(--acc
 .bar > .r { background: var(--revise); }
 .stats { display: flex; gap: 14px; flex-wrap: wrap; font-size: .88rem; margin-top: 8px; }
 .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
-input[type=search] { width: 100%; font: inherit; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border);
-  background: var(--surface); color: var(--text); margin-bottom: 20px; }
+input[type=search], input[type=email], input[type=password], input[type=text] {
+  width: 100%; font: inherit; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border);
+  background: var(--surface); color: var(--text); }
+input[type=search] { margin-bottom: 20px; }
+label { display: block; font-size: .88rem; font-weight: 600; margin: 12px 0 4px; }
 h2.cat { font-size: 1.02rem; margin: 26px 0 10px; }
 .topics { display: grid; gap: 10px; }
 .topic { display: block; color: var(--text); }
@@ -63,8 +82,8 @@ h2.cat { font-size: 1.02rem; margin: 26px 0 10px; }
 .crumbs { margin-bottom: 10px; font-size: .9rem; }
 .topic-head h2 { margin: 0 0 4px; font-size: 1.4rem; }
 .filters { display: flex; gap: 6px; flex-wrap: wrap; margin: 16px 0; }
-.filters button[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
-h3.section { font-size: .95rem; color: var(--muted); margin: 22px 0 8px; text-transform: none; }
+.filters button[aria-pressed="true"], .tabs button[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
+h3.section { font-size: .95rem; color: var(--muted); margin: 22px 0 8px; }
 .q { margin-bottom: 10px; scroll-margin-top: 16px; }
 .q.done { border-left: 4px solid var(--done); }
 .q.revise { border-left: 4px solid var(--revise); }
@@ -88,33 +107,45 @@ h3.section { font-size: .95rem; color: var(--muted); margin: 22px 0 8px; text-tr
 .answer blockquote { margin: 0; padding-left: 12px; border-left: 3px solid var(--border); color: var(--muted); }
 .pager { display: flex; justify-content: space-between; gap: 10px; margin-top: 24px; flex-wrap: wrap; }
 .empty { text-align: center; padding: 30px; color: var(--muted); }
+.account section { margin-bottom: 16px; }
+.account h2 { font-size: 1.1rem; margin: 0 0 6px; }
+.tabs { display: flex; gap: 6px; margin: 12px 0 4px; }
+.pw-wrap { position: relative; }
+.pw-wrap input { padding-right: 64px; }
+.pw-wrap button { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); padding: 3px 8px; font-size: .8rem; }
+.form-msg { font-size: .88rem; margin-top: 10px; min-height: 1.2em; }
+.form-msg.error { color: var(--danger); }
+.form-msg.ok { color: var(--done); }
+.qr { background: #fff; padding: 8px; border-radius: 8px; display: inline-block; margin-top: 10px; }
+.qr svg { display: block; width: 200px; height: 200px; }
+.code-box { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .78rem; word-break: break-all;
+  background: var(--code-bg); padding: 8px; border-radius: 8px; margin-top: 10px; }
 .toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--text); color: var(--bg);
-  padding: 8px 14px; border-radius: 8px; font-size: .9rem; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  padding: 8px 14px; border-radius: 8px; font-size: .9rem; opacity: 0; transition: opacity .2s; pointer-events: none; max-width: 90vw; }
 .toast.show { opacity: 1; }
 footer { margin-top: 40px; font-size: .82rem; color: var(--muted); text-align: center; }
-@media (max-width: 520px) { .summary { grid-template-columns: 1fr; } .big { font-size: 1.7rem; } }
+@media (max-width: 520px) { .summary { grid-template-columns: 1fr; } .big { font-size: 1.7rem; } .chip-long { display: none; } }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header class="top">
     <h1><a href="#/" id="site-title">Interview Prep Tracker</a></h1>
-    <div class="tools">
+    <nav class="tools" aria-label="Main">
       <a class="btn" href="#/revise">↻ Revise list</a>
-      <button id="export-btn" title="Download your progress as a file">Export</button>
-      <button id="import-btn" title="Load progress from an exported file">Import</button>
-      <button id="theme-btn" title="Toggle dark mode">◐</button>
-      <input type="file" id="import-file" accept="application/json" hidden>
-    </div>
+      <a class="btn chip" id="sync-chip" href="#/account">💾 Saved on this device</a>
+      <button id="theme-btn" title="Toggle dark mode" aria-label="Toggle dark mode">◐</button>
+    </nav>
   </header>
   <main id="app"><div class="empty">Loading questions…</div></main>
-  <footer>Progress is saved in this browser. Use Export / Import to move it to another device.
-    · <a id="repo-link" href="./">View repo</a></footer>
+  <footer>No account needed. Your progress saves automatically on this device ·
+    <a href="#/account">Sync &amp; backup</a> · <a id="repo-link" href="./">View repo</a></footer>
 </div>
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<input type="file" id="import-file" accept="application/json" hidden>
 
 <script>
-// ---------- Parsing (pure functions) ----------
+// ===================== Parsing & encoding (pure functions) =====================
 // PARSE-START
 function parseReadme(md) {
   const lines = md.split("\n");
@@ -139,7 +170,7 @@ function parseTopic(md) {
   let section = "", q = null, body = [];
   const flush = () => {
     if (!q) return;
-    let text = body.join("\n");
+    const text = body.join("\n");
     const start = text.indexOf("<summary>Answer</summary>");
     const end = text.lastIndexOf("</details>");
     q.answer = (start >= 0 && end > start) ? text.slice(start + "<summary>Answer</summary>".length, end).trim() : text.trim();
@@ -160,21 +191,91 @@ function parseTopic(md) {
 function questionKey(file, title) {
   return file.replace(/^topics\//, "") + "::" + title.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 }
+
+// Merge marks: per question, the most recent change (t) wins. Returns true if `into` changed.
+function mergeMarksInto(into, from) {
+  let changed = false;
+  for (const k in from) {
+    const r = from[k], l = into[k];
+    if (r && typeof r.t === "number" && (!l || r.t > l.t)) { into[k] = { s: r.s || "", t: r.t }; changed = true; }
+  }
+  return changed;
+}
+
+function toB64url(bytes) {
+  let bin = ""; for (const b of bytes) bin += String.fromCharCode(b);
+  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+function fromB64url(s) {
+  s = s.replace(/-/g, "+").replace(/_/g, "/"); while (s.length % 4) s += "=";
+  return Array.from(atob(s), c => c.charCodeAt(0));
+}
+// Compact transfer code: 2 bits per question (0 none, 1 done, 2 revise), grouped by topic.
+// Questions are only ever appended to topic files, so positions stay stable.
+function encodeProgress(list, codeOf, timeSec) {
+  const bytes = [1, (timeSec >>> 24) & 255, (timeSec >>> 16) & 255, (timeSec >>> 8) & 255, timeSec & 255];
+  for (const t of list) {
+    const qs = t.questions;
+    bytes.push(Number(t.num) & 255, (qs.length >> 8) & 255, qs.length & 255);
+    let cur = 0, bits = 0;
+    for (const q of qs) {
+      cur |= (codeOf(t, q) & 3) << bits; bits += 2;
+      if (bits === 8) { bytes.push(cur); cur = 0; bits = 0; }
+    }
+    if (bits) bytes.push(cur);
+  }
+  return toB64url(bytes);
+}
+function decodeProgress(code, list) {
+  const b = fromB64url(code);
+  if (b[0] !== 1 || b.length < 5) throw new Error("Unsupported code");
+  const time = ((b[1] << 24) | (b[2] << 16) | (b[3] << 8) | b[4]) >>> 0;
+  let i = 5, skipped = 0;
+  const items = [];
+  while (i + 3 <= b.length) {
+    const num = b[i], count = (b[i + 1] << 8) | b[i + 2];
+    i += 3;
+    const codes = [];
+    for (let j = 0; j < count; j++) codes.push((b[i + (j >> 2)] >> ((j & 3) * 2)) & 3);
+    i += Math.ceil(count / 4);
+    const t = list.find(x => Number(x.num) === num);
+    if (!t || t.questions.length < count) { if (codes.some(c => c)) skipped++; continue; }
+    codes.forEach((c, j) => { if (c === 1 || c === 2) items.push({ t, q: t.questions[j], s: c === 1 ? "done" : "revise" }); });
+  }
+  return { time, items, skipped };
+}
 // PARSE-END
 
-// ---------- Storage ----------
+// ===================== Local storage =====================
 const STORE = "iq-tracker::" + location.pathname.replace(/index\.html$/, "");
+const TRACKER_ID = (location.pathname.split("/").filter(Boolean)[0] || "local").replace(/\.html$/, "");
 function loadState() {
-  try { const s = JSON.parse(localStorage.getItem(STORE)); if (s && s.status) return s; } catch (e) {}
-  return { status: {}, last: null };
-}
-function saveState() {
-  try { localStorage.setItem(STORE, JSON.stringify(state)); }
-  catch (e) { toast("Couldn't save progress in this browser (storage blocked)."); }
+  let s = null;
+  try { s = JSON.parse(localStorage.getItem(STORE)); } catch (e) {}
+  s = s || {};
+  if (!s.marks) {                       // migrate v1 format { status: {key: "done"} }
+    s.marks = {};
+    if (s.status) for (const k in s.status) s.marks[k] = { s: s.status[k], t: 0 };
+  }
+  delete s.status;
+  s.prefs = s.prefs || {};
+  return s;
 }
 let state = loadState();
+function saveState() {
+  try { localStorage.setItem(STORE, JSON.stringify(state)); }
+  catch (e) { toast("Couldn't save progress in this browser (storage is blocked)."); }
+}
+const getMark = k => (state.marks[k] && state.marks[k].s) || "";
 
-// ---------- Theme ----------
+let persistAsked = false;
+function requestPersistentStorage() {
+  if (persistAsked || !navigator.storage || !navigator.storage.persist) return;
+  persistAsked = true;
+  navigator.storage.persist().catch(() => {});
+}
+
+// ===================== Theme =====================
 (function initTheme() {
   let t = null; try { t = localStorage.getItem("iq-theme"); } catch (e) {}
   if (t) document.documentElement.dataset.theme = t;
@@ -187,76 +288,256 @@ let state = loadState();
   };
 })();
 
-// ---------- Data loading ----------
-let site = null;           // { title, categories }
-const topics = {};         // file -> parsed topic
-let topicOrder = [];       // [{file,name,...}]
+// ===================== Data loading =====================
+let site = null;
+const topics = {};
+let topicOrder = [];
+let shortTitle = "Interview Prep";
 
 async function loadAll() {
   const res = await fetch("README.md", { cache: "no-cache" });
   if (!res.ok) throw new Error("Couldn't load README.md");
   site = parseReadme(await res.text());
   topicOrder = site.categories.flatMap(c => c.topics).sort((a, b) => Number(a.num) - Number(b.num));
-  document.getElementById("site-title").textContent = site.title.replace(/ – Cheat Sheet$/, "") + " · Tracker";
-  document.title = site.title.replace(/ – Cheat Sheet$/, "") + " · Tracker";
+  shortTitle = site.title.replace(/ – Cheat Sheet$/, "").replace(/ Questions$/, "");
+  document.getElementById("site-title").textContent = shortTitle + " Tracker";
+  document.title = shortTitle + " Tracker";
   await Promise.all(topicOrder.map(async t => {
     const r = await fetch(t.file, { cache: "no-cache" });
     topics[t.file] = r.ok ? parseTopic(await r.text()) : { title: t.name, covers: "", questions: [] };
+    t.questions = topics[t.file].questions;
   }));
 }
 
-// ---------- Helpers ----------
-const esc = s => s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+// ===================== Helpers =====================
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const inline = s => marked.parseInline(s);
 function topicStats(file) {
   const qs = (topics[file] || { questions: [] }).questions;
   let done = 0, revise = 0;
-  for (const q of qs) { const s = state.status[questionKey(file, q.title)]; if (s === "done") done++; else if (s === "revise") revise++; }
+  for (const q of qs) { const s = getMark(questionKey(file, q.title)); if (s === "done") done++; else if (s === "revise") revise++; }
   return { total: qs.length, done, revise };
+}
+function allStats() {
+  let total = 0, done = 0, revise = 0;
+  for (const t of topicOrder) { const s = topicStats(t.file); total += s.total; done += s.done; revise += s.revise; }
+  return { total, done, revise };
 }
 function bar(st) {
   const d = st.total ? (st.done / st.total * 100) : 0, r = st.total ? (st.revise / st.total * 100) : 0;
   return `<div class="bar" role="img" aria-label="${st.done} done, ${st.revise} to revise, of ${st.total}"><div class="d" style="width:${d}%"></div><div class="r" style="width:${r}%"></div></div>`;
 }
+function timeAgo(ms) {
+  if (!ms) return "never";
+  const s = Math.round((Date.now() - ms) / 1000);
+  if (s < 60) return "just now";
+  if (s < 3600) return Math.round(s / 60) + " min ago";
+  if (s < 86400) return Math.round(s / 3600) + " h ago";
+  return Math.round(s / 86400) + " days ago";
+}
 let toastTimer;
 function toast(msg) {
   const el = document.getElementById("toast"); el.textContent = msg; el.classList.add("show");
-  clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove("show"), 1800);
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove("show"), 2400);
 }
-function setStatus(file, q, value) {
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); return true; }
+  catch (e) {
+    const ta = document.createElement("textarea"); ta.value = text; document.body.appendChild(ta); ta.select();
+    let ok = false; try { ok = document.execCommand("copy"); } catch (err) {}
+    ta.remove(); return ok;
+  }
+}
+function setMark(file, q, value) {
   const k = questionKey(file, q.title);
-  if (state.status[k] === value) delete state.status[k]; else state.status[k] = value;
+  state.marks[k] = { s: getMark(k) === value ? "" : value, t: Date.now() };
   state.last = { file, n: q.n, at: Date.now() };
   saveState();
+  requestPersistentStorage();
+  if (sync.user) schedulePush();
 }
 
-// ---------- Views ----------
+// ===================== Optional cloud sync (Firebase) =====================
+const CONFIG = (window.TRACKER_CONFIG && window.TRACKER_CONFIG.firebase) || null;
+const sync = { enabled: !!CONFIG, ready: false, user: null, status: "local", lastSynced: 0, pending: false, fb: null, unsub: null, timer: null };
+
+function renderChip() {
+  const chip = document.getElementById("sync-chip");
+  chip.className = "btn chip";
+  if (!sync.user) {
+    chip.innerHTML = sync.enabled
+      ? `💾 <span class="chip-long">Saved on this device · </span>Sign in to sync`
+      : `💾 Saved on this device`;
+    chip.title = "Your progress is saved in this browser. Open sync & backup options.";
+    return;
+  }
+  const map = {
+    syncing: ["⟳ Syncing…", ""], synced: ["☁️ Synced", "synced"],
+    offline: ["☁️ Offline · will sync", "warn"], error: ["⚠️ Sync paused", "warn"]
+  };
+  const [label, cls] = map[sync.status] || map.synced;
+  chip.textContent = label; if (cls) chip.classList.add(cls);
+  chip.title = "Signed in as " + sync.user.email;
+}
+function setSyncStatus(s) {
+  sync.status = s; renderChip();
+  const line = document.getElementById("sync-status-line");
+  if (line) line.textContent = syncStatusText();
+}
+function syncStatusText() {
+  if (sync.status === "syncing") return "Syncing your progress…";
+  if (sync.status === "offline") return "You're offline. Changes are saved on this device and will sync when you're back online.";
+  if (sync.status === "error") return "Sync is paused because of a problem. Your progress is still saved on this device. Try “Sync now”.";
+  return "All changes synced · last synced " + timeAgo(sync.lastSynced) + ".";
+}
+
+async function initFirebase() {
+  if (!sync.enabled) return;
+  try {
+    const base = "https://www.gstatic.com/firebasejs/10.12.2/";
+    const [appM, authM, fsM] = await Promise.all([
+      import(base + "firebase-app.js"), import(base + "firebase-auth.js"), import(base + "firebase-firestore.js")]);
+    const app = appM.initializeApp(CONFIG);
+    sync.fb = { auth: authM.getAuth(app), db: fsM.getFirestore(app), A: authM, F: fsM };
+    sync.ready = true;
+    if (currentView === "account") route();
+    authM.onAuthStateChanged(sync.fb.auth, onUserChanged);
+  } catch (e) {
+    console.warn("Sync unavailable:", e);
+    sync.loadError = true; renderChip();
+    if (currentView === "account") route();
+  }
+}
+function progressDoc() { return sync.fb.F.doc(sync.fb.db, "users", sync.user.uid, "progress", TRACKER_ID); }
+function parseRemote(data) { try { return JSON.parse(data.data || "{}"); } catch (e) { return {}; } }
+function adoptRemoteLast(last) {
+  if (last && last.file && (!state.last || (last.at || 0) > (state.last.at || 0))) state.last = last;
+}
+
+function onUserChanged(user) {
+  if (sync.unsub) { sync.unsub(); sync.unsub = null; }
+  const wasSignedIn = !!sync.user;
+  sync.user = user;
+  if (!user) { setSyncStatus("local"); if (wasSignedIn || currentView === "account" || currentView === "home") route(); return; }
+  setSyncStatus("syncing");
+  sync.unsub = sync.fb.F.onSnapshot(progressDoc(), snap => {
+    if (snap.exists()) {
+      const data = snap.data();
+      const changed = mergeMarksInto(state.marks, parseRemote(data));
+      adoptRemoteLast(data.last);
+      if (changed) { saveState(); refreshMarksInView(); }
+    }
+    sync.lastSynced = Date.now();
+    if (!sync.pending) setSyncStatus("synced");
+  }, () => setSyncStatus(navigator.onLine ? "error" : "offline"));
+  schedulePush(0);                       // upload this device's progress (merged)
+  if (currentView === "account" || currentView === "home") route();
+}
+
+function schedulePush(delay = 1500) {
+  if (!sync.user) return;
+  sync.pending = true; setSyncStatus("syncing");
+  clearTimeout(sync.timer); sync.timer = setTimeout(pushNow, delay);
+}
+async function pushNow() {
+  if (!sync.user) return;
+  const { F, db } = sync.fb, ref = progressDoc();
+  try {
+    let merged = null, remoteLast = null;
+    await F.runTransaction(db, async tx => {
+      const snap = await tx.get(ref);
+      const remote = snap.exists() ? parseRemote(snap.data()) : {};
+      remoteLast = snap.exists() ? snap.data().last : null;
+      merged = Object.assign({}, remote);
+      mergeMarksInto(merged, state.marks);
+      let last = state.last || null;
+      if (remoteLast && (!last || (remoteLast.at || 0) > (last.at || 0))) last = remoteLast;
+      tx.set(ref, { data: JSON.stringify(merged), last, updatedAt: F.serverTimestamp() });
+    });
+    adoptRemoteLast(remoteLast);
+    if (mergeMarksInto(state.marks, merged)) refreshMarksInView();
+    saveState();
+    sync.pending = false; sync.lastSynced = Date.now(); setSyncStatus("synced");
+  } catch (e) {
+    console.warn("Sync failed:", e);
+    setSyncStatus(navigator.onLine ? "error" : "offline");
+  }
+}
+window.addEventListener("online", () => { if (sync.user && sync.pending) schedulePush(0); });
+
+const AUTH_ERRORS = {
+  "auth/invalid-email": "That email address doesn't look right.",
+  "auth/missing-password": "Please enter your password.",
+  "auth/invalid-credential": "Email or password is incorrect.",
+  "auth/wrong-password": "Email or password is incorrect.",
+  "auth/user-not-found": "Email or password is incorrect.",
+  "auth/email-already-in-use": "An account with this email already exists. Try signing in instead.",
+  "auth/weak-password": "Please choose a stronger password (at least 8 characters).",
+  "auth/too-many-requests": "Too many attempts. Please wait a few minutes and try again.",
+  "auth/network-request-failed": "You seem to be offline. Check your connection and try again.",
+  "auth/requires-recent-login": "For your security, please sign out, sign in again, and then retry.",
+  "auth/operation-not-allowed": "Sign-in isn't enabled for this site yet.",
+  "auth/unauthorized-domain": "Sign-in isn't enabled for this site's address yet."
+};
+const authMessage = e => AUTH_ERRORS[e && e.code] || "Something went wrong. Please try again.";
+
+// ===================== Views =====================
 const app = document.getElementById("app");
+let currentView = "home";
+
+function welcomeCard() {
+  if (state.prefs.welcomeDismissed) return "";
+  return `<section class="card notice" aria-labelledby="welcome-title">
+    <h2 id="welcome-title">👋 Start studying. No account needed.</h2>
+    <p>Mark questions <b>✓ Done</b> or <b>↻ Revise</b> as you go. Your progress is saved automatically on this device.
+    ${sync.enabled
+      ? `Want it on your phone and other computers too? <b>Signing in is optional</b>: do it only if you want your progress synced across devices.`
+      : `Studying on more than one device? You can move your progress anytime from <a href="#/account">Sync &amp; backup</a>.`}</p>
+    <div class="row-btns">
+      <button class="primary" id="welcome-start">Start studying</button>
+      ${sync.enabled ? `<a class="btn" href="#/account" id="welcome-signin">Sign in to sync</a>` : ""}
+    </div>
+  </section>`;
+}
+function nudgeCard(st) {
+  if (sync.user || !state.prefs.welcomeDismissed) return "";
+  const marked = st.done + st.revise;
+  if (marked < 10 || Date.now() < (state.prefs.nudgeSnoozeUntil || 0)) return "";
+  const lastBackup = state.prefs.lastBackup || 0;
+  if (!sync.enabled && Date.now() - lastBackup < 7 * 864e5) return "";
+  return `<section class="card notice" aria-labelledby="nudge-title">
+    <h2 id="nudge-title">Keep your ${marked} marked questions safe</h2>
+    <p>Right now your progress lives only in this browser. Clearing browsing data, or not visiting for a while in Safari, can erase it.
+    ${sync.enabled ? "Sign in (optional) to sync it across your devices, or save a backup." : "Save a transfer link or backup file to keep it safe."}</p>
+    <div class="row-btns">
+      <a class="btn primary" href="#/account">${sync.enabled ? "Sign in to sync" : "Back up my progress"}</a>
+      <button id="nudge-later">Remind me later</button>
+    </div>
+  </section>`;
+}
 
 function renderHome() {
-  let total = 0, done = 0, revise = 0;
-  for (const t of topicOrder) { const s = topicStats(t.file); total += s.total; done += s.done; revise += s.revise; }
-  const pct = total ? Math.round(done / total * 100) : 0;
+  currentView = "home";
+  const st = allStats();
+  const pct = st.total ? Math.round(st.done / st.total * 100) : 0;
   const last = state.last && topics[state.last.file] ? state.last : null;
   const lastTopic = last && topicOrder.find(t => t.file === last.file);
-  const firstUndone = (() => {
-    for (const t of topicOrder) for (const q of topics[t.file].questions)
-      if (!state.status[questionKey(t.file, q.title)]) return { file: t.file, n: q.n, name: t.name };
-    return null;
-  })();
-  let html = `
+  let firstUndone = null;
+  outer: for (const t of topicOrder) for (const q of t.questions)
+    if (!getMark(questionKey(t.file, q.title))) { firstUndone = { file: t.file, n: q.n, name: t.name }; break outer; }
+  let html = welcomeCard() + nudgeCard(st) + `
   <section class="card summary">
     <div>
-      <div class="big">${pct}% <span class="small muted">mastered</span></div>
-      <div style="margin-top:10px">${bar({ total, done, revise })}</div>
+      <div class="big">${pct}% <span class="small muted">done</span></div>
+      <div style="margin-top:10px">${bar(st)}</div>
       <div class="stats">
-        <span><span class="dot" style="background:var(--done)"></span>${done} done</span>
-        <span><span class="dot" style="background:var(--revise)"></span>${revise} to revise</span>
-        <span class="muted">${total - done - revise} not started · ${total} total</span>
+        <span><span class="dot" style="background:var(--done)"></span>${st.done} done</span>
+        <span><span class="dot" style="background:var(--revise)"></span>${st.revise} to revise</span>
+        <span class="muted">${st.total - st.done - st.revise} not started · ${st.total} total</span>
       </div>
     </div>
     <div style="display:grid;gap:8px">
-      ${lastTopic ? `<a class="btn primary" style="background:var(--accent);color:#fff;border-color:var(--accent)" href="#/t/${encodeURIComponent(last.file)}/${last.n}">▶ Continue: ${esc(lastTopic.name)} Q${last.n}</a>` : ""}
+      ${lastTopic ? `<a class="btn primary" href="#/t/${encodeURIComponent(last.file)}/${last.n}">▶ Continue: ${esc(lastTopic.name)} Q${last.n}</a>` : ""}
       ${firstUndone ? `<a class="btn" href="#/t/${encodeURIComponent(firstUndone.file)}/${firstUndone.n}">Next unstarted: ${esc(firstUndone.name)} Q${firstUndone.n}</a>` : `<span class="complete">🎉 Every question is marked!</span>`}
     </div>
   </section>
@@ -267,7 +548,8 @@ function renderHome() {
     html += `<h2 class="cat">${esc(c.name)}</h2><div class="topics">`;
     for (const t of c.topics) {
       const s = topicStats(t.file);
-      const status = s.total && s.done === s.total ? `<span class="complete">✓ Complete</span>` : `<span class="small muted">${s.done}/${s.total}${s.revise ? ` · ${s.revise} revise` : ""}</span>`;
+      const status = s.total && s.done === s.total ? `<span class="complete">✓ Complete</span>`
+        : `<span class="small muted">${s.done}/${s.total}${s.revise ? ` · ${s.revise} revise` : ""}</span>`;
       html += `<a class="card topic" href="#/t/${encodeURIComponent(t.file)}">
         <div class="row"><span class="name">${esc(t.num)} · ${esc(t.name)}</span>${status}</div>
         ${bar(s)}<div class="areas">${esc(t.areas)}</div></a>`;
@@ -276,6 +558,12 @@ function renderHome() {
   }
   html += `</div>`;
   app.innerHTML = html;
+  const ws = document.getElementById("welcome-start");
+  if (ws) ws.onclick = () => { state.prefs.welcomeDismissed = true; saveState(); renderHome(); };
+  const wsi = document.getElementById("welcome-signin");
+  if (wsi) wsi.onclick = () => { state.prefs.welcomeDismissed = true; saveState(); };
+  const nl = document.getElementById("nudge-later");
+  if (nl) nl.onclick = () => { state.prefs.nudgeSnoozeUntil = Date.now() + 14 * 864e5; saveState(); renderHome(); };
   const input = document.getElementById("search");
   input.addEventListener("input", () => renderSearch(input.value));
 }
@@ -286,13 +574,13 @@ function renderSearch(query) {
   if (!q) { out.innerHTML = ""; cats.hidden = false; return; }
   cats.hidden = true;
   const hits = [];
-  for (const t of topicOrder) for (const item of topics[t.file].questions) {
-    if (item.title.toLowerCase().includes(q) || item.answer.toLowerCase().includes(q))
-      hits.push({ t, item, inTitle: item.title.toLowerCase().includes(q) });
+  for (const t of topicOrder) for (const item of t.questions) {
+    const inTitle = item.title.toLowerCase().includes(q);
+    if (inTitle || item.answer.toLowerCase().includes(q)) hits.push({ t, item, inTitle });
   }
   hits.sort((a, b) => b.inTitle - a.inTitle);
   out.innerHTML = hits.length ? `<p class="small muted">${hits.length} matching question${hits.length > 1 ? "s" : ""}</p>` + hits.slice(0, 80).map(h => {
-    const s = state.status[questionKey(h.t.file, h.item.title)];
+    const s = getMark(questionKey(h.t.file, h.item.title));
     return `<a class="card topic" style="margin-bottom:8px" href="#/t/${encodeURIComponent(h.t.file)}/${h.item.n}">
       <div class="row"><span class="name">${inline(h.item.title)}</span>${s === "done" ? '<span class="complete">✓</span>' : s === "revise" ? '<span style="color:var(--revise)">↻</span>' : ""}</div>
       <div class="areas">${esc(h.t.name)} · Q${h.item.n}</div></a>`;
@@ -301,7 +589,7 @@ function renderSearch(query) {
 
 let topicFilter = "all";
 function questionCard(file, q, showSource) {
-  const k = questionKey(file, q.title), s = state.status[k] || "";
+  const s = getMark(questionKey(file, q.title));
   return `<article class="card q ${s}" id="q-${q.n}" data-file="${esc(file)}" data-n="${q.n}">
     <div class="qt"><span class="num">${q.n}.</span><div class="title">${inline(q.title)}</div></div>
     ${showSource ? `<div class="src">${esc(topicOrder.find(t => t.file === file).name)}</div>` : ""}
@@ -313,7 +601,6 @@ function questionCard(file, q, showSource) {
     <div class="answer" hidden></div>
   </article>`;
 }
-
 function bindCards(onChange) {
   app.querySelectorAll("article.q").forEach(card => {
     const file = card.dataset.file, n = Number(card.dataset.n);
@@ -326,31 +613,52 @@ function bindCards(onChange) {
       show.setAttribute("aria-expanded", String(!ans.hidden));
       state.last = { file, n, at: Date.now() }; saveState();
     };
-    card.querySelector(".done-btn").onclick = () => { setStatus(file, q, "done"); onChange(card, file, q); };
-    card.querySelector(".rev-btn").onclick = () => { setStatus(file, q, "revise"); onChange(card, file, q); };
+    card.querySelector(".done-btn").onclick = () => { setMark(file, q, "done"); onChange(card, file, q); };
+    card.querySelector(".rev-btn").onclick = () => { setMark(file, q, "revise"); onChange(card, file, q); };
   });
 }
-
-function refreshCard(card, file, q) {
-  const s = state.status[questionKey(file, q.title)] || "";
+function refreshCard(card) {
+  const file = card.dataset.file, q = topics[file].questions.find(x => x.n === Number(card.dataset.n));
+  const s = getMark(questionKey(file, q.title));
   card.classList.remove("done", "revise"); if (s) card.classList.add(s);
   card.querySelector(".done-btn").setAttribute("aria-pressed", String(s === "done"));
   card.querySelector(".rev-btn").setAttribute("aria-pressed", String(s === "revise"));
 }
+function refreshTopicHead(file) {
+  const head = app.querySelector(".topic-head");
+  if (!head) return;
+  const s = topicStats(file);
+  head.querySelector(".bar").outerHTML = bar(s);
+  const spans = head.querySelectorAll(".stats span");
+  spans[0].textContent = `${s.done}/${s.total} done`;
+  spans[1].textContent = `${s.revise} to revise`;
+}
+// Called when marks arrive from another device: update in place, never disrupt reading.
+function refreshMarksInView() {
+  if (currentView === "home") {
+    const search = document.getElementById("search");
+    if (!search || !search.value) renderHome();
+  } else if (currentView === "topic" || currentView === "revise") {
+    app.querySelectorAll("article.q").forEach(refreshCard);
+    if (currentView === "topic") refreshTopicHead(currentTopic);
+  }
+}
 
+let currentTopic = null;
 function renderTopic(file, focusN) {
   const t = topics[file], meta = topicOrder.find(x => x.file === file);
   if (!t || !meta) { app.innerHTML = `<div class="empty">Topic not found. <a href="#/">Go home</a></div>`; return; }
+  currentView = "topic"; currentTopic = file;
   const idx = topicOrder.indexOf(meta), prev = topicOrder[idx - 1], next = topicOrder[idx + 1];
   const st = topicStats(file);
-  const match = q => { const s = state.status[questionKey(file, q.title)];
+  const match = q => { const s = getMark(questionKey(file, q.title));
     return topicFilter === "all" || (topicFilter === "todo" && !s) || topicFilter === s; };
   let html = `<div class="crumbs"><a href="#/">← All topics</a></div>
     <section class="card topic-head"><h2>${esc(meta.num)} · ${esc(t.title || meta.name)}</h2>
       <div class="small muted">${inline(t.covers || meta.areas)}</div>
       <div style="margin-top:12px">${bar(st)}</div>
       <div class="stats"><span>${st.done}/${st.total} done</span><span>${st.revise} to revise</span>
-        <a href="https://github.com${repoPath()}/blob/main/${encodeURI(file)}" target="_blank" rel="noopener">Open on GitHub ↗</a></div>
+        ${repoPath() ? `<a href="https://github.com${repoPath()}/blob/main/${encodeURI(file)}" target="_blank" rel="noopener">Open on GitHub ↗</a>` : ""}</div>
     </section>
     <div class="filters" role="group" aria-label="Filter questions">
       ${[["all", "All"], ["todo", "Not started"], ["revise", "Revise"], ["done", "Done"]].map(([v, l]) =>
@@ -371,15 +679,12 @@ function renderTopic(file, focusN) {
   app.querySelectorAll(".filters button[data-f]").forEach(b => b.onclick = () => { topicFilter = b.dataset.f; renderTopic(file); });
   document.getElementById("expand-all").onclick = e => {
     const open = e.target.textContent.startsWith("Expand");
-    app.querySelectorAll("article.q").forEach(c => { const a = c.querySelector(".answer"); if (a.hidden === open) c.querySelector(".show-btn").click(); });
+    app.querySelectorAll("article.q").forEach(c => { if (c.querySelector(".answer").hidden === open) c.querySelector(".show-btn").click(); });
     e.target.textContent = open ? "Collapse all answers" : "Expand all answers";
   };
-  bindCards((card, f, q) => {
-    refreshCard(card, f, q);
+  bindCards(card => {
+    refreshCard(card); refreshTopicHead(file);
     const s = topicStats(file);
-    app.querySelector(".topic-head .bar").outerHTML = bar(s);
-    app.querySelector(".topic-head .stats span").textContent = `${s.done}/${s.total} done`;
-    app.querySelectorAll(".topic-head .stats span")[1].textContent = `${s.revise} to revise`;
     if (s.total && s.done === s.total) toast("🎉 Topic complete!");
   });
   if (focusN) {
@@ -389,59 +694,270 @@ function renderTopic(file, focusN) {
 }
 
 function renderRevise() {
+  currentView = "revise";
   let html = `<div class="crumbs"><a href="#/">← All topics</a></div><h2>↻ Questions to revise</h2>`, count = 0;
-  for (const t of topicOrder) for (const q of topics[t.file].questions)
-    if (state.status[questionKey(t.file, q.title)] === "revise") { html += questionCard(t.file, q, true); count++; }
-  if (!count) html += `<div class="empty">Nothing marked for revision. Use the ↻ Revise button on any question you want to come back to.</div>`;
+  for (const t of topicOrder) for (const q of t.questions)
+    if (getMark(questionKey(t.file, q.title)) === "revise") { html += questionCard(t.file, q, true); count++; }
+  if (!count) html += `<div class="empty">Nothing marked for revision yet. Use the ↻ Revise button on any question you want to come back to.</div>`;
   app.innerHTML = html;
-  bindCards(refreshCard);
+  bindCards(card => refreshCard(card));
   window.scrollTo(0, 0);
 }
 
-function repoPath() {
-  // https://<user>.github.io/<repo>/ → /<user>/<repo>
-  const user = location.hostname.split(".")[0];
-  const repo = location.pathname.split("/").filter(Boolean)[0] || "";
-  return location.hostname.endsWith("github.io") ? `/${user}/${repo}` : "";
+// ----- Sync & backup page -----
+let authMode = "signin";
+function renderAccount() {
+  currentView = "account";
+  const st = allStats();
+  let syncSection;
+  if (!sync.enabled) {
+    syncSection = `<section class="card">
+      <h2>☁️ Sync across devices</h2>
+      <p class="muted small">Account sync isn't available on this site yet. You can still move your progress between devices with a transfer link or a backup file below.</p>
+    </section>`;
+  } else if (sync.loadError) {
+    syncSection = `<section class="card"><h2>☁️ Sync across devices <span class="small muted">(optional)</span></h2>
+      <p class="small muted">Sign-in couldn't load right now. You may be offline, or your network may block it (common on work networks).
+      Your progress is still saved on this device, and you can use a transfer link below.</p>
+      <button id="retry-sync">Try again</button></section>`;
+  } else if (!sync.ready) {
+    syncSection = `<section class="card"><h2>☁️ Sync across devices <span class="small muted">(optional)</span></h2><p class="muted">Loading sign-in…</p></section>`;
+  } else if (sync.user) {
+    syncSection = `<section class="card">
+      <h2>☁️ Sync is on</h2>
+      <p>Signed in as <b>${esc(sync.user.email)}</b>. Your progress stays in sync on every device where you sign in.</p>
+      <p class="small muted" id="sync-status-line" aria-live="polite">${esc(syncStatusText())}</p>
+      <div class="row-btns">
+        <button id="sync-now">Sync now</button>
+        <button id="sign-out">Sign out</button>
+      </div>
+      <p class="small muted" style="margin-top:12px">Signing out keeps your progress on this device. It just stops syncing.</p>
+      <details style="margin-top:8px"><summary class="small muted">Delete account</summary>
+        <p class="small">This permanently deletes your account and the progress stored in the cloud. Progress on this device is kept.</p>
+        <button id="delete-account" class="danger">Delete my account</button>
+        <div class="form-msg" id="delete-msg" role="alert"></div>
+      </details>
+    </section>`;
+  } else {
+    const isUp = authMode === "signup", isReset = authMode === "reset";
+    syncSection = `<section class="card">
+      <h2>☁️ Sync across devices <span class="small muted">(optional)</span></h2>
+      <p class="small muted">You don't need an account to study. Sign in only if you want your progress on your phone, laptop and other computers.
+      ${st.done + st.revise ? `The ${st.done + st.revise} questions you've marked on this device will be added to your account.` : ""}</p>
+      ${isReset ? "" : `<div class="tabs" role="group" aria-label="Account">
+        <button id="tab-signin" aria-pressed="${!isUp}">Sign in</button>
+        <button id="tab-signup" aria-pressed="${isUp}">Create account</button></div>`}
+      <form id="auth-form" novalidate>
+        ${isReset ? `<p class="small">Enter your email and we'll send you a link to reset your password.</p>` : ""}
+        <label for="auth-email">Email</label>
+        <input type="email" id="auth-email" autocomplete="email" required inputmode="email" autocapitalize="off" spellcheck="false">
+        ${isReset ? "" : `<label for="auth-password">Password${isUp ? ` <span class="muted small">(at least 8 characters)</span>` : ""}</label>
+        <div class="pw-wrap"><input type="password" id="auth-password" autocomplete="${isUp ? "new-password" : "current-password"}" required minlength="${isUp ? 8 : 1}">
+        <button type="button" id="pw-toggle" aria-label="Show password">Show</button></div>`}
+        <div class="row-btns" style="margin-top:14px">
+          <button type="submit" class="primary" id="auth-submit">${isReset ? "Send reset link" : isUp ? "Create account" : "Sign in"}</button>
+          ${isReset ? `<button type="button" class="linkish" id="back-signin">Back to sign in</button>`
+                    : (!isUp ? `<button type="button" class="linkish" id="forgot">Forgot password?</button>` : "")}
+        </div>
+        <div class="form-msg" id="auth-msg" role="alert"></div>
+      </form>
+      <p class="small muted" style="margin-top:12px">We store only your email and your study progress. Nothing else, and it's never shared.</p>
+    </section>`;
+  }
+  const lastBackup = state.prefs.lastBackup;
+  app.innerHTML = `<div class="crumbs"><a href="#/">← All topics</a></div>
+  <div class="account">
+    <h2 style="font-size:1.4rem;margin:0 0 6px">Sync &amp; backup</h2>
+    <p class="muted" style="margin-top:0">Your progress (${st.done} done, ${st.revise} to revise) is saved automatically on this device.
+      Everything below is optional.</p>
+    ${syncSection}
+    <section class="card">
+      <h2>📲 Move progress to another device <span class="small muted">(no account)</span></h2>
+      <p class="small muted">Create a one-time link, then open it on your phone or another computer (or scan the QR code).
+      It's merged with that device's progress, and the most recent mark wins.</p>
+      <button id="make-link">Create transfer link</button>
+      <div id="link-out"></div>
+    </section>
+    <section class="card">
+      <h2>💾 Backup file</h2>
+      <p class="small muted">Download your progress as a file, or restore it from one. Last backup: ${lastBackup ? timeAgo(lastBackup) : "never"}.</p>
+      <div class="row-btns"><button id="export-btn">Download backup</button><button id="import-btn">Restore from file</button></div>
+    </section>
+    <section class="card">
+      <h2>📱 Tip: install it as an app</h2>
+      <p class="small muted" style="margin:0">On iPhone: Share → <b>Add to Home Screen</b>. On Android or desktop Chrome/Edge: menu → <b>Install app</b>.
+      Installed, it opens like an app, and Safari won't clear your progress after a week away.</p>
+    </section>
+  </div>`;
+  bindAccount();
 }
 
-// ---------- Router ----------
-function route() {
-  const h = decodeURIComponent(location.hash.replace(/^#/, "")) || "/";
-  const m = h.match(/^\/t\/(topics\/[^/]+\.md)(?:\/(\d+))?$/);
-  if (m) renderTopic(m[1], m[2] ? Number(m[2]) : null);
-  else if (h === "/revise") renderRevise();
-  else renderHome();
+function bindAccount() {
+  const $ = id => document.getElementById(id);
+  if ($("tab-signin")) $("tab-signin").onclick = () => { authMode = "signin"; renderAccount(); };
+  if ($("tab-signup")) $("tab-signup").onclick = () => { authMode = "signup"; renderAccount(); };
+  if ($("forgot")) $("forgot").onclick = () => { const e = $("auth-email").value; authMode = "reset"; renderAccount(); $("auth-email").value = e; };
+  if ($("back-signin")) $("back-signin").onclick = () => { authMode = "signin"; renderAccount(); };
+  if ($("pw-toggle")) $("pw-toggle").onclick = () => {
+    const pw = $("auth-password"), show = pw.type === "password";
+    pw.type = show ? "text" : "password"; $("pw-toggle").textContent = show ? "Hide" : "Show";
+    $("pw-toggle").setAttribute("aria-label", show ? "Hide password" : "Show password");
+  };
+  if ($("auth-form")) $("auth-form").onsubmit = async ev => {
+    ev.preventDefault();
+    const msg = $("auth-msg"), btn = $("auth-submit");
+    const email = $("auth-email").value.trim(), pw = $("auth-password") ? $("auth-password").value : "";
+    msg.className = "form-msg"; msg.textContent = "";
+    if (!/^\S+@\S+\.\S+$/.test(email)) { msg.className = "form-msg error"; msg.textContent = "Please enter a valid email address."; return; }
+    if (authMode === "signup" && pw.length < 8) { msg.className = "form-msg error"; msg.textContent = "Password must be at least 8 characters."; return; }
+    if (authMode === "signin" && !pw) { msg.className = "form-msg error"; msg.textContent = "Please enter your password."; return; }
+    const { A, auth } = sync.fb;
+    btn.disabled = true;
+    try {
+      if (authMode === "reset") {
+        try { await A.sendPasswordResetEmail(auth, email); } catch (e) { if (e.code !== "auth/user-not-found") throw e; }
+        msg.className = "form-msg ok"; msg.textContent = "If an account exists for that email, a reset link is on its way. Check your inbox.";
+      } else if (authMode === "signup") {
+        await A.createUserWithEmailAndPassword(auth, email, pw);
+        toast("Account created. Your progress is now syncing.");
+      } else {
+        await A.signInWithEmailAndPassword(auth, email, pw);
+        toast("Signed in. Syncing your progress.");
+      }
+    } catch (e) { msg.className = "form-msg error"; msg.textContent = authMessage(e); }
+    finally { if (document.body.contains(btn)) btn.disabled = false; }
+  };
+  if ($("retry-sync")) $("retry-sync").onclick = () => { sync.loadError = false; renderAccount(); initFirebase(); };
+  if ($("sync-now")) $("sync-now").onclick = () => schedulePush(0);
+  if ($("sign-out")) $("sign-out").onclick = async () => { await sync.fb.A.signOut(sync.fb.auth); toast("Signed out. Your progress stays on this device."); };
+  if ($("delete-account")) $("delete-account").onclick = async () => {
+    if (!confirm("Delete your account and cloud progress permanently? Progress on this device will be kept.")) return;
+    const m = $("delete-msg");
+    try {
+      if (sync.unsub) { sync.unsub(); sync.unsub = null; }
+      await sync.fb.F.deleteDoc(progressDoc());
+      await sync.fb.A.deleteUser(sync.fb.auth.currentUser);
+      toast("Account deleted.");
+    } catch (e) { m.className = "form-msg error"; m.textContent = authMessage(e); }
+  };
+  $("make-link").onclick = makeTransferLink;
+  $("export-btn").onclick = exportFile;
+  $("import-btn").onclick = () => document.getElementById("import-file").click();
 }
 
-// ---------- Export / import ----------
-document.getElementById("export-btn").onclick = () => {
-  const blob = new Blob([JSON.stringify({ app: STORE, exportedAt: new Date().toISOString(), ...state }, null, 2)], { type: "application/json" });
+// ----- Transfer link & QR -----
+function transferCode() {
+  const now = Math.floor(Date.now() / 1000);
+  return encodeProgress(topicOrder, (t, q) => { const s = getMark(questionKey(t.file, q.title)); return s === "done" ? 1 : s === "revise" ? 2 : 0; }, now);
+}
+let qrLib = null;
+function loadQrLib() {
+  if (qrLib) return qrLib;
+  qrLib = new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = "https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js";
+    s.onload = () => resolve(window.qrcode); s.onerror = reject;
+    document.head.appendChild(s);
+  });
+  return qrLib;
+}
+async function makeTransferLink() {
+  const url = location.origin + location.pathname + "#/import/" + transferCode();
+  const out = document.getElementById("link-out");
+  out.innerHTML = `<div class="code-box">${esc(url)}</div>
+    <div class="row-btns" style="margin-top:8px"><button id="copy-link" class="primary">Copy link</button>
+    ${navigator.share ? `<button id="share-link">Share…</button>` : ""}</div>
+    <div class="qr" id="qr" aria-label="QR code of the transfer link"></div>
+    <p class="small muted">This link is a snapshot of your progress right now. Create a new one next time.</p>`;
+  document.getElementById("copy-link").onclick = async () => {
+    if (await copyText(url)) { toast("Link copied"); state.prefs.lastBackup = Date.now(); saveState(); } else toast("Couldn't copy. Select the link and copy it manually.");
+  };
+  const sh = document.getElementById("share-link");
+  if (sh) sh.onclick = () => navigator.share({ title: shortTitle + " progress", url }).then(() => { state.prefs.lastBackup = Date.now(); saveState(); }).catch(() => {});
+  try {
+    const qrcode = await loadQrLib();
+    const qr = qrcode(0, "L"); qr.addData(url); qr.make();
+    document.getElementById("qr").innerHTML = qr.createSvgTag({ cellSize: 4, margin: 2, scalable: true });
+  } catch (e) { const el = document.getElementById("qr"); if (el) el.remove(); }
+}
+function renderImport(code) {
+  currentView = "import";
+  let parsed;
+  try { parsed = decodeProgress(code, topicOrder); }
+  catch (e) { app.innerHTML = `<div class="empty">This transfer link is invalid or incomplete. <a href="#/">Go home</a></div>`; return; }
+  const done = parsed.items.filter(i => i.s === "done").length, rev = parsed.items.length - done;
+  app.innerHTML = `<div class="crumbs"><a href="#/">← All topics</a></div>
+    <section class="card"><h2 style="margin-top:0">Import progress from another device?</h2>
+    <p>This link contains <b>${done} done</b> and <b>${rev} to revise</b>, saved ${timeAgo(parsed.time * 1000)}.
+    It will be <b>merged</b> with the progress on this device (newer marks win). Nothing is deleted.</p>
+    ${parsed.skipped ? `<p class="small muted">${parsed.skipped} topic(s) changed since the link was made and will be skipped.</p>` : ""}
+    <div class="row-btns"><button class="primary" id="do-import">Import progress</button><a class="btn" href="#/">Cancel</a></div></section>`;
+  document.getElementById("do-import").onclick = () => {
+    const incoming = {};
+    for (const i of parsed.items) incoming[questionKey(i.t.file, i.q.title)] = { s: i.s, t: parsed.time * 1000 };
+    mergeMarksInto(state.marks, incoming);
+    saveState(); requestPersistentStorage();
+    if (sync.user) schedulePush(0);
+    toast("Progress imported");
+    history.replaceState(null, "", location.pathname + "#/");
+    route();
+  };
+}
+
+// ----- Backup file -----
+function exportFile() {
+  const blob = new Blob([JSON.stringify({ app: STORE, version: 2, exportedAt: new Date().toISOString(), marks: state.marks, last: state.last }, null, 2)], { type: "application/json" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = "interview-progress-" + new Date().toISOString().slice(0, 10) + ".json";
+  a.download = (TRACKER_ID || "interview") + "-progress-" + new Date().toISOString().slice(0, 10) + ".json";
   a.click(); URL.revokeObjectURL(a.href);
-};
-document.getElementById("import-btn").onclick = () => document.getElementById("import-file").click();
+  state.prefs.lastBackup = Date.now(); saveState();
+  if (currentView === "account") renderAccount();
+}
 document.getElementById("import-file").onchange = async e => {
   const f = e.target.files[0]; if (!f) return;
   try {
     const data = JSON.parse(await f.text());
-    if (!data.status) throw new Error("bad file");
-    state.status = { ...state.status, ...data.status };
-    if (data.last && (!state.last || data.last.at > state.last.at)) state.last = data.last;
-    saveState(); route(); toast("Progress imported");
-  } catch (err) { toast("That file isn't a valid progress export."); }
+    let incoming = data.marks;
+    if (!incoming && data.status) { incoming = {}; for (const k in data.status) incoming[k] = { s: data.status[k], t: 1 }; }
+    if (!incoming) throw new Error("bad file");
+    mergeMarksInto(state.marks, incoming);
+    if (data.last) adoptRemoteLast(data.last);
+    saveState(); if (sync.user) schedulePush(0);
+    route(); toast("Progress restored");
+  } catch (err) { toast("That file isn't a valid progress backup."); }
   e.target.value = "";
 };
 
-// ---------- Boot ----------
-const repoLink = document.getElementById("repo-link");
-if (repoPath()) repoLink.href = "https://github.com" + repoPath();
+function repoPath() {
+  if (!location.hostname.endsWith("github.io")) return "";
+  const user = location.hostname.split(".")[0];
+  const repo = location.pathname.split("/").filter(Boolean)[0] || "";
+  return `/${user}/${repo}`;
+}
+
+// ===================== Router & boot =====================
+function route() {
+  const raw = location.hash.replace(/^#/, "") || "/";
+  const imp = raw.match(/^\/import\/([A-Za-z0-9_-]+)$/);
+  if (imp) return renderImport(imp[1]);
+  const h = decodeURIComponent(raw);
+  const m = h.match(/^\/t\/(topics\/[^/]+\.md)(?:\/(\d+))?$/);
+  if (m) renderTopic(m[1], m[2] ? Number(m[2]) : null);
+  else if (h === "/revise") renderRevise();
+  else if (h === "/account") renderAccount();
+  else renderHome();
+}
+
+if (repoPath()) document.getElementById("repo-link").href = "https://github.com" + repoPath();
+renderChip();
 window.addEventListener("hashchange", route);
-loadAll().then(route).catch(err => {
+loadAll().then(() => { route(); initFirebase(); }).catch(err => {
   app.innerHTML = `<div class="empty">Couldn't load the questions (${esc(err.message)}).<br>If you opened this file directly, serve the repo folder instead, e.g. <code>python3 -m http.server</code>.</div>`;
 });
+if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
+  navigator.serviceWorker.register("sw.js").catch(() => {});
+}
 </script>
 </body>
 </html>

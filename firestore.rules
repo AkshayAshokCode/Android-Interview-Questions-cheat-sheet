@@ -1,0 +1,13 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Each signed-in user can read/write only their own progress documents.
+    match /users/{uid}/progress/{tracker} {
+      allow read, delete: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['data', 'last', 'updatedAt'])
+        && request.resource.data.data is string
+        && request.resource.data.data.size() < 500000;
+    }
+  }
+}
