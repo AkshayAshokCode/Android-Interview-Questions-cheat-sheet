@@ -104,7 +104,20 @@ h3.section { font-size: .95rem; color: var(--muted); margin: 22px 0 8px; }
 .q.focus { outline: 2px solid var(--accent); }
 .q .qt { display: flex; gap: 10px; align-items: flex-start; }
 .q .num { color: var(--muted); font-variant-numeric: tabular-nums; min-width: 2.2em; }
-.q .title { flex: 1; font-weight: 600; }
+.q .title { flex: 1; min-width: 0; font-weight: 600; overflow-wrap: anywhere; }
+.listen-btn { flex-shrink: 0; border: none; background: none; padding: 2px 6px; font-size: 1.05rem; line-height: 1; border-radius: 6px; color: var(--muted); }
+.listen-btn:hover { background: var(--surface-2); }
+.q.speaking { outline: 2px solid var(--accent); }
+.q.speaking .listen-btn { color: var(--accent); }
+.player { position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%); width: min(560px, calc(100vw - 20px));
+  background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 10px 12px; z-index: 20;
+  box-shadow: 0 6px 24px rgba(0,0,0,.25); display: flex; align-items: center; gap: 10px; }
+.player .now { flex: 1; min-width: 0; font-size: .85rem; }
+.player .now b, .player .now span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.player .ctrls { display: flex; gap: 6px; flex-shrink: 0; }
+.player button { padding: 6px 10px; min-width: 40px; }
+body.playing .toast { bottom: 96px; }
+body.playing .wrap { padding-bottom: 120px; }
 .q .title code { font-size: .88em; }
 .q .actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; padding-left: calc(2.2em + 10px); }
 .q .actions .done-btn[aria-pressed="true"] { background: var(--done-bg); color: var(--done); border-color: var(--done); }
@@ -118,6 +131,9 @@ h3.section { font-size: .95rem; color: var(--muted); margin: 22px 0 8px; }
 .answer table { border-collapse: collapse; width: 100%; font-size: .88rem; display: block; overflow-x: auto; }
 .answer th, .answer td { border: 1px solid var(--border); padding: 6px 8px; text-align: left; vertical-align: top; }
 .answer th { background: var(--surface-2); }
+.answer table { overflow-wrap: normal; word-break: normal; }
+.answer th, .answer td { min-width: 84px; }
+.answer th:first-child, .answer td:first-child { min-width: 72px; }
 .answer blockquote { margin: 0; padding-left: 12px; border-left: 3px solid var(--border); color: var(--muted); }
 .pager { display: flex; justify-content: space-between; gap: 10px; margin-top: 24px; flex-wrap: wrap; }
 .empty { text-align: center; padding: 30px; color: var(--muted); }
@@ -152,6 +168,10 @@ footer { margin-top: 40px; font-size: .82rem; color: var(--muted); text-align: c
   .q .actions button { padding: 6px 10px; }
   .card { padding: 14px 12px; }
   .q .actions { gap: 5px; }
+  .player { gap: 8px; padding: 8px 10px; }
+  .player > span[aria-hidden] { display: none; }
+  .player .ctrls { gap: 4px; }
+  .player button { min-width: 36px; padding: 6px 8px; }
 }
 @media (max-width: 360px) { .rev-label { display: none; } }
 </style>
@@ -177,6 +197,16 @@ footer { margin-top: 40px; font-size: .82rem; color: var(--muted); text-align: c
   <main id="app"><div class="empty">Loading questions…</div></main>
   <footer>No account needed. Your progress is saved on this device<span id="footer-sync" hidden> ·
     <a href="#/account">Sign in to sync across devices</a></span> · <a id="repo-link" href="./">View repo</a></footer>
+</div>
+<div class="player" id="player" hidden role="region" aria-label="Read aloud player">
+  <span aria-hidden="true">🔊</span>
+  <div class="now"><span class="muted" id="player-pos"></span><b id="player-title"></b></div>
+  <div class="ctrls">
+    <button id="player-pause" aria-label="Pause">⏸</button>
+    <button id="player-next" aria-label="Next question">⏭</button>
+    <button id="player-rate" aria-label="Reading speed">1×</button>
+    <button id="player-stop" aria-label="Stop reading">✕</button>
+  </div>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
@@ -596,6 +626,50 @@ function snippetFor(q, query) {
   return (start ? "…" : "") + text.slice(start, end) + (end < text.length ? "…" : "");
 }
 // PARSE-END
+// PARSE-START
+function questionToSpeech(title) {
+  return title.replace(/`/g, "").replace(/\bvs\.?\b/gi, "versus").replace(/[*_]/g, "");
+}
+// Turn a markdown answer into natural speech: skip code, read tables row by row, drop symbols.
+function answerToSpeech(md) {
+  let s = md.replace(/```[\s\S]*?```/g, "\nSee the code example.\n");
+  let header = null;
+  s = s.split("\n").map(line => {
+    if (/^\s*\|?\s*:?-{3,}/.test(line)) return "";
+    if (/^\s*\|.*\|\s*$/.test(line)) {
+      const cells = line.split("|").map(c => c.trim()).filter(Boolean);
+      if (!header) { header = cells; return ""; }
+      return cells.map((c, i) => (header[i] ? `${header[i]}: ${c}` : c)).join("; ") + ".";
+    }
+    header = null;
+    return line;
+  }).join("\n");
+  s = s.replace(/<[^>]+>/g, " ").replace(/!\[[^\]]*\]\([^)]*\)/g, "").replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/`([^`]+)`/g, "$1").replace(/<([A-Za-z0-9?*, ]+)>/g, " of $1").replace(/\*\*|__|[*_#>`]/g, " ").replace(/\s\|\s/g, ", ").replace(/[|<]/g, " ")
+    .replace(/~\s?(?=\d)/g, "about ").replace(/~/g, " ")
+    .replace(/→/g, " to ").replace(/←/g, " from ").replace(/≈/g, " about ").replace(/×/g, " times ")
+    .replace(/[✅❌⚠️✓↻☁️💾🔊📈⭐🟣🟢🔵🟠🔴🟡]/gu, " ").replace(/\bvs\.?\b/gi, "versus").replace(/\be\.g\./gi, "for example")
+    .replace(/\bi\.e\./gi, "that is").replace(/\betc\./gi, "etcetera").replace(/^\s*(\d+\.|[-•])\s+/gm, "")
+    .replace(/:\s*\n/g, ": ").replace(/([^.!?:;])\n{2,}/g, "$1.\n").replace(/\n+/g, " ").replace(/\s+/g, " ")
+    .replace(/\s+([.,;:!?])/g, "$1").replace(/([.!?])(\s*[.;])+/g, "$1").trim();
+  return s;
+}
+// Short chunks avoid browsers cutting off long utterances (~15s limit in Chrome).
+function speechChunks(text, max = 220) {
+  const sentences = text.match(/[^.!?;]+[.!?;]+["')\]]*|[^.!?;]+$/g) || [text];
+  const out = []; let cur = "";
+  const push = s => { s = s.trim(); if (s) out.push(s); };
+  for (let sen of sentences) {
+    while (sen.length > max) {                      // split very long sentences at commas/spaces
+      let cut = sen.lastIndexOf(", ", max); if (cut < max / 2) cut = sen.lastIndexOf(" ", max); if (cut < 1) cut = max;
+      push(cur); cur = ""; push(sen.slice(0, cut + 1)); sen = sen.slice(cut + 1);
+    }
+    if ((cur + " " + sen).length > max) { push(cur); cur = sen; } else cur += " " + sen;
+  }
+  push(cur);
+  return out;
+}
+// PARSE-END
 function highlight(html, query) {
   const words = query.split(/\s+/).filter(w => w.length > 1).map(w => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
   if (!words.length) return html;
@@ -666,7 +740,8 @@ function questionCard(file, q, showSource, query) {
   const meta = showSource && topicOrder.find(t => t.file === file);
   const snippet = query ? snippetFor(q, query) : "";
   return `<article class="card q ${s}" id="q-${q.n}" data-file="${esc(file)}" data-n="${q.n}">
-    <div class="qt"><span class="num">${q.n}.</span><div class="title">${query ? highlight(inline(q.title), query) : inline(q.title)}</div></div>
+    <div class="qt"><span class="num">${q.n}.</span><div class="title">${query ? highlight(inline(q.title), query) : inline(q.title)}</div>
+      ${speech.supported ? `<button class="listen-btn" title="Listen to this question and answer" aria-label="Listen to this question and answer">🔊</button>` : ""}</div>
     ${meta ? `<div class="src"><a href="#/t/${encodeURIComponent(file)}/${q.n}">${esc(meta.name)} · Q${q.n}</a></div>` : ""}
     ${snippet ? `<div class="snippet">${highlight(esc(snippet), query)}</div>` : ""}
     <div class="actions">
@@ -688,6 +763,11 @@ function bindCards(onChange) {
       show.textContent = ans.hidden ? "Show answer" : "Hide answer";
       show.setAttribute("aria-expanded", String(!ans.hidden));
       state.last = { file, n, at: Date.now() }; saveState();
+    };
+    const lb = card.querySelector(".listen-btn");
+    if (lb) lb.onclick = () => {
+      if (speech.playing && speech.items.length === 1 && speech.items[0].file === file && speech.items[0].n === n) { stopSpeech(); return; }
+      playItems([{ file, n }], 0);
     };
     card.querySelector(".done-btn").onclick = () => { setMark(file, q, "done"); onChange(card, file, q); };
     card.querySelector(".rev-btn").onclick = () => { setMark(file, q, "revise"); onChange(card, file, q); };
@@ -740,6 +820,7 @@ function renderTopic(file, focusN) {
       ${[["all", "All"], ["todo", "Not started"], ["revise", "Revise"], ["done", "Done"]].map(([v, l]) =>
         `<button data-f="${v}" aria-pressed="${topicFilter === v}">${l}</button>`).join("")}
       <button id="expand-all">Expand all answers</button>
+      ${speech.supported ? `<button id="listen-all">🔊 Listen</button>` : ""}
     </div>`;
   let section = null, shown = 0;
   for (const q of t.questions) {
@@ -752,7 +833,12 @@ function renderTopic(file, focusN) {
     ${prev ? `<a class="btn" href="#/t/${encodeURIComponent(prev.file)}">← ${esc(prev.name)}</a>` : "<span></span>"}
     ${next ? `<a class="btn" href="#/t/${encodeURIComponent(next.file)}">${esc(next.name)} →</a>` : ""}</nav>`;
   app.innerHTML = html;
-  app.querySelectorAll(".filters button[data-f]").forEach(b => b.onclick = () => { topicFilter = b.dataset.f; renderTopic(file); });
+  app.querySelectorAll(".filters button[data-f]").forEach(b => b.onclick = () => { stopSpeech(); topicFilter = b.dataset.f; renderTopic(file); });
+  const la = document.getElementById("listen-all");
+  if (la) la.onclick = () => {
+    const items = [...app.querySelectorAll("article.q")].map(c => ({ file: c.dataset.file, n: Number(c.dataset.n) }));
+    if (items.length) playItems(items, 0); else toast("No questions to read in this filter.");
+  };
   document.getElementById("expand-all").onclick = e => {
     const open = e.target.textContent.startsWith("Expand");
     app.querySelectorAll("article.q").forEach(c => { if (c.querySelector(".answer").hidden === open) c.querySelector(".show-btn").click(); });
@@ -775,7 +861,11 @@ function renderRevise() {
   for (const t of topicOrder) for (const q of t.questions)
     if (getMark(questionKey(t.file, q.title)) === "revise") { html += questionCard(t.file, q, true); count++; }
   if (!count) html += `<div class="empty">Nothing marked for revision yet. Use the ↻ Revise button on any question you want to come back to.</div>`;
+  else if (speech.supported) html = html.replace("<h2>↻ Questions to revise</h2>",
+    `<div class="row-btns" style="justify-content:space-between"><h2>↻ Questions to revise</h2><button id="listen-all">🔊 Listen to all</button></div>`);
   app.innerHTML = html;
+  const la = document.getElementById("listen-all");
+  if (la) la.onclick = () => playItems([...app.querySelectorAll("article.q")].map(c => ({ file: c.dataset.file, n: Number(c.dataset.n) })), 0);
   bindCards(card => refreshCard(card));
   window.scrollTo(0, 0);
 }
@@ -907,8 +997,106 @@ function repoPath() {
   return `/${user}/${repo}`;
 }
 
+// ===================== Read aloud (Web Speech API) =====================
+const speech = { supported: "speechSynthesis" in window && "SpeechSynthesisUtterance" in window,
+  playing: false, paused: false, items: [], index: 0, queue: [], current: "", token: 0,
+  rates: [0.8, 1, 1.25, 1.5], rate: Number(state.prefs.rate) || 1 };
+function pickVoice() {
+  const voices = speech.supported ? speechSynthesis.getVoices() : [];
+  const lang = (navigator.language || "en-US").toLowerCase();
+  const en = voices.filter(v => /^en/i.test(v.lang));
+  return en.find(v => v.lang.toLowerCase() === lang && v.localService) || en.find(v => v.default) ||
+         en.find(v => /en-(us|gb|in|au)/i.test(v.lang)) || en[0] || null;
+}
+function playerUI() {
+  const pl = document.getElementById("player");
+  pl.hidden = !speech.playing; document.body.classList.toggle("playing", speech.playing);
+  if (!speech.playing) return;
+  const it = speech.items[speech.index], q = topics[it.file].questions.find(x => x.n === it.n);
+  document.getElementById("player-pos").textContent = speech.items.length > 1 ? `${speech.index + 1} of ${speech.items.length} · Q${it.n}` : `Q${it.n}`;
+  document.getElementById("player-title").textContent = q.title.replace(/`/g, "");
+  const pb = document.getElementById("player-pause");
+  pb.textContent = speech.paused ? "▶" : "⏸"; pb.setAttribute("aria-label", speech.paused ? "Resume" : "Pause");
+  document.getElementById("player-rate").textContent = speech.rate + "×";
+  document.getElementById("player-next").disabled = speech.index >= speech.items.length - 1;
+}
+function cardFor(it) { return app.querySelector(`article.q[data-file="${CSS.escape(it.file)}"][data-n="${it.n}"]`); }
+function playItems(items, start) {
+  if (!speech.supported) return;
+  stopSpeech();
+  speech.items = items; speech.index = start; speech.playing = true; speech.paused = false;
+  speakCurrentItem();
+}
+function speakCurrentItem() {
+  const it = speech.items[speech.index], q = topics[it.file].questions.find(x => x.n === it.n);
+  app.querySelectorAll("article.q.speaking").forEach(c => c.classList.remove("speaking"));
+  const card = cardFor(it);
+  if (card) {
+    card.classList.add("speaking");
+    const ans = card.querySelector(".answer");
+    if (ans.hidden) card.querySelector(".show-btn").click();
+    card.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  speech.queue = [`Question ${it.n}. ${questionToSpeech(q.title)}`, ...speechChunks(answerToSpeech(q.answer))];
+  playerUI();
+  speakNextChunk();
+}
+function speakNextChunk() {
+  if (!speech.playing || speech.paused) return;
+  if (!speech.queue.length) { finishItem(); return; }
+  const text = speech.queue.shift(), token = ++speech.token;
+  speech.current = text;
+  const u = new SpeechSynthesisUtterance(text);
+  u.rate = speech.rate; u.lang = "en-US";
+  const v = pickVoice(); if (v) { u.voice = v; u.lang = v.lang; }
+  u.onend = () => { if (token === speech.token) speakNextChunk(); };
+  u.onerror = e => {
+    if (token !== speech.token || e.error === "interrupted" || e.error === "canceled") return;
+    stopSpeech();
+    toast(e.error === "not-allowed" ? "Tap 🔊 again to start reading." : "Read aloud isn't available in this browser.");
+  };
+  speechSynthesis.speak(u);
+}
+function finishItem() {
+  const card = cardFor(speech.items[speech.index]); if (card) card.classList.remove("speaking");
+  if (speech.index < speech.items.length - 1) { speech.index++; const token = ++speech.token; setTimeout(() => { if (token === speech.token && speech.playing) speakCurrentItem(); }, 700); }
+  else { stopSpeech(); toast("Finished reading"); }
+}
+function stopSpeech() {
+  if (!speech.supported) return;
+  speech.token++; speech.playing = false; speech.paused = false; speech.queue = [];
+  try { speechSynthesis.cancel(); } catch (e) {}
+  app.querySelectorAll("article.q.speaking").forEach(c => c.classList.remove("speaking"));
+  playerUI();
+}
+function restartChunk() {          // cancel and re-speak the current sentence (used by resume / speed change)
+  speech.token++; try { speechSynthesis.cancel(); } catch (e) {}
+  if (speech.current) speech.queue.unshift(speech.current);
+  speakNextChunk();
+}
+document.getElementById("player-pause").onclick = () => {
+  if (!speech.playing) return;
+  if (speech.paused) { speech.paused = false; playerUI(); restartChunk(); }
+  else { speech.paused = true; speech.token++; try { speechSynthesis.cancel(); } catch (e) {} playerUI(); }
+};
+document.getElementById("player-next").onclick = () => {
+  if (!speech.playing || speech.index >= speech.items.length - 1) return;
+  speech.token++; try { speechSynthesis.cancel(); } catch (e) {}
+  const card = cardFor(speech.items[speech.index]); if (card) card.classList.remove("speaking");
+  speech.index++; speech.paused = false; speakCurrentItem();
+};
+document.getElementById("player-rate").onclick = () => {
+  const i = speech.rates.indexOf(speech.rate);
+  speech.rate = speech.rates[(i + 1) % speech.rates.length];
+  state.prefs.rate = speech.rate; saveState(); playerUI();
+  if (speech.playing && !speech.paused) restartChunk();
+};
+document.getElementById("player-stop").onclick = stopSpeech;
+if (speech.supported) { speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = () => {}; }
+
 // ===================== Router & boot =====================
 function route() {
+  stopSpeech();
   searchInput.value = "";                      // navigating anywhere closes search
   searchInput.placeholder = placeholderFor(null);  // topic pages override this
   const raw = location.hash.replace(/^#/, "") || "/";

@@ -4,7 +4,7 @@ A revision guide for Android developer interviews: **660+ questions with intervi
 
 Every answer is hidden in a collapsible block, so you can **test yourself first** and then click to check.
 
-> **📈 [Open the interactive study tracker](https://akshayashokcode.github.io/Android-Interview-Questions-cheat-sheet/)**: mark questions ✓ Done or ↻ Revise, see your progress per topic, search every question, and continue where you left off.
+> **📈 [Open the interactive study tracker](https://akshayashokcode.github.io/Android-Interview-Questions-cheat-sheet/)**: mark questions ✓ Done or ↻ Revise, see your progress per topic, search every question, listen to answers read aloud, and continue where you left off.
 >
 > **No account needed.** Your progress saves automatically on your device. Want to keep it safe and in sync across your devices? Sign in (optional).
 
