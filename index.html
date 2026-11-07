@@ -558,28 +558,52 @@ function highlight(html, query) {
   const re = new RegExp("(" + words.join("|") + ")", "gi");
   return html.split(/(<[^>]+>)/).map(part => part.startsWith("<") ? part : part.replace(re, "<mark>$1</mark>")).join("");
 }
+// Search started from inside a topic searches that topic first; one tap widens it to all topics.
+let searchContext = null;   // topic file the search was started from (null = everywhere)
+let searchScope = "all";    // "topic" | "all"
 function renderSearchView(query) {
   currentView = "search";
-  const { total, hits } = searchQuestions(topicOrder, query);
-  let html = `<div class="crumbs"><a href="#/" id="search-close">← Close search</a></div>`;
-  if (!total) {
-    html += `<div class="empty">No questions match “${esc(query)}”.<br><span class="small">Try fewer or different words.</span></div>`;
+  const ctxMeta = searchContext && topicOrder.find(t => t.file === searchContext);
+  const inTopic = !!ctxMeta && searchScope === "topic";
+  const all = searchQuestions(topicOrder, query);
+  const res = inTopic ? searchQuestions([ctxMeta], query) : all;
+  const others = ctxMeta ? all.total - searchQuestions([ctxMeta], query).total : 0;
+  let html = `<div class="crumbs"><a href="#/" id="search-close">← ${ctxMeta ? "Back to " + esc(ctxMeta.name) : "Close search"}</a></div>`;
+  if (ctxMeta) {
+    html += `<div class="row-btns small" style="margin-bottom:10px">` + (inTopic
+      ? `<span class="muted">${res.total} in ${esc(ctxMeta.name)}${others ? ` · ${others} more in other topics` : ""}</span>
+         ${others && res.total ? `<button id="scope-btn">Search all topics</button>` : ""}`
+      : `<span class="muted">${all.total} in all topics</span>
+         <button id="scope-btn">Only ${esc(ctxMeta.name)}</button>`) + `</div>`;
+  }
+  if (!res.total) {
+    html += inTopic && others
+      ? `<div class="empty">No matches for “${esc(query)}” in ${esc(ctxMeta.name)}.<br><button id="scope-btn-empty" class="primary" style="margin-top:10px">Search all topics (${others})</button></div>`
+      : `<div class="empty">No questions match “${esc(query)}”.<br><span class="small">Try fewer or different words.</span></div>`;
   } else {
-    html += `<p class="small muted">${total} matching question${total > 1 ? "s" : ""}${total > hits.length ? ` · showing the top ${hits.length}, so add a word to narrow it down` : ""}</p>`;
-    for (const h of hits) html += questionCard(h.t.file, h.q, true, query);
+    if (!ctxMeta || !inTopic) html += `<p class="small muted">${res.total} matching question${res.total > 1 ? "s" : ""}${res.total > res.hits.length ? ` · showing the top ${res.hits.length}, so add a word to narrow it down` : ""}</p>`;
+    for (const h of res.hits) html += questionCard(h.t.file, h.q, !inTopic, query);
   }
   app.innerHTML = html;
   document.getElementById("search-close").onclick = e => { e.preventDefault(); clearSearch(); };
+  const toggle = () => { searchScope = searchScope === "topic" ? "all" : "topic"; renderSearchView(query); };
+  ["scope-btn", "scope-btn-empty"].forEach(id => { const b = document.getElementById(id); if (b) b.onclick = toggle; });
   bindCards(card => refreshCard(card));
 }
 const searchInput = document.getElementById("global-search");
+const DEFAULT_PLACEHOLDER = searchInput.placeholder;
 let searchTimer;
 function clearSearch() { searchInput.value = ""; route(); }
 searchInput.addEventListener("input", () => {
   clearTimeout(searchTimer);
   searchTimer = setTimeout(() => {
     if (!site) return;
-    if (searchInput.value.trim()) renderSearchView(searchInput.value.trim()); else route();
+    if (!searchInput.value.trim()) { route(); return; }
+    if (currentView !== "search") {           // a new search: remember where it started
+      searchContext = currentView === "topic" ? currentTopic : null;
+      searchScope = searchContext ? "topic" : "all";
+    }
+    renderSearchView(searchInput.value.trim());
   }, 150);
 });
 searchInput.addEventListener("keydown", e => { if (e.key === "Escape") { clearSearch(); searchInput.blur(); } });
@@ -654,6 +678,7 @@ function renderTopic(file, focusN) {
   const t = topics[file], meta = topicOrder.find(x => x.file === file);
   if (!t || !meta) { app.innerHTML = `<div class="empty">Topic not found. <a href="#/">Go home</a></div>`; return; }
   currentView = "topic"; currentTopic = file;
+  searchInput.placeholder = `Search in ${meta.name}…`;
   const idx = topicOrder.indexOf(meta), prev = topicOrder[idx - 1], next = topicOrder[idx + 1];
   const st = topicStats(file);
   const match = q => { const s = getMark(questionKey(file, q.title));
@@ -839,6 +864,7 @@ function repoPath() {
 // ===================== Router & boot =====================
 function route() {
   searchInput.value = "";                      // navigating anywhere closes search
+  searchInput.placeholder = DEFAULT_PLACEHOLDER;  // topic pages override this
   const raw = location.hash.replace(/^#/, "") || "/";
   const h = decodeURIComponent(raw);
   const m = h.match(/^\/t\/(topics\/[^/]+\.md)(?:\/(\d+))?$/);
