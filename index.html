@@ -33,6 +33,7 @@
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); border: 0; }
 html { -webkit-text-size-adjust: 100%; }
 body { margin: 0; background: var(--bg); color: var(--text);
   font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
@@ -109,6 +110,12 @@ h3.section { font-size: .95rem; color: var(--muted); margin: 22px 0 8px; }
 .listen-btn:hover { background: var(--surface-2); }
 .q.speaking { outline: 2px solid var(--accent); }
 .q.speaking .listen-btn { color: var(--accent); }
+.start-panel { margin: -6px 0 16px; }
+.start-panel h3 { font-size: .95rem; margin: 0 0 10px; }
+.start-panel select { width: 100%; font: inherit; font-size: .9rem; padding: 9px 10px; border-radius: 10px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text); min-width: 0; }
+.start-panel .pick { display: flex; gap: 8px; margin-top: 10px; }
+.start-panel .pick select { flex: 1; }
 .player { position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%); width: min(560px, calc(100vw - 20px));
   background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 10px 12px; z-index: 20;
   box-shadow: 0 6px 24px rgba(0,0,0,.25); display: flex; align-items: center; gap: 10px; }
@@ -173,7 +180,7 @@ footer { margin-top: 40px; font-size: .82rem; color: var(--muted); text-align: c
   .player .ctrls { gap: 4px; }
   .player button { min-width: 36px; padding: 6px 8px; }
 }
-@media (max-width: 360px) { .rev-label { display: none; } }
+@media (max-width: 360px) { .rev-label { display: none; } .q .actions button { padding: 6px 8px; font-size: .85rem; } }
 </style>
 </head>
 <body>
@@ -769,6 +776,7 @@ function bindCards(onChange) {
       const cur = speech.playing && speech.items[speech.index];
       if (cur && cur.file === file && cur.n === n) { stopSpeech(); return; }      // tapping the one being read stops it
       if (speech.playing && speech.mode === "list") toast(`Reading just Q${n}`);
+      const sp = document.getElementById("start-panel"); if (sp) sp.remove();
       playItems([{ file, n }], 0, "single");
     };
     card.querySelector(".done-btn").onclick = () => { setMark(file, q, "done"); onChange(card, file, q); };
@@ -840,7 +848,7 @@ function renderTopic(file, focusN) {
   if (la) la.onclick = () => {
     if (speech.playing && speech.mode === "list") { stopSpeech(); return; }
     const items = [...app.querySelectorAll("article.q")].map(c => ({ file: c.dataset.file, n: Number(c.dataset.n) }));
-    if (items.length) playItems(items, 0, "list"); else toast("No questions to read in this filter.");
+    if (items.length) toggleStartPanel(items, la, false); else toast("No questions to read in this filter.");
   };
   document.getElementById("expand-all").onclick = e => {
     const open = e.target.textContent.startsWith("Expand");
@@ -870,7 +878,7 @@ function renderRevise() {
   const la = document.getElementById("listen-all");
   if (la) la.onclick = () => {
     if (speech.playing && speech.mode === "list") { stopSpeech(); return; }
-    playItems([...app.querySelectorAll("article.q")].map(c => ({ file: c.dataset.file, n: Number(c.dataset.n) })), 0, "list");
+    toggleStartPanel([...app.querySelectorAll("article.q")].map(c => ({ file: c.dataset.file, n: Number(c.dataset.n) })), la, true);
   };
   bindCards(card => refreshCard(card));
   window.scrollTo(0, 0);
@@ -1044,6 +1052,36 @@ function playerUI() {
   document.getElementById("player-next").disabled = speech.index >= speech.items.length - 1;
 }
 function cardFor(it) { return app.querySelector(`article.q[data-file="${CSS.escape(it.file)}"][data-n="${it.n}"]`); }
+// "Start reading from…" panel for topic / revise-list reading.
+function toggleStartPanel(items, anchor, showTopic) {
+  const existing = document.getElementById("start-panel");
+  if (existing) { existing.remove(); anchor.setAttribute("aria-expanded", "false"); return; }
+  const label = it => { const q = topics[it.file].questions.find(x => x.n === it.n);
+    const name = showTopic ? topicOrder.find(t => t.file === it.file).name + " · " : "";
+    const title = q.title.replace(/`/g, ""); return `${name}Q${it.n} · ${title.length > 70 ? title.slice(0, 68) + "…" : title}`; };
+  const lastIdx = state.last ? items.findIndex(it => it.file === state.last.file && it.n === state.last.n) : -1;
+  const notDoneIdx = items.findIndex(it => getMark(questionKey(it.file, topics[it.file].questions.find(x => x.n === it.n).title)) !== "done");
+  const quick = [[0, "From the beginning"]];
+  if (lastIdx > 0) quick.push([lastIdx, `Where you left off (Q${items[lastIdx].n})`]);
+  if (notDoneIdx > 0 && notDoneIdx !== lastIdx) quick.push([notDoneIdx, `First not done (Q${items[notDoneIdx].n})`]);
+  const selected = lastIdx > 0 ? lastIdx : (notDoneIdx > 0 ? notDoneIdx : 0);
+  const panel = document.createElement("section");
+  panel.className = "card start-panel"; panel.id = "start-panel";
+  panel.setAttribute("aria-label", "Choose where to start reading");
+  panel.innerHTML = `<h3>🔊 Start reading from</h3>
+    <div class="row-btns">${quick.map(([i, l]) => `<button data-start="${i}"${i === selected ? ' class="primary"' : ""}>${esc(l)}</button>`).join("")}</div>
+    <div class="pick">
+      <label class="sr-only" for="start-select">Choose a question</label>
+      <select id="start-select">${items.map((it, i) => `<option value="${i}"${i === selected ? " selected" : ""}>${esc(label(it))}</option>`).join("")}</select>
+      <button class="primary" id="start-go">▶ Start</button>
+    </div>`;
+  const row = anchor.closest(".filters, .row-btns") || anchor;
+  row.insertAdjacentElement("afterend", panel);
+  anchor.setAttribute("aria-expanded", "true");
+  const start = i => { panel.remove(); anchor.setAttribute("aria-expanded", "false"); playItems(items, i, "list"); };
+  panel.querySelectorAll("[data-start]").forEach(b => b.onclick = () => start(Number(b.dataset.start)));
+  panel.querySelector("#start-go").onclick = () => start(Number(panel.querySelector("#start-select").value));
+}
 function playItems(items, start, mode) {
   if (!speech.supported) return;
   const wasPlaying = speech.playing;
