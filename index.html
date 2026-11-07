@@ -100,6 +100,8 @@ h2.cat { font-size: 1.02rem; margin: 26px 0 10px; }
 .topic .areas { font-size: .82rem; color: var(--muted); margin-top: 6px; }
 .complete { color: var(--done); font-weight: 600; }
 .crumbs { margin-bottom: 10px; font-size: .9rem; }
+#crumb-slot .crumbs { margin: -4px 0 12px; }
+#crumb-slot .crumbs a { display: inline-block; padding: 4px 0; font-weight: 600; }
 .topic-head h2 { margin: 0 0 4px; font-size: 1.4rem; }
 .filters { display: flex; gap: 6px; flex-wrap: wrap; margin: 16px 0; }
 .filters button[aria-pressed="true"], .tabs button[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
@@ -220,6 +222,7 @@ footer { margin-top: 40px; font-size: .82rem; color: var(--muted); text-align: c
       <button id="theme-btn" title="Toggle dark mode" aria-label="Toggle dark mode">◐</button>
     </nav>
   </header>
+  <div id="crumb-slot"></div>
   <div class="search-wrap" role="search">
     <span class="icon" aria-hidden="true">🔍</span>
     <input type="search" id="global-search" placeholder="Search all questions and answers…" aria-label="Search all questions and answers" autocomplete="off">
@@ -571,6 +574,9 @@ const authMessage = e => AUTH_ERRORS[e && e.code] || "Something went wrong. Plea
 
 // ===================== Views =====================
 const app = document.getElementById("app");
+const crumbSlot = document.getElementById("crumb-slot");
+// Each view renders its back link inside #app; lift it above the search bar so it's easy to find.
+function liftCrumbs() { const c = app.querySelector(".crumbs"); crumbSlot.replaceChildren(...(c ? [c] : [])); }
 let currentView = "home";
 
 function welcomeCard() {
@@ -640,7 +646,7 @@ function renderHome() {
     html += `</div>`;
   }
   html += `</div>`;
-  app.innerHTML = html;
+  app.innerHTML = html; liftCrumbs();
   const ws = document.getElementById("welcome-start");
   if (ws) ws.onclick = () => { state.prefs.welcomeDismissed = true; saveState(); renderHome(); };
   const wsi = document.getElementById("welcome-signin");
@@ -872,7 +878,7 @@ function renderSearchView(query) {
     if (!ctxMeta || !inTopic) html += `<p class="small muted">${res.total} matching question${res.total > 1 ? "s" : ""}${res.total > res.hits.length ? ` · showing the top ${res.hits.length}, so add a word to narrow it down` : ""}</p>`;
     for (const h of res.hits) html += questionCard(h.t.file, h.q, !inTopic, query);
   }
-  app.innerHTML = html;
+  app.innerHTML = html; liftCrumbs();
   document.getElementById("search-close").onclick = e => { e.preventDefault(); clearSearch(); };
   const toggle = () => { searchScope = searchScope === "topic" ? "all" : "topic"; renderSearchView(query); };
   ["scope-btn", "scope-btn-empty"].forEach(id => { const b = document.getElementById(id); if (b) b.onclick = toggle; });
@@ -976,7 +982,7 @@ function refreshMarksInView() {
 let currentTopic = null;
 function renderTopic(file, focusN) {
   const t = topics[file], meta = topicOrder.find(x => x.file === file);
-  if (!t || !meta) { app.innerHTML = `<div class="empty">Topic not found. <a href="#/">Go home</a></div>`; return; }
+  if (!t || !meta) { app.innerHTML = `<div class="empty">Topic not found. <a href="#/">Go home</a></div>`; liftCrumbs(); return; }
   currentView = "topic"; currentTopic = file;
   searchInput.placeholder = placeholderFor(meta.name);
   const idx = topicOrder.indexOf(meta), prev = topicOrder[idx - 1], next = topicOrder[idx + 1];
@@ -1006,7 +1012,7 @@ function renderTopic(file, focusN) {
   html += `<nav class="pager">
     ${prev ? `<a class="btn" href="#/t/${encodeURIComponent(prev.file)}">← ${esc(prev.name)}</a>` : "<span></span>"}
     ${next ? `<a class="btn" href="#/t/${encodeURIComponent(next.file)}">${esc(next.name)} →</a>` : ""}</nav>`;
-  app.innerHTML = html;
+  app.innerHTML = html; liftCrumbs();
   app.querySelectorAll(".filters button[data-f]").forEach(b => b.onclick = () => { stopSpeech(); topicFilter = b.dataset.f; renderTopic(file); });
   const la = document.getElementById("listen-all");
   if (la) la.onclick = () => {
@@ -1038,7 +1044,7 @@ function renderRevise() {
   if (!count) html += `<div class="empty">Nothing marked for revision yet. Use the ↻ Revise button on any question you want to come back to.</div>`;
   else if (speech.supported) html = html.replace("<h2>↻ Questions to revise</h2>",
     `<div class="row-btns" style="justify-content:space-between"><h2>↻ Questions to revise</h2><button id="listen-all">🔊 Listen to all</button></div>`);
-  app.innerHTML = html;
+  app.innerHTML = html; liftCrumbs();
   const la = document.getElementById("listen-all");
   if (la) la.onclick = () => {
     if (speech.playing && speech.mode === "list") { stopSpeech(); return; }
@@ -1115,6 +1121,7 @@ function renderAccount() {
       Sign in to keep it safe and in sync across your devices.</p>
     ${syncSection}
   </div>`;
+  liftCrumbs();
   bindAccount();
 }
 
