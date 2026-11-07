@@ -6,7 +6,7 @@ Every answer is hidden in a collapsible block, so you can **test yourself first*
 
 > **📈 [Open the interactive study tracker](https://akshayashokcode.github.io/Android-Interview-Questions-cheat-sheet/)**: mark questions ✓ Done or ↻ Revise, see your progress per topic, search every question, and continue where you left off.
 >
-> **No account needed.** Your progress saves automatically on your device. Studying on several devices? Optionally sign in to keep your progress in sync, or move it with a transfer link / QR code.
+> **No account needed.** Your progress saves automatically on your device. Want to keep it safe and in sync across your devices? Sign in (optional).
 
 ---
 

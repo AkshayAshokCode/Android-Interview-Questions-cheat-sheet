@@ -116,10 +116,6 @@ h3.section { font-size: .95rem; color: var(--muted); margin: 22px 0 8px; }
 .form-msg { font-size: .88rem; margin-top: 10px; min-height: 1.2em; }
 .form-msg.error { color: var(--danger); }
 .form-msg.ok { color: var(--done); }
-.qr { background: #fff; padding: 8px; border-radius: 8px; display: inline-block; margin-top: 10px; }
-.qr svg { display: block; width: 200px; height: 200px; }
-.code-box { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .78rem; word-break: break-all;
-  background: var(--code-bg); padding: 8px; border-radius: 8px; margin-top: 10px; }
 .toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--text); color: var(--bg);
   padding: 8px 14px; border-radius: 8px; font-size: .9rem; opacity: 0; transition: opacity .2s; pointer-events: none; max-width: 90vw; }
 .toast.show { opacity: 1; }
@@ -133,16 +129,15 @@ footer { margin-top: 40px; font-size: .82rem; color: var(--muted); text-align: c
     <h1><a href="#/" id="site-title">Interview Prep Tracker</a></h1>
     <nav class="tools" aria-label="Main">
       <a class="btn" href="#/revise">↻ Revise list</a>
-      <a class="btn chip" id="sync-chip" href="#/account">💾 Saved on this device</a>
+      <a class="btn chip" id="sync-chip" href="#/account" hidden>Sign in to sync</a>
       <button id="theme-btn" title="Toggle dark mode" aria-label="Toggle dark mode">◐</button>
     </nav>
   </header>
   <main id="app"><div class="empty">Loading questions…</div></main>
-  <footer>No account needed. Your progress saves automatically on this device ·
-    <a href="#/account">Sync &amp; backup</a> · <a id="repo-link" href="./">View repo</a></footer>
+  <footer>No account needed. Your progress is saved on this device<span id="footer-sync" hidden> ·
+    <a href="#/account">Sign in to sync across devices</a></span> · <a id="repo-link" href="./">View repo</a></footer>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
-<input type="file" id="import-file" accept="application/json" hidden>
 
 <script>
 // ===================== Parsing & encoding (pure functions) =====================
@@ -202,48 +197,6 @@ function mergeMarksInto(into, from) {
   return changed;
 }
 
-function toB64url(bytes) {
-  let bin = ""; for (const b of bytes) bin += String.fromCharCode(b);
-  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-}
-function fromB64url(s) {
-  s = s.replace(/-/g, "+").replace(/_/g, "/"); while (s.length % 4) s += "=";
-  return Array.from(atob(s), c => c.charCodeAt(0));
-}
-// Compact transfer code: 2 bits per question (0 none, 1 done, 2 revise), grouped by topic.
-// Questions are only ever appended to topic files, so positions stay stable.
-function encodeProgress(list, codeOf, timeSec) {
-  const bytes = [1, (timeSec >>> 24) & 255, (timeSec >>> 16) & 255, (timeSec >>> 8) & 255, timeSec & 255];
-  for (const t of list) {
-    const qs = t.questions;
-    bytes.push(Number(t.num) & 255, (qs.length >> 8) & 255, qs.length & 255);
-    let cur = 0, bits = 0;
-    for (const q of qs) {
-      cur |= (codeOf(t, q) & 3) << bits; bits += 2;
-      if (bits === 8) { bytes.push(cur); cur = 0; bits = 0; }
-    }
-    if (bits) bytes.push(cur);
-  }
-  return toB64url(bytes);
-}
-function decodeProgress(code, list) {
-  const b = fromB64url(code);
-  if (b[0] !== 1 || b.length < 5) throw new Error("Unsupported code");
-  const time = ((b[1] << 24) | (b[2] << 16) | (b[3] << 8) | b[4]) >>> 0;
-  let i = 5, skipped = 0;
-  const items = [];
-  while (i + 3 <= b.length) {
-    const num = b[i], count = (b[i + 1] << 8) | b[i + 2];
-    i += 3;
-    const codes = [];
-    for (let j = 0; j < count; j++) codes.push((b[i + (j >> 2)] >> ((j & 3) * 2)) & 3);
-    i += Math.ceil(count / 4);
-    const t = list.find(x => Number(x.num) === num);
-    if (!t || t.questions.length < count) { if (codes.some(c => c)) skipped++; continue; }
-    codes.forEach((c, j) => { if (c === 1 || c === 2) items.push({ t, q: t.questions[j], s: c === 1 ? "done" : "revise" }); });
-  }
-  return { time, items, skipped };
-}
 // PARSE-END
 
 // ===================== Local storage =====================
@@ -340,14 +293,6 @@ function toast(msg) {
   const el = document.getElementById("toast"); el.textContent = msg; el.classList.add("show");
   clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove("show"), 2400);
 }
-async function copyText(text) {
-  try { await navigator.clipboard.writeText(text); return true; }
-  catch (e) {
-    const ta = document.createElement("textarea"); ta.value = text; document.body.appendChild(ta); ta.select();
-    let ok = false; try { ok = document.execCommand("copy"); } catch (err) {}
-    ta.remove(); return ok;
-  }
-}
 function setMark(file, q, value) {
   const k = questionKey(file, q.title);
   state.marks[k] = { s: getMark(k) === value ? "" : value, t: Date.now() };
@@ -363,12 +308,12 @@ const sync = { enabled: !!CONFIG, ready: false, user: null, status: "local", las
 
 function renderChip() {
   const chip = document.getElementById("sync-chip");
+  chip.hidden = !sync.enabled;                       // no sign-in configured → nothing to show
+  document.getElementById("footer-sync").hidden = !sync.enabled || !!sync.user;
   chip.className = "btn chip";
   if (!sync.user) {
-    chip.innerHTML = sync.enabled
-      ? `💾 <span class="chip-long">Saved on this device · </span>Sign in to sync`
-      : `💾 Saved on this device`;
-    chip.title = "Your progress is saved in this browser. Open sync & backup options.";
+    chip.textContent = "☁️ Sign in to sync";
+    chip.title = "Your progress is saved on this device. Sign in to keep it in sync across devices.";
     return;
   }
   const map = {
@@ -491,8 +436,8 @@ function welcomeCard() {
     <h2 id="welcome-title">👋 Start studying. No account needed.</h2>
     <p>Mark questions <b>✓ Done</b> or <b>↻ Revise</b> as you go. Your progress is saved automatically on this device.
     ${sync.enabled
-      ? `Want it on your phone and other computers too? <b>Signing in is optional</b>: do it only if you want your progress synced across devices.`
-      : `Studying on more than one device? You can move your progress anytime from <a href="#/account">Sync &amp; backup</a>.`}</p>
+      ? `Want to keep it safe and in sync on your phone and other computers? <b>Sign in</b>. It's optional.`
+      : ""}</p>
     <div class="row-btns">
       <button class="primary" id="welcome-start">Start studying</button>
       ${sync.enabled ? `<a class="btn" href="#/account" id="welcome-signin">Sign in to sync</a>` : ""}
@@ -500,18 +445,15 @@ function welcomeCard() {
   </section>`;
 }
 function nudgeCard(st) {
-  if (sync.user || !state.prefs.welcomeDismissed) return "";
+  if (!sync.enabled || sync.user || !state.prefs.welcomeDismissed) return "";
   const marked = st.done + st.revise;
   if (marked < 10 || Date.now() < (state.prefs.nudgeSnoozeUntil || 0)) return "";
-  const lastBackup = state.prefs.lastBackup || 0;
-  if (!sync.enabled && Date.now() - lastBackup < 7 * 864e5) return "";
   return `<section class="card notice" aria-labelledby="nudge-title">
     <h2 id="nudge-title">Keep your ${marked} marked questions safe</h2>
-    <p>Right now your progress lives only in this browser. Clearing browsing data, or not visiting for a while in Safari, can erase it.
-    ${sync.enabled ? "Sign in (optional) to sync it across your devices, or save a backup." : "Save a transfer link or backup file to keep it safe."}</p>
+    <p>Your progress is saved only in this browser right now. Sign in to keep it safe and in sync across your devices.</p>
     <div class="row-btns">
-      <a class="btn primary" href="#/account">${sync.enabled ? "Sign in to sync" : "Back up my progress"}</a>
-      <button id="nudge-later">Remind me later</button>
+      <a class="btn primary" href="#/account">Sign in to sync</a>
+      <button id="nudge-later">Not now</button>
     </div>
   </section>`;
 }
@@ -704,7 +646,7 @@ function renderRevise() {
   window.scrollTo(0, 0);
 }
 
-// ----- Sync & backup page -----
+// ----- Account page -----
 let authMode = "signin";
 function renderAccount() {
   currentView = "account";
@@ -713,12 +655,12 @@ function renderAccount() {
   if (!sync.enabled) {
     syncSection = `<section class="card">
       <h2>☁️ Sync across devices</h2>
-      <p class="muted small">Account sync isn't available on this site yet. You can still move your progress between devices with a transfer link or a backup file below.</p>
+      <p class="muted small">Sign-in isn't available on this site yet. Your progress is saved on this device.</p>
     </section>`;
   } else if (sync.loadError) {
     syncSection = `<section class="card"><h2>☁️ Sync across devices <span class="small muted">(optional)</span></h2>
       <p class="small muted">Sign-in couldn't load right now. You may be offline, or your network may block it (common on work networks).
-      Your progress is still saved on this device, and you can use a transfer link below.</p>
+      Your progress is still saved on this device.</p>
       <button id="retry-sync">Try again</button></section>`;
   } else if (!sync.ready) {
     syncSection = `<section class="card"><h2>☁️ Sync across devices <span class="small muted">(optional)</span></h2><p class="muted">Loading sign-in…</p></section>`;
@@ -764,30 +706,12 @@ function renderAccount() {
       <p class="small muted" style="margin-top:12px">We store only your email and your study progress. Nothing else, and it's never shared.</p>
     </section>`;
   }
-  const lastBackup = state.prefs.lastBackup;
   app.innerHTML = `<div class="crumbs"><a href="#/">← All topics</a></div>
   <div class="account">
-    <h2 style="font-size:1.4rem;margin:0 0 6px">Sync &amp; backup</h2>
-    <p class="muted" style="margin-top:0">Your progress (${st.done} done, ${st.revise} to revise) is saved automatically on this device.
-      Everything below is optional.</p>
+    <h2 style="font-size:1.4rem;margin:0 0 6px">Account</h2>
+    <p class="muted" style="margin-top:0">Your progress (${st.done} done, ${st.revise} to revise) is saved on this device.
+      Sign in to keep it safe and in sync across your devices.</p>
     ${syncSection}
-    <section class="card">
-      <h2>📲 Move progress to another device <span class="small muted">(no account)</span></h2>
-      <p class="small muted">Create a one-time link, then open it on your phone or another computer (or scan the QR code).
-      It's merged with that device's progress, and the most recent mark wins.</p>
-      <button id="make-link">Create transfer link</button>
-      <div id="link-out"></div>
-    </section>
-    <section class="card">
-      <h2>💾 Backup file</h2>
-      <p class="small muted">Download your progress as a file, or restore it from one. Last backup: ${lastBackup ? timeAgo(lastBackup) : "never"}.</p>
-      <div class="row-btns"><button id="export-btn">Download backup</button><button id="import-btn">Restore from file</button></div>
-    </section>
-    <section class="card">
-      <h2>📱 Tip: install it as an app</h2>
-      <p class="small muted" style="margin:0">On iPhone: Share → <b>Add to Home Screen</b>. On Android or desktop Chrome/Edge: menu → <b>Install app</b>.
-      Installed, it opens like an app, and Safari won't clear your progress after a week away.</p>
-    </section>
   </div>`;
   bindAccount();
 }
@@ -840,94 +764,7 @@ function bindAccount() {
       toast("Account deleted.");
     } catch (e) { m.className = "form-msg error"; m.textContent = authMessage(e); }
   };
-  $("make-link").onclick = makeTransferLink;
-  $("export-btn").onclick = exportFile;
-  $("import-btn").onclick = () => document.getElementById("import-file").click();
 }
-
-// ----- Transfer link & QR -----
-function transferCode() {
-  const now = Math.floor(Date.now() / 1000);
-  return encodeProgress(topicOrder, (t, q) => { const s = getMark(questionKey(t.file, q.title)); return s === "done" ? 1 : s === "revise" ? 2 : 0; }, now);
-}
-let qrLib = null;
-function loadQrLib() {
-  if (qrLib) return qrLib;
-  qrLib = new Promise((resolve, reject) => {
-    const s = document.createElement("script");
-    s.src = "https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js";
-    s.onload = () => resolve(window.qrcode); s.onerror = reject;
-    document.head.appendChild(s);
-  });
-  return qrLib;
-}
-async function makeTransferLink() {
-  const url = location.origin + location.pathname + "#/import/" + transferCode();
-  const out = document.getElementById("link-out");
-  out.innerHTML = `<div class="code-box">${esc(url)}</div>
-    <div class="row-btns" style="margin-top:8px"><button id="copy-link" class="primary">Copy link</button>
-    ${navigator.share ? `<button id="share-link">Share…</button>` : ""}</div>
-    <div class="qr" id="qr" aria-label="QR code of the transfer link"></div>
-    <p class="small muted">This link is a snapshot of your progress right now. Create a new one next time.</p>`;
-  document.getElementById("copy-link").onclick = async () => {
-    if (await copyText(url)) { toast("Link copied"); state.prefs.lastBackup = Date.now(); saveState(); } else toast("Couldn't copy. Select the link and copy it manually.");
-  };
-  const sh = document.getElementById("share-link");
-  if (sh) sh.onclick = () => navigator.share({ title: shortTitle + " progress", url }).then(() => { state.prefs.lastBackup = Date.now(); saveState(); }).catch(() => {});
-  try {
-    const qrcode = await loadQrLib();
-    const qr = qrcode(0, "L"); qr.addData(url); qr.make();
-    document.getElementById("qr").innerHTML = qr.createSvgTag({ cellSize: 4, margin: 2, scalable: true });
-  } catch (e) { const el = document.getElementById("qr"); if (el) el.remove(); }
-}
-function renderImport(code) {
-  currentView = "import";
-  let parsed;
-  try { parsed = decodeProgress(code, topicOrder); }
-  catch (e) { app.innerHTML = `<div class="empty">This transfer link is invalid or incomplete. <a href="#/">Go home</a></div>`; return; }
-  const done = parsed.items.filter(i => i.s === "done").length, rev = parsed.items.length - done;
-  app.innerHTML = `<div class="crumbs"><a href="#/">← All topics</a></div>
-    <section class="card"><h2 style="margin-top:0">Import progress from another device?</h2>
-    <p>This link contains <b>${done} done</b> and <b>${rev} to revise</b>, saved ${timeAgo(parsed.time * 1000)}.
-    It will be <b>merged</b> with the progress on this device (newer marks win). Nothing is deleted.</p>
-    ${parsed.skipped ? `<p class="small muted">${parsed.skipped} topic(s) changed since the link was made and will be skipped.</p>` : ""}
-    <div class="row-btns"><button class="primary" id="do-import">Import progress</button><a class="btn" href="#/">Cancel</a></div></section>`;
-  document.getElementById("do-import").onclick = () => {
-    const incoming = {};
-    for (const i of parsed.items) incoming[questionKey(i.t.file, i.q.title)] = { s: i.s, t: parsed.time * 1000 };
-    mergeMarksInto(state.marks, incoming);
-    saveState(); requestPersistentStorage();
-    if (sync.user) schedulePush(0);
-    toast("Progress imported");
-    history.replaceState(null, "", location.pathname + "#/");
-    route();
-  };
-}
-
-// ----- Backup file -----
-function exportFile() {
-  const blob = new Blob([JSON.stringify({ app: STORE, version: 2, exportedAt: new Date().toISOString(), marks: state.marks, last: state.last }, null, 2)], { type: "application/json" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = (TRACKER_ID || "interview") + "-progress-" + new Date().toISOString().slice(0, 10) + ".json";
-  a.click(); URL.revokeObjectURL(a.href);
-  state.prefs.lastBackup = Date.now(); saveState();
-  if (currentView === "account") renderAccount();
-}
-document.getElementById("import-file").onchange = async e => {
-  const f = e.target.files[0]; if (!f) return;
-  try {
-    const data = JSON.parse(await f.text());
-    let incoming = data.marks;
-    if (!incoming && data.status) { incoming = {}; for (const k in data.status) incoming[k] = { s: data.status[k], t: 1 }; }
-    if (!incoming) throw new Error("bad file");
-    mergeMarksInto(state.marks, incoming);
-    if (data.last) adoptRemoteLast(data.last);
-    saveState(); if (sync.user) schedulePush(0);
-    route(); toast("Progress restored");
-  } catch (err) { toast("That file isn't a valid progress backup."); }
-  e.target.value = "";
-};
 
 function repoPath() {
   if (!location.hostname.endsWith("github.io")) return "";
@@ -939,8 +776,6 @@ function repoPath() {
 // ===================== Router & boot =====================
 function route() {
   const raw = location.hash.replace(/^#/, "") || "/";
-  const imp = raw.match(/^\/import\/([A-Za-z0-9_-]+)$/);
-  if (imp) return renderImport(imp[1]);
   const h = decodeURIComponent(raw);
   const m = h.match(/^\/t\/(topics\/[^/]+\.md)(?:\/(\d+))?$/);
   if (m) renderTopic(m[1], m[2] ? Number(m[2]) : null);
