@@ -44,7 +44,7 @@ header.top h1 { font-size: 1.3rem; margin: 0; }
 header.top h1 a { color: var(--text); }
 .brand { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .switcher { display: inline-flex; border: 1px solid var(--border); border-radius: 99px; padding: 3px; background: var(--surface); }
-.switcher a, .switcher span { font-size: .85rem; padding: 4px 14px; border-radius: 99px; color: var(--muted); }
+.switcher a, .switcher span { font-size: .85rem; padding: 4px 0; min-width: 76px; text-align: center; border-radius: 99px; color: var(--muted); }
 .switcher a:hover { color: var(--text); text-decoration: none; }
 .switcher [aria-current="page"] { background: var(--text); color: var(--bg); font-weight: 600; }
 .tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
@@ -291,7 +291,7 @@ async function loadAll() {
   site = parseReadme(await res.text());
   topicOrder = site.categories.flatMap(c => c.topics).sort((a, b) => Number(a.num) - Number(b.num));
   shortTitle = site.title.replace(/ – Cheat Sheet$/, "").replace(/ Questions$/, "");
-  document.getElementById("site-title").textContent = shortTitle + " Tracker";
+  // Same heading on every track so the Android | iOS toggle never shifts; the tab title names the track.
   document.title = shortTitle + " Tracker";
   renderSwitcher();
   await Promise.all(topicOrder.map(async t => {
