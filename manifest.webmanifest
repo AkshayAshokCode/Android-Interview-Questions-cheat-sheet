@@ -2,8 +2,8 @@
   "name": "Android Interview Prep Tracker",
   "short_name": "Android Prep",
   "description": "Study Android interview questions and track your progress.",
-  "start_url": "./",
-  "scope": "./",
+  "start_url": "/Android-Interview-Questions-cheat-sheet/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#f7f7f5",
   "theme_color": "#1f9d55",
@@ -24,5 +24,6 @@
       "type": "image/png",
       "purpose": "maskable"
     }
-  ]
+  ],
+  "id": "/Android-Interview-Questions-cheat-sheet/"
 }

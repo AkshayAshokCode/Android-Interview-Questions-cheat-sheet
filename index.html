@@ -373,6 +373,9 @@ function renderSwitcher() {
     ? `<span aria-current="page">${esc(t.name)}</span>`
     : `<a href="${base}${t.repo}/" title="Switch to the ${esc(t.name)} tracker">${esc(t.name)}</a>`).join("");
   el.hidden = false;
+  // In an installed (home-screen) app, switch tracks with a script navigation so iOS keeps it inside the app.
+  const standalone = navigator.standalone || matchMedia("(display-mode: standalone)").matches;
+  if (standalone) el.querySelectorAll("a").forEach(a => a.onclick = e => { e.preventDefault(); location.href = a.href; });
 }
 
 async function loadAll() {
