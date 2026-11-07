@@ -766,8 +766,10 @@ function bindCards(onChange) {
     };
     const lb = card.querySelector(".listen-btn");
     if (lb) lb.onclick = () => {
-      if (speech.playing && speech.items.length === 1 && speech.items[0].file === file && speech.items[0].n === n) { stopSpeech(); return; }
-      playItems([{ file, n }], 0);
+      const cur = speech.playing && speech.items[speech.index];
+      if (cur && cur.file === file && cur.n === n) { stopSpeech(); return; }      // tapping the one being read stops it
+      if (speech.playing && speech.mode === "list") toast(`Reading just Q${n}`);
+      playItems([{ file, n }], 0, "single");
     };
     card.querySelector(".done-btn").onclick = () => { setMark(file, q, "done"); onChange(card, file, q); };
     card.querySelector(".rev-btn").onclick = () => { setMark(file, q, "revise"); onChange(card, file, q); };
@@ -836,8 +838,9 @@ function renderTopic(file, focusN) {
   app.querySelectorAll(".filters button[data-f]").forEach(b => b.onclick = () => { stopSpeech(); topicFilter = b.dataset.f; renderTopic(file); });
   const la = document.getElementById("listen-all");
   if (la) la.onclick = () => {
+    if (speech.playing && speech.mode === "list") { stopSpeech(); return; }
     const items = [...app.querySelectorAll("article.q")].map(c => ({ file: c.dataset.file, n: Number(c.dataset.n) }));
-    if (items.length) playItems(items, 0); else toast("No questions to read in this filter.");
+    if (items.length) playItems(items, 0, "list"); else toast("No questions to read in this filter.");
   };
   document.getElementById("expand-all").onclick = e => {
     const open = e.target.textContent.startsWith("Expand");
@@ -865,7 +868,10 @@ function renderRevise() {
     `<div class="row-btns" style="justify-content:space-between"><h2>↻ Questions to revise</h2><button id="listen-all">🔊 Listen to all</button></div>`);
   app.innerHTML = html;
   const la = document.getElementById("listen-all");
-  if (la) la.onclick = () => playItems([...app.querySelectorAll("article.q")].map(c => ({ file: c.dataset.file, n: Number(c.dataset.n) })), 0);
+  if (la) la.onclick = () => {
+    if (speech.playing && speech.mode === "list") { stopSpeech(); return; }
+    playItems([...app.querySelectorAll("article.q")].map(c => ({ file: c.dataset.file, n: Number(c.dataset.n) })), 0, "list");
+  };
   bindCards(card => refreshCard(card));
   window.scrollTo(0, 0);
 }
@@ -999,7 +1005,7 @@ function repoPath() {
 
 // ===================== Read aloud (Web Speech API) =====================
 const speech = { supported: "speechSynthesis" in window && "SpeechSynthesisUtterance" in window,
-  playing: false, paused: false, items: [], index: 0, queue: [], current: "", token: 0,
+  playing: false, paused: false, mode: "single", items: [], index: 0, queue: [], current: "", token: 0,
   rates: [0.8, 1, 1.25, 1.5], rate: Number(state.prefs.rate) || 1 };
 function pickVoice() {
   const voices = speech.supported ? speechSynthesis.getVoices() : [];
@@ -1008,9 +1014,26 @@ function pickVoice() {
   return en.find(v => v.lang.toLowerCase() === lang && v.localService) || en.find(v => v.default) ||
          en.find(v => /en-(us|gb|in|au)/i.test(v.lang)) || en[0] || null;
 }
+// Reflect playback state on the 🔊 buttons: the card being read shows ⏹, the list button becomes "Stop listening".
+function updateListenButtons() {
+  const cur = speech.playing && speech.items[speech.index];
+  app.querySelectorAll("article.q").forEach(card => {
+    const b = card.querySelector(".listen-btn"); if (!b) return;
+    const active = cur && card.dataset.file === cur.file && Number(card.dataset.n) === cur.n;
+    b.textContent = active ? "⏹" : "🔊";
+    b.title = active ? "Stop reading" : "Listen to just this question";
+    b.setAttribute("aria-label", b.title);
+  });
+  const la = document.getElementById("listen-all");
+  if (la) {
+    if (!la.dataset.label) la.dataset.label = la.textContent;
+    la.textContent = speech.playing && speech.mode === "list" ? "⏹ Stop listening" : la.dataset.label;
+  }
+}
 function playerUI() {
   const pl = document.getElementById("player");
   pl.hidden = !speech.playing; document.body.classList.toggle("playing", speech.playing);
+  updateListenButtons();
   if (!speech.playing) return;
   const it = speech.items[speech.index], q = topics[it.file].questions.find(x => x.n === it.n);
   document.getElementById("player-pos").textContent = speech.items.length > 1 ? `${speech.index + 1} of ${speech.items.length} · Q${it.n}` : `Q${it.n}`;
@@ -1021,11 +1044,16 @@ function playerUI() {
   document.getElementById("player-next").disabled = speech.index >= speech.items.length - 1;
 }
 function cardFor(it) { return app.querySelector(`article.q[data-file="${CSS.escape(it.file)}"][data-n="${it.n}"]`); }
-function playItems(items, start) {
+function playItems(items, start, mode) {
   if (!speech.supported) return;
-  stopSpeech();
-  speech.items = items; speech.index = start; speech.playing = true; speech.paused = false;
-  speakCurrentItem();
+  const wasPlaying = speech.playing;
+  stopSpeech();                                   // only one reading at a time
+  speech.items = items; speech.index = start; speech.mode = mode || "single";
+  speech.playing = true; speech.paused = false; speech.current = "";
+  const token = ++speech.token;
+  // Safari can drop speech queued immediately after cancel(), so give it a moment when switching.
+  if (wasPlaying) { playerUI(); setTimeout(() => { if (token === speech.token && speech.playing && !speech.paused) speakCurrentItem(); }, 150); }
+  else speakCurrentItem();
 }
 function speakCurrentItem() {
   const it = speech.items[speech.index], q = topics[it.file].questions.find(x => x.n === it.n);
@@ -1059,12 +1087,12 @@ function speakNextChunk() {
 }
 function finishItem() {
   const card = cardFor(speech.items[speech.index]); if (card) card.classList.remove("speaking");
-  if (speech.index < speech.items.length - 1) { speech.index++; const token = ++speech.token; setTimeout(() => { if (token === speech.token && speech.playing) speakCurrentItem(); }, 700); }
+  if (speech.index < speech.items.length - 1) { speech.index++; playerUI(); const token = ++speech.token; setTimeout(() => { if (token === speech.token && speech.playing) speakCurrentItem(); }, 700); }
   else { stopSpeech(); toast("Finished reading"); }
 }
 function stopSpeech() {
   if (!speech.supported) return;
-  speech.token++; speech.playing = false; speech.paused = false; speech.queue = [];
+  speech.token++; speech.playing = false; speech.paused = false; speech.queue = []; speech.current = "";
   try { speechSynthesis.cancel(); } catch (e) {}
   app.querySelectorAll("article.q.speaking").forEach(c => c.classList.remove("speaking"));
   playerUI();
@@ -1076,7 +1104,7 @@ function restartChunk() {          // cancel and re-speak the current sentence (
 }
 document.getElementById("player-pause").onclick = () => {
   if (!speech.playing) return;
-  if (speech.paused) { speech.paused = false; playerUI(); restartChunk(); }
+  if (speech.paused) { speech.paused = false; playerUI(); if (!speech.current && !speech.queue.length) speakCurrentItem(); else restartChunk(); }
   else { speech.paused = true; speech.token++; try { speechSynthesis.cancel(); } catch (e) {} playerUI(); }
 };
 document.getElementById("player-next").onclick = () => {
