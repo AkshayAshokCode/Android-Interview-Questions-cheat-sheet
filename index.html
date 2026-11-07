@@ -118,7 +118,15 @@ h3.section { font-size: .95rem; color: var(--muted); margin: 22px 0 8px; }
 .start-panel .pick select { flex: 1; }
 .player { position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%); width: min(560px, calc(100vw - 20px));
   background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 10px 12px; z-index: 20;
-  box-shadow: 0 6px 24px rgba(0,0,0,.25); display: flex; align-items: center; gap: 10px; }
+  box-shadow: 0 6px 24px rgba(0,0,0,.25); display: flex; flex-direction: column; gap: 10px; max-height: 80vh; overflow-y: auto; }
+.player-main { display: flex; align-items: center; gap: 10px; }
+.player-settings { border-top: 1px dashed var(--border); padding-top: 10px; display: grid; gap: 10px; }
+.player-settings label { margin: 0; font-size: .82rem; display: grid; gap: 4px; }
+.player-settings select { font: inherit; font-size: .88rem; padding: 7px 8px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--surface); color: var(--text); width: 100%; min-width: 0; }
+.player-settings .two { display: grid; grid-template-columns: 1fr 110px; gap: 10px; }
+.player-settings p { margin: 0; font-size: .8rem; color: var(--muted); }
+#player-voice[aria-expanded="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
 .player .now { flex: 1; min-width: 0; font-size: .85rem; }
 .player .now b, .player .now span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .player .ctrls { display: flex; gap: 6px; flex-shrink: 0; }
@@ -176,7 +184,7 @@ footer { margin-top: 40px; font-size: .82rem; color: var(--muted); text-align: c
   .card { padding: 14px 12px; }
   .q .actions { gap: 5px; }
   .player { gap: 8px; padding: 8px 10px; }
-  .player > span[aria-hidden] { display: none; }
+  .player-main > span[aria-hidden] { display: none; }
   .player .ctrls { gap: 4px; }
   .player button { min-width: 36px; padding: 6px 8px; }
 }
@@ -206,13 +214,22 @@ footer { margin-top: 40px; font-size: .82rem; color: var(--muted); text-align: c
     <a href="#/account">Sign in to sync across devices</a></span> · <a id="repo-link" href="./">View repo</a></footer>
 </div>
 <div class="player" id="player" hidden role="region" aria-label="Read aloud player">
-  <span aria-hidden="true">🔊</span>
-  <div class="now"><span class="muted" id="player-pos"></span><b id="player-title"></b></div>
-  <div class="ctrls">
-    <button id="player-pause" aria-label="Pause">⏸</button>
-    <button id="player-next" aria-label="Next question">⏭</button>
-    <button id="player-rate" aria-label="Reading speed">1×</button>
-    <button id="player-stop" aria-label="Stop reading">✕</button>
+  <div class="player-main">
+    <span aria-hidden="true">🔊</span>
+    <div class="now"><span class="muted" id="player-pos"></span><b id="player-title"></b></div>
+    <div class="ctrls">
+      <button id="player-pause" aria-label="Pause">⏸</button>
+      <button id="player-next" aria-label="Next question">⏭</button>
+      <button id="player-voice" aria-label="Voice and speed settings" aria-expanded="false" aria-controls="player-settings">⚙</button>
+      <button id="player-stop" aria-label="Stop reading">✕</button>
+    </div>
+  </div>
+  <div class="player-settings" id="player-settings" hidden>
+    <div class="two">
+      <label>Voice <select id="voice-select"></select></label>
+      <label>Speed <select id="rate-select"></select></label>
+    </div>
+    <p id="voice-tip"></p>
   </div>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -634,6 +651,28 @@ function snippetFor(q, query) {
 }
 // PARSE-END
 // PARSE-START
+// Rank speech voices so the most natural-sounding English voice comes first.
+const NOVELTY_VOICES = /^(Albert|Bad News|Bahh|Bells|Boing|Bubbles|Cellos|Deranged|Good News|Hysterical|Jester|Organ|Pipe Organ|Superstar|Trinoids|Whisper|Wobble|Zarvox|Fred|Junior|Ralph|Kathy|Princess|Grandma|Grandpa|Rocko|Shelley|Sandy|Flo|Eddy|Reed)\b/i;
+function voiceScore(v, lang) {
+  const name = v.name || "", vl = (v.lang || "").replace("_", "-").toLowerCase(), want = (lang || "en-US").toLowerCase();
+  let s = 0;
+  if (/natural|neural/i.test(name)) s += 100;          // Edge online "Natural" voices
+  if (/premium/i.test(name)) s += 90;                   // Apple premium (Siri-quality)
+  if (/enhanced/i.test(name)) s += 80;                  // Apple enhanced
+  if (/^google\b/i.test(name)) s += 70;                 // Chrome's Google voices
+  if (/siri/i.test(name)) s += 60;
+  if (/\b(Ava|Zoe|Evan|Nathan|Allison|Susan|Tom|Samantha|Karen|Daniel|Serena|Moira|Tessa|Aria|Jenny|Guy|Libby|Sonia|Ryan|Neerja|Prabhat)\b/i.test(name)) s += 10;
+  if (NOVELTY_VOICES.test(name)) s -= 200;
+  if (/compact/i.test(name)) s -= 40;
+  if (/espeak/i.test(name)) s -= 80;
+  if (vl === want) s += 15; else if (vl.slice(0, 2) === want.slice(0, 2) && /en-(us|gb)/.test(vl)) s += 8;
+  if (v.default) s += 3;
+  return s;
+}
+function rankVoices(voices, lang) {
+  const en = voices.filter(v => /^en/i.test(v.lang || ""));
+  return (en.length ? en : voices).map(v => ({ v, s: voiceScore(v, lang) })).sort((a, b) => b.s - a.s).map(x => x.v);
+}
 function questionToSpeech(title) {
   return title.replace(/`/g, "").replace(/\bvs\.?\b/gi, "versus").replace(/[*_]/g, "");
 }
@@ -1017,10 +1056,8 @@ const speech = { supported: "speechSynthesis" in window && "SpeechSynthesisUtter
   rates: [0.8, 1, 1.25, 1.5], rate: Number(state.prefs.rate) || 1 };
 function pickVoice() {
   const voices = speech.supported ? speechSynthesis.getVoices() : [];
-  const lang = (navigator.language || "en-US").toLowerCase();
-  const en = voices.filter(v => /^en/i.test(v.lang));
-  return en.find(v => v.lang.toLowerCase() === lang && v.localService) || en.find(v => v.default) ||
-         en.find(v => /en-(us|gb|in|au)/i.test(v.lang)) || en[0] || null;
+  if (state.prefs.voiceName) { const chosen = voices.find(v => v.name === state.prefs.voiceName); if (chosen) return chosen; }
+  return rankVoices(voices, navigator.language || "en-US")[0] || null;
 }
 // Reflect playback state on the 🔊 buttons: the card being read shows ⏹, the list button becomes "Stop listening".
 function updateListenButtons() {
@@ -1048,7 +1085,6 @@ function playerUI() {
   document.getElementById("player-title").textContent = q.title.replace(/`/g, "");
   const pb = document.getElementById("player-pause");
   pb.textContent = speech.paused ? "▶" : "⏸"; pb.setAttribute("aria-label", speech.paused ? "Resume" : "Pause");
-  document.getElementById("player-rate").textContent = speech.rate + "×";
   document.getElementById("player-next").disabled = speech.index >= speech.items.length - 1;
 }
 function cardFor(it) { return app.querySelector(`article.q[data-file="${CSS.escape(it.file)}"][data-n="${it.n}"]`); }
@@ -1113,7 +1149,7 @@ function speakNextChunk() {
   const text = speech.queue.shift(), token = ++speech.token;
   speech.current = text;
   const u = new SpeechSynthesisUtterance(text);
-  u.rate = speech.rate; u.lang = "en-US";
+  u.rate = speech.rate; u.lang = "en-US";   // replaced below when a voice is chosen
   const v = pickVoice(); if (v) { u.voice = v; u.lang = v.lang; }
   u.onend = () => { if (token === speech.token) speakNextChunk(); };
   u.onerror = e => {
@@ -1151,14 +1187,45 @@ document.getElementById("player-next").onclick = () => {
   const card = cardFor(speech.items[speech.index]); if (card) card.classList.remove("speaking");
   speech.index++; speech.paused = false; speakCurrentItem();
 };
-document.getElementById("player-rate").onclick = () => {
-  const i = speech.rates.indexOf(speech.rate);
-  speech.rate = speech.rates[(i + 1) % speech.rates.length];
-  state.prefs.rate = speech.rate; saveState(); playerUI();
+// ----- Voice & speed settings -----
+function voiceTip() {
+  const ua = navigator.userAgent;
+  if (/iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1))
+    return "For a more natural voice: Settings → Accessibility → Spoken Content → Voices → English → download a “Premium” or “Enhanced” voice (e.g. Ava, Zoe), then reload this page.";
+  if (/Macintosh/.test(ua))
+    return "For a more natural voice: System Settings → Accessibility → Spoken Content → System voice → Manage Voices → download a “Premium” voice (e.g. Ava, Zoe), then reload.";
+  if (/Android/.test(ua))
+    return "For a more natural voice: Settings → Text-to-speech output → Speech Services by Google → Install voice data → English → choose a high-quality voice.";
+  if (/Edg\//.test(ua)) return "Tip: voices marked “Natural” sound the most human.";
+  return "Tip: “Google” voices sound better than the defaults. For the most natural voices, open this page in Microsoft Edge (“Natural” voices).";
+}
+function fillVoiceSettings() {
+  const vs = document.getElementById("voice-select"), rs = document.getElementById("rate-select");
+  const ranked = rankVoices(speechSynthesis.getVoices(), navigator.language || "en-US").slice(0, 40);
+  const best = ranked[0];
+  vs.innerHTML = `<option value="">Auto${best ? ` (${esc(best.name)})` : ""}</option>` +
+    ranked.map(v => `<option value="${esc(v.name)}"${v.name === state.prefs.voiceName ? " selected" : ""}>${esc(v.name)}${v.localService ? "" : " · online"}</option>`).join("");
+  rs.innerHTML = speech.rates.map(r => `<option value="${r}"${r === speech.rate ? " selected" : ""}>${r}×</option>`).join("");
+  document.getElementById("voice-tip").textContent = voiceTip();
+}
+document.getElementById("player-voice").onclick = () => {
+  const panel = document.getElementById("player-settings"), btn = document.getElementById("player-voice");
+  panel.hidden = !panel.hidden; btn.setAttribute("aria-expanded", String(!panel.hidden));
+  if (!panel.hidden) fillVoiceSettings();
+};
+document.getElementById("voice-select").onchange = e => {
+  state.prefs.voiceName = e.target.value || null; saveState();
+  if (speech.playing && !speech.paused) restartChunk();
+};
+document.getElementById("rate-select").onchange = e => {
+  speech.rate = Number(e.target.value); state.prefs.rate = speech.rate; saveState();
   if (speech.playing && !speech.paused) restartChunk();
 };
 document.getElementById("player-stop").onclick = stopSpeech;
-if (speech.supported) { speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = () => {}; }
+if (speech.supported) {
+  speechSynthesis.getVoices();
+  speechSynthesis.onvoiceschanged = () => { if (!document.getElementById("player-settings").hidden) fillVoiceSettings(); };
+}
 
 // ===================== Router & boot =====================
 function route() {
