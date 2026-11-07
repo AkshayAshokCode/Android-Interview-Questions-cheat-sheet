@@ -15,6 +15,21 @@ Covers: Activity lifecycle, configuration changes, state saving, process death, 
 
 An Activity is a single screen with UI and the entry point for user interaction. Lifecycle callbacks:
 
+```mermaid
+flowchart TD
+    L(["Launched"]) --> C["onCreate()"]
+    C --> S["onStart() - visible"]
+    S --> R["onResume() - interactive"]
+    R -->|"another activity in front / dialog"| P["onPause()"]
+    P -->|"user returns"| R
+    P -->|"no longer visible"| ST["onStop()"]
+    ST -->|"user navigates back"| RS["onRestart()"]
+    RS --> S
+    ST -->|"finishing or config change"| D["onDestroy()"]
+    ST -.->|"process killed (low memory)"| K(["Process gone"])
+    K -.->|"user returns"| C
+```
+
 | Callback | When | What to do |
 |---|---|---|
 | `onCreate()` | Created (once per instance) | `setContentView`/`setContent`, init ViewModel, restore state |
@@ -38,6 +53,19 @@ Use `isFinishing` / `isChangingConfigurations` in `onDestroy` to tell the cases 
 **A → B (B is opaque):**
 `A.onPause` → `B.onCreate` → `B.onStart` → `B.onResume` → `A.onStop`
 (A's `onPause` runs first and B's start runs before A's `onStop`. That's why `onPause` must be fast.)
+
+```mermaid
+sequenceDiagram
+    participant A as Activity A
+    participant B as Activity B
+    A->>A: onPause()
+    B->>B: onCreate() → onStart() → onResume()
+    A->>A: onStop()
+    Note over A,B: user presses Back
+    B->>B: onPause()
+    A->>A: onRestart() → onStart() → onResume()
+    B->>B: onStop() → onDestroy()
+```
 
 **Back from B:**
 `B.onPause` → `A.onRestart` → `A.onStart` → `A.onResume` → `B.onStop` → `B.onDestroy`
@@ -103,6 +131,17 @@ Views that have an `id` save their own state automatically (EditText text, scrol
 
 <details>
 <summary>Answer</summary>
+
+```mermaid
+flowchart TD
+    E{"What happened?"} -->|"Rotation / theme / locale"| CC["Configuration change"]
+    E -->|"App killed in background"| PD["Process death"]
+    CC --> V1["ViewModel ✅ kept"]
+    CC --> B1["Saved state ✅ kept"]
+    PD --> V2["ViewModel ❌ lost"]
+    PD --> B2["SavedStateHandle / rememberSaveable ✅ restored"]
+    PD --> DB["Room / DataStore ✅ (persisted)"]
+```
 
 | | Config change (rotation) | Process death (killed in the background) |
 |---|---|---|
@@ -185,6 +224,21 @@ Intent flags can override these at runtime.
 <summary>Answer</summary>
 
 A Fragment is a **reusable portion of UI** with its own lifecycle, hosted by an Activity (or by another Fragment). It has **two lifecycles**: the Fragment's own lifecycle and its **View's lifecycle** (`viewLifecycleOwner`).
+
+```mermaid
+flowchart TD
+    A["onAttach()"] --> C["onCreate()"]
+    C --> CV["onCreateView()"]
+    CV --> VC["onViewCreated()"]
+    VC --> S["onStart()"]
+    S --> R["onResume()"]
+    R --> P["onPause()"]
+    P --> ST["onStop()"]
+    ST --> DV["onDestroyView() - view gone"]
+    DV -->|"back stack: returns"| CV
+    DV --> D["onDestroy()"]
+    D --> DT["onDetach()"]
+```
 
 Order:
 `onAttach` → `onCreate` → `onCreateView` → `onViewCreated` → `onViewStateRestored` → `onStart` → `onResume` → `onPause` → `onStop` → `onSaveInstanceState` → **`onDestroyView`** → `onDestroy` → `onDetach`.

@@ -184,6 +184,15 @@ A callback (`ComponentCallbacks2`) telling the app about memory pressure. For ex
 <details>
 <summary>Answer</summary>
 
+```mermaid
+flowchart TD
+    T["User taps the app"] --> P{"Process alive?"}
+    P -->|"no"| COLD["Cold start<br/>fork Zygote → Application.onCreate → Activity"]
+    P -->|"yes"| A{"Activity still in memory?"}
+    A -->|"no"| WARM["Warm start<br/>recreate Activity"]
+    A -->|"yes"| HOT["Hot start<br/>onStart / onResume"]
+```
+
 - **Cold** – the process doesn't exist: fork from Zygote → `Application.onCreate` → Activity creation → first frame. The slowest kind.
 - **Warm** – the process exists, but the Activity has to be recreated (e.g. the user backed out, or it was evicted).
 - **Hot** – the Activity is still in memory and is just brought to the foreground (`onStart`/`onResume`).

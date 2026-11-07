@@ -88,6 +88,17 @@ ART's collector is **concurrent** (it mostly runs alongside app threads with ver
 
 **DEX (Dalvik Executable)** is the bytecode format ART runs. It's register-based and compact, and multiple classes share constant pools.
 
+```mermaid
+flowchart TD
+    K[".kt / .java source"] -->|"kotlinc / javac"| C[".class bytecode"]
+    C -->|"R8: shrink, optimize, obfuscate, dex"| D["classes.dex"]
+    R["res/ + AndroidManifest"] -->|"AAPT2"| RS["compiled resources + R"]
+    D --> PK["Package APK / AAB"]
+    RS --> PK
+    PK -->|"apksigner + zipalign"| SG["Signed app"]
+    SG -->|"install"| ART["ART dex2oat (profile-guided AOT)"]
+```
+
 **Build process:**
 1. Kotlin/Java source → `kotlinc`/`javac` → `.class` (JVM bytecode).
 2. **R8** – shrinks, optimizes, obfuscates, and **dexes** (`.class` → `.dex`, through D8).
@@ -388,6 +399,22 @@ You **don't** need one for private app data. Use Room directly.
 
 <details>
 <summary>Answer</summary>
+
+```mermaid
+sequenceDiagram
+    participant L as Launcher
+    participant S as system_server (ATMS)
+    participant Z as Zygote
+    participant A as App process
+    L->>S: startActivity(intent)
+    S->>Z: no process yet, fork one
+    Z->>A: fork (preloaded classes)
+    A->>S: attachApplication
+    S->>A: bindApplication
+    Note over A: ContentProviders, then Application.onCreate()
+    S->>A: launch Activity
+    Note over A: onCreate, onStart, onResume, first frame
+```
 
 1. The Launcher sends an Intent to **ActivityManagerService / ActivityTaskManager** (in `system_server`) through Binder.
 2. If the app process doesn't exist, AMS asks **Zygote** to **fork** a new process. Zygote has core classes and resources preloaded, which makes startup fast.

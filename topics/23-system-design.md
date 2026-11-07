@@ -13,6 +13,15 @@ Covers: how to approach a mobile system design round, plus worked designs (image
 
 Follow a structured flow (~45 min):
 
+```mermaid
+flowchart TD
+    R["1. Clarify requirements<br/>functional + non-functional"] --> H["2. High-level client architecture"]
+    H --> A["3. API design<br/>endpoints, pagination, real-time"]
+    A --> D["4. Data layer<br/>storage, caching, sync"]
+    D --> DD["5. Deep dives<br/>2–3 hard parts"]
+    DD --> W["6. Wrap-up<br/>testing, monitoring, security, a11y"]
+```
+
 1. **Clarify requirements (5 min)**
    - Functional: the core features. Agree on scope ("feed + like + comments; no DMs").
    - Non-functional: offline support, real-time needs, scale (DAU, items), latency, battery and data usage, security, accessibility, supported devices and min SDK.
@@ -32,6 +41,19 @@ Follow a structured flow (~45 min):
 <summary>Answer</summary>
 
 **Requirements:** load from URL/file/resource into an ImageView or composable; memory and disk caching; resize/downsample; placeholders and error images; transformations; cancel when a view is recycled; lifecycle-aware; avoid OOM.
+
+```mermaid
+flowchart TD
+    REQ["load(url, size)"] --> MC{"Memory cache?"}
+    MC -->|"hit"| SHOW["Display"]
+    MC -->|"miss"| DC{"Disk cache?"}
+    DC -->|"hit"| DEC["Decode + downsample (background)"]
+    DC -->|"miss"| NET["Download (dedupe in-flight)"]
+    NET --> WD["Write to disk cache"]
+    WD --> DEC
+    DEC --> PUT["Put in memory cache"]
+    PUT --> SHOW
+```
 
 **Pipeline:**
 `request(url, target size)` → **memory cache** (LruCache keyed by url+size+transformations) → hit? display.
@@ -55,6 +77,23 @@ Miss → **network fetch** (OkHttp) → write to disk cache → **decode with do
 <summary>Answer</summary>
 
 **Requirements:** 1:1 and group chat, real-time delivery, offline send and read, message status (sent/delivered/read), push notifications, media messages, typing indicators, history pagination.
+
+```mermaid
+sequenceDiagram
+    participant UI
+    participant DB as Local DB
+    participant WS as WebSocket
+    participant S as Server
+    UI->>DB: insert message (PENDING, client UUID)
+    DB-->>UI: shows instantly
+    DB->>WS: send
+    WS->>S: message
+    S-->>WS: ack (server id, seq)
+    WS->>DB: status = SENT
+    S-->>WS: delivered / read receipts
+    WS->>DB: update status
+    Note over DB,S: offline → WorkManager retries from outbox
+```
 
 **Client architecture:**
 - **Room as the SSOT**: tables `conversations`, `messages(id, localId, conversationId, senderId, body, status, timestamp, …)`. The UI observes a Room Flow and pages it with Paging 3.
@@ -92,6 +131,17 @@ Miss → **network fetch** (OkHttp) → write to disk cache → **decode with do
 
 <details>
 <summary>Answer</summary>
+
+```mermaid
+flowchart TD
+    E["User edits"] --> L[("Local DB<br/>syncStatus = PENDING")]
+    L --> UI["UI updates immediately"]
+    T["Trigger: online / app start / periodic"] --> SY["Sync worker"]
+    SY -->|"push pending (idempotent)"| SV["Server"]
+    SV -->|"pull changes since lastSyncToken"| SY
+    SY --> M["Merge + resolve conflicts"]
+    M --> L
+```
 
 - **Local DB is the source of truth**: every read comes from Room, and every write goes to Room first.
 - Each record has `id` (UUID generated on the client), `updatedAt`, `syncStatus` (SYNCED / PENDING_CREATE / PENDING_UPDATE / PENDING_DELETE), and `version`.

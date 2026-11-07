@@ -163,6 +163,17 @@ A `CoroutineScope` defines the **lifetime** of the coroutines started in it. **S
 3. **Cancelling** the parent cancels all its children.
 4. A **failing child** cancels the parent and its siblings (with a regular `Job`), and the error isn't lost.
 
+```mermaid
+flowchart TD
+    S["viewModelScope"] --> P["launch (parent)"]
+    P --> C1["async { getUser() }"]
+    P --> C2["async { getPosts() }"]
+    X["ViewModel cleared / scope cancelled"] -.->|"cancels"| P
+    P -.->|"cancellation flows down"| C1
+    P -.->|"cancellation flows down"| C2
+    C2 -.->|"failure flows up"| P
+```
+
 </details>
 
 ### 11. What are `viewModelScope`, `lifecycleScope`, `GlobalScope`?
@@ -185,6 +196,19 @@ A `CoroutineScope` defines the **lifetime** of the coroutines started in it. **S
 Both are suspending builders that create a child scope and wait for all children.
 - **`coroutineScope`** – if **any child fails**, all other children are cancelled and the exception is rethrown. "All or nothing."
 - **`supervisorScope`** – a child's failure **doesn't affect siblings or the parent**. Each child handles its own errors (with `try/catch` in the child or a `CoroutineExceptionHandler`).
+
+```mermaid
+flowchart TD
+    subgraph CS["coroutineScope"]
+        A1["child A ❌ fails"] -->|"cancels"| P1["scope"]
+        P1 -->|"cancels sibling"| B1["child B"]
+        P1 -->|"rethrows"| E1["caller gets exception"]
+    end
+    subgraph SS["supervisorScope"]
+        A2["child A ❌ fails"] -->|"handled by A / handler"| H2["only A stops"]
+        B2["child B ✅ keeps running"]
+    end
+```
 
 Example: loading several independent dashboard widgets → `supervisorScope`. Loading data that all has to succeed → `coroutineScope`.
 
@@ -275,6 +299,22 @@ Use `try { } finally { }`. If the cleanup itself needs to **suspend** (e.g. clos
 
 <details>
 <summary>Answer</summary>
+
+```mermaid
+flowchart TD
+    T["Exception thrown in a coroutine"] --> K{"Builder?"}
+    K -->|"launch"| L["Propagates up to parent"]
+    K -->|"async"| AS["Stored in Deferred"]
+    AS --> AW["Thrown at await()"]
+    AS -->|"if child of a regular Job"| L
+    L --> SJ{"Parent is a supervisor?"}
+    SJ -->|"no"| CA["Parent + siblings cancelled"]
+    CA --> R["Reaches the root"]
+    SJ -->|"yes"| R
+    R --> H{"CoroutineExceptionHandler?"}
+    H -->|"yes"| HL["Handler logs it"]
+    H -->|"no"| CR["App crashes"]
+```
 
 - **`launch`** – an uncaught exception propagates **up to the parent** and cancels it (unless there's a supervisor). At the root, it goes to the `CoroutineExceptionHandler`, or crashes the app if there's none.
 - **`async`** – the exception is stored and **thrown when you call `await()`**. If the `async` is a child of a regular Job, it **also** propagates to the parent immediately.

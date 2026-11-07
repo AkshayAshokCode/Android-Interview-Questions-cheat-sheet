@@ -27,6 +27,15 @@ A ViewModel is a **state holder** for UI-related data and business-logic entry p
 <details>
 <summary>Answer</summary>
 
+```mermaid
+flowchart TD
+    A1["Activity (old instance)"] --> VS[("ViewModelStore<br/>{key → ViewModel}")]
+    RC["Rotation"] --> NC["onRetainNonConfigurationInstance()<br/>keeps the store"]
+    NC --> A2["Activity (new instance)"]
+    A2 -->|"same store, same ViewModel"| VS
+    F["Activity finishing<br/>(not a config change)"] --> CL["store.clear() → onCleared()"]
+```
+
 - Each `ViewModelStoreOwner` (ComponentActivity, Fragment, NavBackStackEntry) has a **`ViewModelStore`** (essentially a `Map<String, ViewModel>`).
 - `ViewModelProvider(owner, factory).get(MyVM::class)` looks up the store by key and creates the ViewModel through the factory only if it's missing.
 - On a configuration change, `ComponentActivity` keeps the `ViewModelStore` alive through **`onRetainNonConfigurationInstance()`** / `getLastNonConfigurationInstance()`, so the new Activity instance receives the **same store**.
@@ -226,6 +235,16 @@ A library to load large data sets **page by page**, with caching, retry, loading
 - **`Pager`** → `Flow<PagingData<T>>`. Use **`cachedIn(viewModelScope)`** to survive configuration changes.
 - **UI:** `PagingDataAdapter` (Views) or `collectAsLazyPagingItems()` (Compose).
 - **`LoadState`** (`Loading`, `NotLoading`, `Error`) for refresh/append/prepend → show loaders and retry buttons.
+
+```mermaid
+flowchart TD
+    UI["UI: LazyColumn / PagingDataAdapter"] -->|"collects"| PG["Pager → Flow of PagingData<br/>cachedIn(viewModelScope)"]
+    PG --> PS["Room PagingSource"]
+    PS --> DB[("Room DB")]
+    PG -->|"end of local data"| RM["RemoteMediator"]
+    RM -->|"fetch next page"| API["Network API"]
+    RM -->|"insert page + keys"| DB
+```
 
 </details>
 

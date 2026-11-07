@@ -28,6 +28,14 @@ Network calls on the main thread throw `NetworkOnMainThreadException`. Use **Str
 <details>
 <summary>Answer</summary>
 
+```mermaid
+flowchart LR
+    BG["Background thread"] -->|"handler.post(runnable)"| MQ[("MessageQueue")]
+    H["Handler"] -->|"sendMessage()"| MQ
+    MQ --> L["Looper.loop()<br/>takes next message"]
+    L -->|"dispatch"| HM["Handler.handleMessage()<br/>runs on Looper's thread"]
+```
+
 - **MessageQueue** – a queue of `Message`s/`Runnable`s, ordered by delivery time.
 - **Looper** – runs an infinite loop on a thread: takes the next message from the queue and dispatches it. **One Looper per thread** (stored in a `ThreadLocal`). The main thread's Looper is created by `ActivityThread.main()`. For a background thread, call `Looper.prepare()` + `Looper.loop()`, or use `HandlerThread`.
 - **Handler** – bound to a Looper. Used to **post** work to that Looper's thread (`post`, `postDelayed`, `sendMessage`) and to handle messages (`handleMessage`).
@@ -318,6 +326,20 @@ A `PowerManager.WakeLock` keeps the **CPU awake** (partial wake lock) while the 
 
 <details>
 <summary>Answer</summary>
+
+```mermaid
+flowchart TD
+    E["enqueue(WorkRequest)"] --> DB[("Saved in WorkManager's Room DB")]
+    DB --> JS["Scheduled with JobScheduler"]
+    JS --> C{"Constraints met?<br/>network, charging…"}
+    C -->|"no"| W["Wait"]
+    W --> C
+    C -->|"yes"| RUN["doWork()"]
+    RUN -->|"success"| OK["Done ✅"]
+    RUN -->|"retry"| BO["Backoff, then reschedule"]
+    BO --> JS
+    RB["Device reboot"] -->|"rescheduled from DB"| JS
+```
 
 1. **Persistence:** every enqueued `WorkRequest` (with its input data, constraints and state) is stored in WorkManager's **internal Room database** before `enqueue()` returns.
 2. **System schedulers:** it delegates to **JobScheduler** (API 23+), which survives app death and is **rescheduled after reboot** (WorkManager listens for `BOOT_COMPLETED` through its own receivers). In-process execution happens while the app is alive (the `GreedyScheduler`).

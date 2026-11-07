@@ -52,6 +52,15 @@ Rules: composables can only be called from other composables. They should be **f
 <details>
 <summary>Answer</summary>
 
+```mermaid
+flowchart LR
+    S["State change"] --> C["1. Composition<br/>what to show"]
+    C --> L["2. Layout<br/>measure + place"]
+    L --> D["3. Drawing<br/>render"]
+    O["Read state in<br/>Modifier.offset { }"] -.->|"skips composition"| L
+    DB["Read state in<br/>drawBehind { }"] -.->|"skips composition + layout"| D
+```
+
 1. **Composition** – runs composable functions and builds or updates the UI tree (*what* to show).
 2. **Layout** – measure and place every node (*where* to show it). Single-pass measurement.
 3. **Drawing** – render to the canvas (*how* it looks).
@@ -102,6 +111,14 @@ Without `remember`, the state would be recreated (reset) on every recomposition.
 <summary>Answer</summary>
 
 **State hoisting** moves state **up** to the caller, making a composable **stateless**. Pass down `value` and `onValueChange: (T) -> Unit`:
+
+```mermaid
+flowchart TD
+    VM["ViewModel / state holder<br/>(single source of truth)"] -->|"state flows down"| P["Screen composable"]
+    P -->|"value"| C["Stateless child<br/>SearchBar(query, onQueryChange)"]
+    C -->|"event flows up: onQueryChange(text)"| P
+    P -->|"event"| VM
+```
 
 ```kotlin
 @Composable
@@ -579,6 +596,13 @@ Composables don't have Activity-style callbacks. Their lifecycle has three stage
 1. **Enter the composition** – the composable is called for the first time and its `remember`ed values are created.
 2. **Recompose 0..N times** – it re-runs when the state it reads changes (or it's skipped if its inputs are unchanged).
 3. **Leave the composition** – it's no longer called (e.g. hidden by an `if`, or the screen is popped). Its remembered state is **forgotten** and its effects are **disposed**.
+
+```mermaid
+flowchart LR
+    E["Enter composition<br/>remember{} created<br/>effects start"] --> R["Recompose 0..N times<br/>(or skipped if inputs unchanged)"]
+    R --> R
+    R --> X["Leave composition<br/>state forgotten<br/>onDispose / effects cancelled"]
+```
 
 Hooks: `LaunchedEffect`/`DisposableEffect` run on enter (and restart when their keys change), and `onDispose` runs on leave. Each call site has its own instance (identity comes from the position in the composition tree, or from `key()`).
 

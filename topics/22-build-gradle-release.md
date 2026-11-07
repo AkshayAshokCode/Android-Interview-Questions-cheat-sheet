@@ -191,6 +191,18 @@ On every PR (GitHub Actions, Bitrise, GitLab CI, Jenkins):
 4. **Instrumented/UI tests** on **Gradle Managed Devices** or Firebase Test Lab (often nightly).
 5. Screenshot tests, dependency/vulnerability checks, APK size checks.
 
+```mermaid
+flowchart LR
+    PR["Pull request"] --> L["Lint + Detekt + ktlint"]
+    L --> UT["Unit tests + coverage"]
+    UT --> B["Build"]
+    B --> IT["UI tests (managed devices)"]
+    IT --> M["Merge to main"]
+    M --> S["Signed AAB"]
+    S --> IN["Play internal track"]
+    IN --> SR["Staged rollout 1% → 100%"]
+```
+
 On merge or tag: version bump → signed AAB → upload to Play (**Gradle Play Publisher** / **fastlane supply**) to the internal track → promote after QA. Distribute QA builds with Firebase App Distribution. Store secrets in the CI secret store.
 
 </details>

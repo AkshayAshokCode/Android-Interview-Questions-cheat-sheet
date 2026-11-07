@@ -64,6 +64,16 @@ Three layers:
 2. **Domain layer (optional)** – **UseCases** that encapsulate reusable or complex business logic.
 3. **Data layer** – **Repositories** (expose data, resolve conflicts between sources, contain business logic about data) and **data sources** (network, database, DataStore, which only deal with one source each).
 
+```mermaid
+flowchart TD
+    UI["UI layer<br/>Compose / Views"] <-->|"state ↓ / events ↑"| VM["ViewModel (state holder)"]
+    VM --> UC["Domain layer (optional)<br/>UseCases"]
+    UC --> RP["Data layer: Repository"]
+    VM -.->|"if no domain layer"| RP
+    RP --> RDS["Remote data source<br/>Retrofit"]
+    RP --> LDS["Local data source<br/>Room / DataStore"]
+```
+
 Principles: **separation of concerns**, **driving UI from data models**, **single source of truth (SSOT)**, **unidirectional data flow (UDF)**, **offline-first** where possible, dependency injection.
 
 </details>
@@ -74,6 +84,14 @@ Principles: **separation of concerns**, **driving UI from data models**, **singl
 <summary>Answer</summary>
 
 **State flows down, events flow up.**
+
+```mermaid
+flowchart LR
+    UI["UI"] -->|"event: onRefresh()"| VM["ViewModel"]
+    VM -->|"calls"| D["Repository / UseCase"]
+    D -->|"new data"| VM
+    VM -->|"new UiState"| UI
+```
 
 `UI → event (onClick) → ViewModel → updates data/state → new UiState → UI renders`
 
@@ -90,6 +108,13 @@ Uncle Bob's architecture, which organizes code in concentric layers:
 - **Domain (innermost)** – entities, **use cases**, repository **interfaces**. **Pure Kotlin**: no Android, no frameworks.
 - **Data** – repository implementations, API/DB data sources, DTOs and mappers.
 - **Presentation** – ViewModels and UI.
+
+```mermaid
+flowchart TD
+    P["Presentation<br/>ViewModels, UI"] -->|"depends on"| D["Domain<br/>Entities, UseCases,<br/>Repository interfaces"]
+    DA["Data<br/>Repository impl, API, DB"] -->|"implements"| D
+    P -.->|"never directly"| DA
+```
 
 **Dependency rule:** dependencies point **inward only**. Domain knows nothing about data or presentation. Data implements domain interfaces (**Dependency Inversion**).
 
@@ -135,6 +160,18 @@ class UserRepositoryImpl(private val api: UserApi, private val dao: UserDao) : U
 
 <details>
 <summary>Answer</summary>
+
+```mermaid
+flowchart TD
+    UI["UI"] -->|"observes Flow"| DB[("Room = single source of truth")]
+    R["Repository.refresh()"] -->|"fetch"| API["Network API"]
+    API -->|"response"| R
+    R -->|"write"| DB
+    DB -->|"emits new data"| UI
+    W["User edit"] -->|"write locally first"| DB
+    DB -->|"pending changes"| WM["WorkManager sync"]
+    WM --> API
+```
 
 - **SSOT** – each piece of data has exactly one owner that's allowed to modify it, and everything else observes it. Typically the **local database**.
 - **Offline-first:** the UI **always reads from the DB** (Room Flow). The network only **refreshes the DB** (the network → DB → UI pattern). The app works without connectivity, and it's consistent.

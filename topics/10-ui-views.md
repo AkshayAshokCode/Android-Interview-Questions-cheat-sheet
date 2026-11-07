@@ -28,6 +28,16 @@ The view tree is traversed in three passes, triggered by `ViewRootImpl` on every
 2. **Layout** (`onLayout`) – parents position their children (`child.layout(l, t, r, b)`).
 3. **Draw** (`onDraw`) – background → content → children (`dispatchDraw`) → decorations (scrollbars).
 
+```mermaid
+flowchart TD
+    V["Vsync (Choreographer)"] --> M["Measure: onMeasure()<br/>each view picks its size"]
+    M --> L["Layout: onLayout()<br/>parents position children"]
+    L --> D["Draw: onDraw()<br/>record display lists"]
+    D --> RT["RenderThread + GPU → frame"]
+    I["invalidate()"] -.->|"redraw only"| D
+    RL["requestLayout()"] -.->|"measure + layout again"| M
+```
+
 The frame is then rendered by the **RenderThread** with the GPU (hardware acceleration). To hit 60 fps, each frame must finish in **16 ms** (8 ms at 120 Hz).
 
 </details>
@@ -159,6 +169,17 @@ Lookup order when a position needs a view:
 4. **RecycledViewPool** – ViewHolders grouped by **viewType** (default 5 per type). Need **rebinding** (`onBindViewHolder`).
 5. Otherwise, `onCreateViewHolder` (inflate).
 
+```mermaid
+flowchart TD
+    N["Need a view for position X"] --> SC{"In scrap?"}
+    SC -->|"yes"| U1["Reuse as-is (no bind)"]
+    SC -->|"no"| CA{"In view cache (2)?"}
+    CA -->|"yes, same position"| U2["Reuse as-is (no bind)"]
+    CA -->|"no"| PO{"In RecycledViewPool<br/>for this viewType?"}
+    PO -->|"yes"| U3["Reuse + onBindViewHolder()"]
+    PO -->|"no"| CR["onCreateViewHolder() + bind"]
+```
+
 Tips: `setItemViewCacheSize()`, a shared `RecycledViewPool` for nested RecyclerViews, `setHasFixedSize(true)` when item changes don't affect the RecyclerView's size, and `GridLayoutManager` prefetch.
 
 </details>
@@ -236,6 +257,18 @@ Set them **once in `onCreateViewHolder`** (or in the ViewHolder's `init`), and r
 <summary>Answer</summary>
 
 `Activity.dispatchTouchEvent` → `Window` → root `ViewGroup.dispatchTouchEvent` → **`onInterceptTouchEvent`** (can the parent steal the event?) → child `View.dispatchTouchEvent` → `OnTouchListener.onTouch` → **`onTouchEvent`** (which also handles click and long click).
+
+```mermaid
+flowchart TD
+    A["Activity.dispatchTouchEvent"] --> G["ViewGroup.dispatchTouchEvent"]
+    G --> I{"onInterceptTouchEvent?"}
+    I -->|"true: parent steals it"| GT["ViewGroup.onTouchEvent"]
+    I -->|"false"| C["Child.dispatchTouchEvent"]
+    C --> CT{"Child.onTouchEvent<br/>returns true?"}
+    CT -->|"yes"| DONE["Consumed ✅"]
+    CT -->|"no"| GT
+    GT -->|"not consumed"| AT["Activity.onTouchEvent"]
+```
 
 - Returning `true` = **consumed**. The view then receives the rest of the gesture (MOVE, UP).
 - If nobody consumes `ACTION_DOWN`, the event **bubbles back up** to the parent's `onTouchEvent`, and finally the Activity's.

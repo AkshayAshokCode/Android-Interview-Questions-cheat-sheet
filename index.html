@@ -149,6 +149,17 @@ body.playing .wrap { padding-bottom: 120px; }
 .answer table { overflow-wrap: normal; word-break: normal; }
 .answer th, .answer td { min-width: 84px; }
 .answer th:first-child, .answer td:first-child { min-width: 72px; }
+.diagram { margin: 14px 0; overflow-x: auto; text-align: center; background: var(--surface-2); border-radius: 10px; padding: 10px; color: var(--muted); font-size: .85rem; }
+.diagram svg { height: auto; }
+.diagram.rendered { cursor: zoom-in; text-align: left; }
+.diagram .diagram-scroll { overflow-x: auto; display: flex; justify-content: center; }
+.diagram .diagram-scroll svg { flex-shrink: 0; }
+.diagram .diagram-scroll.wide { justify-content: flex-start; }
+.diagram-hint { display: block; margin-top: 6px; font-size: .75rem; color: var(--muted); text-align: center; }
+.diagram-zoom { position: fixed; inset: 0; z-index: 50; background: var(--bg); display: flex; flex-direction: column; }
+.diagram-zoom header { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+.diagram-zoom .zoom-body { flex: 1; overflow: auto; padding: 16px; touch-action: pan-x pan-y pinch-zoom; }
+.diagram-zoom .zoom-body svg { display: block; margin: 0 auto; }
 .answer blockquote { margin: 0; padding-left: 12px; border-left: 3px solid var(--border); color: var(--muted); }
 .pager { display: flex; justify-content: space-between; gap: 10px; margin-top: 24px; flex-wrap: wrap; }
 .empty { text-align: center; padding: 30px; color: var(--muted); }
@@ -333,6 +344,7 @@ function requestPersistentStorage() {
     const next = cur === "dark" ? "light" : "dark";
     document.documentElement.dataset.theme = next;
     try { localStorage.setItem("iq-theme", next); } catch (e) {}
+    if (window.rerenderDiagrams) window.rerenderDiagrams();
   };
 })();
 
@@ -678,7 +690,7 @@ function questionToSpeech(title) {
 }
 // Turn a markdown answer into natural speech: skip code, read tables row by row, drop symbols.
 function answerToSpeech(md) {
-  let s = md.replace(/```[\s\S]*?```/g, "\nSee the code example.\n");
+  let s = md.replace(/```mermaid[\s\S]*?```/g, "\nSee the diagram.\n").replace(/```[\s\S]*?```/g, "\nSee the code example.\n");
   let header = null;
   s = s.split("\n").map(line => {
     if (/^\s*\|?\s*:?-{3,}/.test(line)) return "";
@@ -716,6 +728,99 @@ function speechChunks(text, max = 220) {
   return out;
 }
 // PARSE-END
+// ----- Diagrams (Mermaid), loaded only when an answer with a diagram is opened -----
+let mermaidLib = null, diagramSeq = 0, diagramQueue = Promise.resolve();
+function loadMermaid() {
+  if (mermaidLib) return mermaidLib;
+  mermaidLib = new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = "https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js";
+    s.onload = () => resolve(window.mermaid);
+    s.onerror = () => { mermaidLib = null; reject(new Error("diagram library failed to load")); };
+    document.head.appendChild(s);
+  });
+  return mermaidLib;
+}
+function isDarkTheme() {
+  const t = document.documentElement.dataset.theme;
+  return t ? t === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+}
+function renderDiagrams(root) {
+  root.querySelectorAll("pre > code.language-mermaid").forEach(code => {
+    const div = document.createElement("div");
+    div.className = "diagram"; div.dataset.src = code.textContent; div.textContent = "Loading diagram…";
+    div.setAttribute("role", "img"); div.setAttribute("aria-label", "Diagram");
+    code.parentElement.replaceWith(div);
+  });
+  const nodes = [...root.querySelectorAll(".diagram[data-src]:not([data-done])")];
+  if (!nodes.length) return diagramQueue;
+  diagramQueue = diagramQueue.then(async () => {           // render one at a time
+    let m;
+    try { m = await loadMermaid(); }
+    catch (e) { nodes.forEach(n => { n.innerHTML = `<pre><code>${esc(n.dataset.src)}</code></pre>`; n.dataset.done = "1"; }); return; }
+    m.initialize({ startOnLoad: false, securityLevel: "strict", theme: isDarkTheme() ? "dark" : "default",
+                   fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" });
+    for (const n of nodes) {
+      if (!document.body.contains(n)) continue;
+      try {
+        // Phones: lay left-to-right flowcharts out top-to-bottom so they fit the narrow screen.
+        const src = narrowScreen.matches ? n.dataset.src.replace(/^(\s*flowchart\s+)LR\b/, "$1TD") : n.dataset.src;
+        const { svg } = await m.render("dg" + (++diagramSeq), src);
+        n.innerHTML = `<div class="diagram-scroll">${svg}</div><span class="diagram-hint">⤢ Tap to enlarge</span>`;
+        sizeDiagram(n); n.classList.add("rendered");
+        n.setAttribute("tabindex", "0"); n.setAttribute("aria-label", "Diagram. Tap to enlarge");
+        n.onclick = () => openDiagram(n);
+        n.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openDiagram(n); } };
+      }
+      catch (e) { n.innerHTML = `<pre><code>${esc(n.dataset.src)}</code></pre>`; }
+      n.dataset.done = "1";
+    }
+  });
+  return diagramQueue;
+}
+// Render at natural size (readable), capped; wide diagrams scroll inside their box instead of shrinking.
+function sizeDiagram(n) {
+  const svg = n.querySelector("svg"); if (!svg) return;
+  const vb = svg.viewBox && svg.viewBox.baseVal;
+  const natural = vb && vb.width ? vb.width : svg.getBoundingClientRect().width;
+  const box = n.querySelector(".diagram-scroll");
+  const avail = (box && box.clientWidth) || 300;
+  // Fit the screen when text stays legible; otherwise scale down to at most 65% and let the rest scroll.
+  let w = Math.min(natural, 640);
+  if (w > avail) w = Math.max(avail, natural * 0.65);
+  svg.style.maxWidth = "none"; svg.style.width = w + "px";
+  if (vb && vb.width) svg.style.height = (w * vb.height / vb.width) + "px";
+  if (box) {
+    const wide = w > avail + 1;
+    box.classList.toggle("wide", wide);
+    const vertical = /^\s*flowchart\s+(TD|TB)\b/.test(n.dataset.src) || (narrowScreen.matches && /^\s*flowchart\s+LR\b/.test(n.dataset.src));
+    if (wide && vertical) box.scrollLeft = (w - avail) / 2;  // vertical flowcharts: start centred on the main path
+  }
+}
+function openDiagram(n) {
+  const src = n.querySelector("svg"); if (!src) return;
+  const vb = src.viewBox && src.viewBox.baseVal;
+  const overlay = document.createElement("div");
+  overlay.className = "diagram-zoom"; overlay.setAttribute("role", "dialog"); overlay.setAttribute("aria-modal", "true"); overlay.setAttribute("aria-label", "Diagram");
+  overlay.innerHTML = `<header><span class="small muted">Pinch or scroll to explore</span><button aria-label="Close diagram">✕ Close</button></header><div class="zoom-body"></div>`;
+  const clone = src.cloneNode(true);
+  const w = vb && vb.width ? Math.max(vb.width, Math.min(window.innerWidth - 32, vb.width * 1.5)) : 900;
+  clone.style.width = w + "px"; clone.style.maxWidth = "none";
+  if (vb && vb.width) clone.style.height = (w * vb.height / vb.width) + "px";
+  overlay.querySelector(".zoom-body").appendChild(clone);
+  const close = () => { overlay.remove(); document.removeEventListener("keydown", onKey); n.focus && n.focus(); };
+  const onKey = e => { if (e.key === "Escape") close(); };
+  overlay.querySelector("button").onclick = close;
+  document.addEventListener("keydown", onKey);
+  document.body.appendChild(overlay);
+  overlay.querySelector("button").focus();
+}
+window.rerenderDiagrams = () => {
+  const done = [...document.querySelectorAll(".diagram[data-done]")];
+  if (!done.length) return;
+  done.forEach(n => n.removeAttribute("data-done"));
+  renderDiagrams(document.getElementById("app"));
+};
 function highlight(html, query) {
   const words = query.split(/\s+/).filter(w => w.length > 1).map(w => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
   if (!words.length) return html;
@@ -804,7 +909,7 @@ function bindCards(onChange) {
     const q = topics[file].questions.find(x => x.n === n);
     const ans = card.querySelector(".answer"), show = card.querySelector(".show-btn");
     show.onclick = () => {
-      if (!ans.dataset.rendered) { ans.innerHTML = marked.parse(q.answer); ans.dataset.rendered = "1"; }
+      if (!ans.dataset.rendered) { ans.innerHTML = marked.parse(q.answer); ans.dataset.rendered = "1"; renderDiagrams(ans); }
       ans.hidden = !ans.hidden;
       show.textContent = ans.hidden ? "Show answer" : "Hide answer";
       show.setAttribute("aria-expanded", String(!ans.hidden));

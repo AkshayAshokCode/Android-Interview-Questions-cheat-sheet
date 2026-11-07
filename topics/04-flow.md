@@ -29,6 +29,18 @@ It has three roles: **producer** (`flow {}`, Room, DataStore), optional **interm
 <details>
 <summary>Answer</summary>
 
+```mermaid
+flowchart LR
+    subgraph Cold["Cold flow { }"]
+        P1["Producer"] -->|"new run"| C1["Collector 1"]
+        P2["Producer"] -->|"new run"| C2["Collector 2"]
+    end
+    subgraph Hot["Hot StateFlow / SharedFlow"]
+        P3["Single producer"] --> C3["Collector 1"]
+        P3 --> C4["Collector 2"]
+    end
+```
+
 | Cold (`flow {}`) | Hot (`StateFlow`, `SharedFlow`, `Channel`) |
 |---|---|
 | Starts producing **only when collected** | Active regardless of collectors |

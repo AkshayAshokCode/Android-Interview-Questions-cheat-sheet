@@ -55,6 +55,17 @@ Covers: HTTP basics, Retrofit, OkHttp & interceptors, auth/token refresh, cachin
 
 Retrofit is a **type-safe HTTP client** (by Square) that turns an annotated interface into an HTTP API:
 
+```mermaid
+flowchart TD
+    C["api.getUser(id)"] --> P["Dynamic Proxy"]
+    P --> SM["ServiceMethod<br/>(parsed annotations, cached)"]
+    SM --> RQ["Build OkHttp Request"]
+    RQ --> OK["OkHttp Call → interceptors → network"]
+    OK --> CV["Converter: JSON → UserDto"]
+    CV --> CA["CallAdapter: suspend / Flow / Rx"]
+    CA --> R["Result returned to caller"]
+```
+
 ```kotlin
 interface UserApi {
     @GET("users/{id}") suspend fun getUser(@Path("id") id: String): UserDto
@@ -90,6 +101,16 @@ val api = Retrofit.Builder()
 
 Interceptors are hooks in OkHttp's request chain (Chain of Responsibility) that can **observe, modify, short-circuit or retry** requests and responses:
 
+```mermaid
+flowchart TD
+    APP["Your code"] --> AI["Application interceptors<br/>(auth headers, logging)"]
+    AI --> CACHE["Cache"]
+    CACHE --> NI["Network interceptors<br/>(see redirects/retries)"]
+    NI --> NET(["Server"])
+    NET --> NI
+    CACHE -.->|"cache hit: network skipped"| AI
+```
+
 ```kotlin
 class AuthInterceptor(private val tokens: TokenStore) : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response =
@@ -112,6 +133,22 @@ Common uses: auth headers, `HttpLoggingInterceptor` (debug builds only), adding 
 <summary>Answer</summary>
 
 Use an **`Authenticator`**. OkHttp calls it automatically on a **401**:
+
+```mermaid
+sequenceDiagram
+    participant App
+    participant OkHttp
+    participant API
+    participant Auth as Token endpoint
+    App->>OkHttp: request (expired token)
+    OkHttp->>API: GET /profile
+    API-->>OkHttp: 401 Unauthorized
+    OkHttp->>OkHttp: Authenticator (synchronized)
+    OkHttp->>Auth: refresh token
+    Auth-->>OkHttp: new access token
+    OkHttp->>API: retry with new token
+    API-->>App: 200 OK
+```
 
 ```kotlin
 class TokenAuthenticator(private val tokenRepo: TokenRepository) : Authenticator {
@@ -246,6 +283,19 @@ Use `ConnectivityManager` with **`registerDefaultNetworkCallback`** (`onAvailabl
 FCM delivers push messages from the server to devices, using a per-install **registration token** (send it to your backend, and handle `onNewToken`).
 - **Notification message** – when the app is in the **background**, the system tray shows it automatically. In the foreground it's delivered to `onMessageReceived`.
 - **Data message** – always delivered to `onMessageReceived` (your code decides what to do). Use **high priority** only for user-visible, time-sensitive messages.
+
+```mermaid
+sequenceDiagram
+    participant App
+    participant FCM as FCM (Google)
+    participant BE as Your backend
+    App->>FCM: register
+    FCM-->>App: registration token
+    App->>BE: send token
+    BE->>FCM: send message to token
+    FCM->>App: deliver (notification or data)
+    Note over App: background + notification: system tray<br/>data / foreground: onMessageReceived()
+```
 
 Android 13+ requires the **`POST_NOTIFICATIONS`** runtime permission.
 

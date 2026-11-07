@@ -77,6 +77,17 @@ Compared with Dagger: no manual component creation or injection calls, standard 
 <details>
 <summary>Answer</summary>
 
+```mermaid
+flowchart TD
+    SC["SingletonComponent @Singleton"] --> ARC["ActivityRetainedComponent<br/>@ActivityRetainedScoped"]
+    SC --> SVC["ServiceComponent @ServiceScoped"]
+    ARC --> VMC["ViewModelComponent @ViewModelScoped"]
+    ARC --> AC["ActivityComponent @ActivityScoped"]
+    AC --> FC["FragmentComponent @FragmentScoped"]
+    AC --> VC["ViewComponent @ViewScoped"]
+    FC --> VWF["ViewWithFragmentComponent"]
+```
+
 | Component | Scope annotation | Lifetime |
 |---|---|---|
 | `SingletonComponent` | `@Singleton` | Application |
