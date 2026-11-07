@@ -438,11 +438,21 @@ function setMark(file, q, value) {
 const CONFIG = (window.TRACKER_CONFIG && window.TRACKER_CONFIG.firebase) || null;
 const sync = { enabled: !!CONFIG, ready: false, user: null, status: "local", lastSynced: 0, pending: false, fb: null, unsub: null, timer: null };
 
+// A small device-wide note (shared by the Android and iOS trackers) that this browser was signed in,
+// so the UI doesn't flash "Sign in" on every page load while Firebase restores the session.
+const SIGNED_IN_HINT = "iq-signed-in";
+function signedInHint() { try { return localStorage.getItem(SIGNED_IN_HINT) === "1"; } catch (e) { return false; } }
+function setSignedInHint(on) { try { on ? localStorage.setItem(SIGNED_IN_HINT, "1") : localStorage.removeItem(SIGNED_IN_HINT); } catch (e) {} }
+function restoringSignIn() { return sync.enabled && !sync.authResolved && signedInHint(); }
 function renderChip() {
   const chip = document.getElementById("sync-chip");
   chip.hidden = !sync.enabled;                       // no sign-in configured → nothing to show
-  document.getElementById("footer-sync").hidden = !sync.enabled || !!sync.user;
+  document.getElementById("footer-sync").hidden = !sync.enabled || !!sync.user || restoringSignIn();
   chip.className = "btn chip";
+  if (!sync.user && restoringSignIn()) {             // signed in last time: don't flash "Sign in" while the account loads
+    chip.textContent = "⟳ Syncing…"; chip.title = "Restoring your account…";
+    return;
+  }
   if (!sync.user) {
     chip.innerHTML = "☁️ Sign in<span class=\"long\"> to sync</span>";
     chip.title = "Your progress is saved on this device. Sign in to keep it in sync across devices.";
@@ -493,9 +503,9 @@ function adoptRemoteLast(last) {
 
 function onUserChanged(user) {
   if (sync.unsub) { sync.unsub(); sync.unsub = null; }
-  const wasSignedIn = !!sync.user;
-  sync.user = user;
-  if (!user) { setSyncStatus("local"); if (wasSignedIn || currentView === "account" || currentView === "home") route(); return; }
+  const wasSignedIn = !!sync.user, wasRestoring = restoringSignIn();
+  sync.user = user; sync.authResolved = true; setSignedInHint(!!user);
+  if (!user) { setSyncStatus("local"); if (site && (wasSignedIn || wasRestoring || currentView === "account" || currentView === "home")) route(); return; }
   if (!state.prefs.welcomeDismissed) { state.prefs.welcomeDismissed = true; saveState(); }   // signed in: the welcome card has done its job
   setSyncStatus("syncing");
   sync.unsub = sync.fb.F.onSnapshot(progressDoc(), snap => {
@@ -564,7 +574,7 @@ const app = document.getElementById("app");
 let currentView = "home";
 
 function welcomeCard() {
-  if (state.prefs.welcomeDismissed || sync.user) return "";
+  if (state.prefs.welcomeDismissed || sync.user || restoringSignIn()) return "";
   return `<section class="card notice" aria-labelledby="welcome-title">
     <h2 id="welcome-title">👋 Start studying. No account needed.</h2>
     <p>Mark questions <b>✓ Done</b> or <b>↻ Revise</b> as you go. Your progress is saved automatically on this device.
@@ -578,7 +588,7 @@ function welcomeCard() {
   </section>`;
 }
 function nudgeCard(st) {
-  if (!sync.enabled || sync.user || !state.prefs.welcomeDismissed) return "";
+  if (!sync.enabled || sync.user || restoringSignIn() || !state.prefs.welcomeDismissed) return "";
   const marked = st.done + st.revise;
   if (marked < 10 || Date.now() < (state.prefs.nudgeSnoozeUntil || 0)) return "";
   return `<section class="card notice" aria-labelledby="nudge-title">
@@ -954,6 +964,7 @@ function refreshTopicHead(file) {
 }
 // Called when marks arrive from another device: update in place, never disrupt reading.
 function refreshMarksInView() {
+  if (!site) return;                             // still loading; first render will show the merged marks
   if (currentView === "home") {
     renderHome();
   } else if (currentView === "topic" || currentView === "revise" || currentView === "search") {
@@ -1343,6 +1354,7 @@ if (speech.supported) {
 
 // ===================== Router & boot =====================
 function route() {
+  if (!site) return;                             // questions not loaded yet; boot will route
   stopSpeech();
   searchInput.value = "";                      // navigating anywhere closes search
   searchInput.placeholder = placeholderFor(null);  // topic pages override this
@@ -1358,7 +1370,8 @@ function route() {
 if (repoPath()) document.getElementById("repo-link").href = "https://github.com" + repoPath();
 renderChip();
 window.addEventListener("hashchange", route);
-loadAll().then(() => { route(); initFirebase(); }).catch(err => {
+initFirebase();                                 // in parallel with loading questions, so sign-in restores quickly
+loadAll().then(() => { route(); }).catch(err => {
   app.innerHTML = `<div class="empty">Couldn't load the questions (${esc(err.message)}).<br>If you opened this file directly, serve the repo folder instead, e.g. <code>python3 -m http.server</code>.</div>`;
 });
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
