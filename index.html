@@ -496,6 +496,7 @@ function onUserChanged(user) {
   const wasSignedIn = !!sync.user;
   sync.user = user;
   if (!user) { setSyncStatus("local"); if (wasSignedIn || currentView === "account" || currentView === "home") route(); return; }
+  if (!state.prefs.welcomeDismissed) { state.prefs.welcomeDismissed = true; saveState(); }   // signed in: the welcome card has done its job
   setSyncStatus("syncing");
   sync.unsub = sync.fb.F.onSnapshot(progressDoc(), snap => {
     if (snap.exists()) {
@@ -563,7 +564,7 @@ const app = document.getElementById("app");
 let currentView = "home";
 
 function welcomeCard() {
-  if (state.prefs.welcomeDismissed) return "";
+  if (state.prefs.welcomeDismissed || sync.user) return "";
   return `<section class="card notice" aria-labelledby="welcome-title">
     <h2 id="welcome-title">👋 Start studying. No account needed.</h2>
     <p>Mark questions <b>✓ Done</b> or <b>↻ Revise</b> as you go. Your progress is saved automatically on this device.
