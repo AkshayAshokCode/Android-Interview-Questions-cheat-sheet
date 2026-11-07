@@ -32,6 +32,7 @@
   --revise: #e3a04f; --revise-bg: #3a2a16; --danger: #ef7676; --code-bg: #232321; --bar-bg: #2c2c29; --shadow: none;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html { -webkit-text-size-adjust: 100%; }
 body { margin: 0; background: var(--bg); color: var(--text);
   font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
@@ -69,7 +70,15 @@ button:disabled { opacity: .6; cursor: default; }
 input[type=search], input[type=email], input[type=password], input[type=text] {
   width: 100%; font: inherit; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border);
   background: var(--surface); color: var(--text); }
-input[type=search] { margin-bottom: 20px; }
+.search-wrap { position: relative; margin-bottom: 18px; }
+.search-wrap input { padding-left: 38px; padding-right: 44px; }
+.search-wrap .icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+.search-wrap kbd { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font: .75rem ui-monospace, Menlo, monospace;
+  color: var(--muted); border: 1px solid var(--border); border-radius: 5px; padding: 1px 6px; pointer-events: none; }
+.search-wrap input:focus + kbd, .search-wrap input:not(:placeholder-shown) + kbd { display: none; }
+.snippet { font-size: .88rem; color: var(--muted); padding-left: calc(2.2em + 10px); margin-top: 6px; }
+mark { background: var(--revise-bg); color: inherit; border-radius: 3px; padding: 0 2px; }
+@media (hover: none) { .search-wrap kbd { display: none; } }
 label { display: block; font-size: .88rem; font-weight: 600; margin: 12px 0 4px; }
 h2.cat { font-size: 1.02rem; margin: 26px 0 10px; }
 .topics { display: grid; gap: 10px; }
@@ -133,6 +142,11 @@ footer { margin-top: 40px; font-size: .82rem; color: var(--muted); text-align: c
       <button id="theme-btn" title="Toggle dark mode" aria-label="Toggle dark mode">◐</button>
     </nav>
   </header>
+  <div class="search-wrap" role="search">
+    <span class="icon" aria-hidden="true">🔍</span>
+    <input type="search" id="global-search" placeholder="Search all questions and answers…" aria-label="Search all questions and answers" autocomplete="off">
+    <kbd aria-hidden="true">/</kbd>
+  </div>
   <main id="app"><div class="empty">Loading questions…</div></main>
   <footer>No account needed. Your progress is saved on this device<span id="footer-sync" hidden> ·
     <a href="#/account">Sign in to sync across devices</a></span> · <a id="repo-link" href="./">View repo</a></footer>
@@ -483,8 +497,6 @@ function renderHome() {
       ${firstUndone ? `<a class="btn" href="#/t/${encodeURIComponent(firstUndone.file)}/${firstUndone.n}">Next unstarted: ${esc(firstUndone.name)} Q${firstUndone.n}</a>` : `<span class="complete">🎉 Every question is marked!</span>`}
     </div>
   </section>
-  <input type="search" id="search" placeholder="Search all questions…" aria-label="Search all questions">
-  <div id="search-results"></div>
   <div id="cats">`;
   for (const c of site.categories) {
     html += `<h2 class="cat">${esc(c.name)}</h2><div class="topics">`;
@@ -506,35 +518,87 @@ function renderHome() {
   if (wsi) wsi.onclick = () => { state.prefs.welcomeDismissed = true; saveState(); };
   const nl = document.getElementById("nudge-later");
   if (nl) nl.onclick = () => { state.prefs.nudgeSnoozeUntil = Date.now() + 14 * 864e5; saveState(); renderHome(); };
-  const input = document.getElementById("search");
-  input.addEventListener("input", () => renderSearch(input.value));
 }
 
-function renderSearch(query) {
-  const out = document.getElementById("search-results"), cats = document.getElementById("cats");
-  const q = query.trim().toLowerCase();
-  if (!q) { out.innerHTML = ""; cats.hidden = false; return; }
-  cats.hidden = true;
-  const hits = [];
-  for (const t of topicOrder) for (const item of t.questions) {
-    const inTitle = item.title.toLowerCase().includes(q);
-    if (inTitle || item.answer.toLowerCase().includes(q)) hits.push({ t, item, inTitle });
-  }
-  hits.sort((a, b) => b.inTitle - a.inTitle);
-  out.innerHTML = hits.length ? `<p class="small muted">${hits.length} matching question${hits.length > 1 ? "s" : ""}</p>` + hits.slice(0, 80).map(h => {
-    const s = getMark(questionKey(h.t.file, h.item.title));
-    return `<a class="card topic" style="margin-bottom:8px" href="#/t/${encodeURIComponent(h.t.file)}/${h.item.n}">
-      <div class="row"><span class="name">${inline(h.item.title)}</span>${s === "done" ? '<span class="complete">✓</span>' : s === "revise" ? '<span style="color:var(--revise)">↻</span>' : ""}</div>
-      <div class="areas">${esc(h.t.name)} · Q${h.item.n}</div></a>`;
-  }).join("") : `<div class="empty">No questions match “${esc(query)}”.</div>`;
+// ----- Search (available on every page) -----
+// PARSE-START
+function plainText(md) {
+  return md.replace(/```[\s\S]*?```/g, " ").replace(/<[^>]+>/g, " ").replace(/[`*_#>|]/g, " ")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1").replace(/\s+/g, " ").trim();
 }
+// Every word must appear in the title or answer; title matches rank first.
+function searchQuestions(list, query, limit = 50) {
+  const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+  if (!words.length) return { total: 0, hits: [] };
+  const phrase = words.join(" ");
+  const hits = [];
+  for (const t of list) for (const q of t.questions) {
+    const title = q.title.toLowerCase(), text = (q.plain || (q.plain = plainText(q.answer))).toLowerCase();
+    if (!words.every(w => title.includes(w) || text.includes(w))) continue;
+    let score = words.filter(w => title.includes(w)).length * 10 + (title.includes(phrase) ? 25 : 0) + (text.includes(phrase) ? 3 : 0);
+    hits.push({ t, q, score });
+  }
+  hits.sort((a, b) => b.score - a.score || Number(a.t.num) - Number(b.t.num) || a.q.n - b.q.n);
+  return { total: hits.length, hits: hits.slice(0, limit) };
+}
+function snippetFor(q, query) {
+  const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+  const title = q.title.toLowerCase();
+  const missing = words.find(w => !title.includes(w)) || (words.every(w => title.includes(w)) ? null : words[0]);
+  if (!missing) return "";
+  const text = q.plain || plainText(q.answer), i = text.toLowerCase().indexOf(missing);
+  if (i < 0) return "";
+  const start = Math.max(0, i - 60), end = Math.min(text.length, i + missing.length + 90);
+  return (start ? "…" : "") + text.slice(start, end) + (end < text.length ? "…" : "");
+}
+// PARSE-END
+function highlight(html, query) {
+  const words = query.split(/\s+/).filter(w => w.length > 1).map(w => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  if (!words.length) return html;
+  const re = new RegExp("(" + words.join("|") + ")", "gi");
+  return html.split(/(<[^>]+>)/).map(part => part.startsWith("<") ? part : part.replace(re, "<mark>$1</mark>")).join("");
+}
+function renderSearchView(query) {
+  currentView = "search";
+  const { total, hits } = searchQuestions(topicOrder, query);
+  let html = `<div class="crumbs"><a href="#/" id="search-close">← Close search</a></div>`;
+  if (!total) {
+    html += `<div class="empty">No questions match “${esc(query)}”.<br><span class="small">Try fewer or different words.</span></div>`;
+  } else {
+    html += `<p class="small muted">${total} matching question${total > 1 ? "s" : ""}${total > hits.length ? ` · showing the top ${hits.length}, so add a word to narrow it down` : ""}</p>`;
+    for (const h of hits) html += questionCard(h.t.file, h.q, true, query);
+  }
+  app.innerHTML = html;
+  document.getElementById("search-close").onclick = e => { e.preventDefault(); clearSearch(); };
+  bindCards(card => refreshCard(card));
+}
+const searchInput = document.getElementById("global-search");
+let searchTimer;
+function clearSearch() { searchInput.value = ""; route(); }
+searchInput.addEventListener("input", () => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => {
+    if (!site) return;
+    if (searchInput.value.trim()) renderSearchView(searchInput.value.trim()); else route();
+  }, 150);
+});
+searchInput.addEventListener("keydown", e => { if (e.key === "Escape") { clearSearch(); searchInput.blur(); } });
+document.addEventListener("keydown", e => {
+  if (e.key !== "/" || e.metaKey || e.ctrlKey || e.altKey) return;
+  const tag = (document.activeElement && document.activeElement.tagName) || "";
+  if (/INPUT|TEXTAREA|SELECT/.test(tag)) return;
+  e.preventDefault(); searchInput.focus(); searchInput.select();
+});
 
 let topicFilter = "all";
-function questionCard(file, q, showSource) {
+function questionCard(file, q, showSource, query) {
   const s = getMark(questionKey(file, q.title));
+  const meta = showSource && topicOrder.find(t => t.file === file);
+  const snippet = query ? snippetFor(q, query) : "";
   return `<article class="card q ${s}" id="q-${q.n}" data-file="${esc(file)}" data-n="${q.n}">
-    <div class="qt"><span class="num">${q.n}.</span><div class="title">${inline(q.title)}</div></div>
-    ${showSource ? `<div class="src">${esc(topicOrder.find(t => t.file === file).name)}</div>` : ""}
+    <div class="qt"><span class="num">${q.n}.</span><div class="title">${query ? highlight(inline(q.title), query) : inline(q.title)}</div></div>
+    ${meta ? `<div class="src"><a href="#/t/${encodeURIComponent(file)}/${q.n}">${esc(meta.name)} · Q${q.n}</a></div>` : ""}
+    ${snippet ? `<div class="snippet">${highlight(esc(snippet), query)}</div>` : ""}
     <div class="actions">
       <button class="show-btn" aria-expanded="false">Show answer</button>
       <button class="done-btn" aria-pressed="${s === "done"}">✓ Done</button>
@@ -578,9 +642,8 @@ function refreshTopicHead(file) {
 // Called when marks arrive from another device: update in place, never disrupt reading.
 function refreshMarksInView() {
   if (currentView === "home") {
-    const search = document.getElementById("search");
-    if (!search || !search.value) renderHome();
-  } else if (currentView === "topic" || currentView === "revise") {
+    renderHome();
+  } else if (currentView === "topic" || currentView === "revise" || currentView === "search") {
     app.querySelectorAll("article.q").forEach(refreshCard);
     if (currentView === "topic") refreshTopicHead(currentTopic);
   }
@@ -775,6 +838,7 @@ function repoPath() {
 
 // ===================== Router & boot =====================
 function route() {
+  searchInput.value = "";                      // navigating anywhere closes search
   const raw = location.hash.replace(/^#/, "") || "/";
   const h = decodeURIComponent(raw);
   const m = h.match(/^\/t\/(topics\/[^/]+\.md)(?:\/(\d+))?$/);
