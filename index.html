@@ -134,7 +134,26 @@ h3.section { font-size: .95rem; color: var(--muted); margin: 22px 0 8px; }
   padding: 8px 14px; border-radius: 8px; font-size: .9rem; opacity: 0; transition: opacity .2s; pointer-events: none; max-width: 90vw; }
 .toast.show { opacity: 1; }
 footer { margin-top: 40px; font-size: .82rem; color: var(--muted); text-align: center; }
-@media (max-width: 520px) { .summary { grid-template-columns: 1fr; } .big { font-size: 1.7rem; } .chip-long { display: none; } }
+@media (max-width: 520px) { .summary { grid-template-columns: 1fr; } .big { font-size: 1.7rem; } }
+/* Phones: compact two-row header, un-indented card actions */
+@media (max-width: 560px) {
+  .wrap { padding: 14px 12px 60px; }
+  header.top { display: grid; grid-template-columns: auto 1fr auto auto; grid-template-areas: "title title title theme" "switch . revise chip";
+    gap: 10px 6px; align-items: center; margin-bottom: 14px; }
+  .brand, .tools { display: contents; }
+  header.top h1 { grid-area: title; font-size: 1.15rem; }
+  #track-switcher { grid-area: switch; }
+  #theme-btn { grid-area: theme; justify-self: end; }
+  #revise-link { grid-area: revise; }
+  #sync-chip { grid-area: chip; }
+  .switcher a, .switcher span { min-width: 62px; }
+  .long { display: none; }
+  .q .actions, .q .src, .snippet { padding-left: 0; }
+  .q .actions button { padding: 6px 10px; }
+  .card { padding: 14px 12px; }
+  .q .actions { gap: 5px; }
+}
+@media (max-width: 360px) { .rev-label { display: none; } }
 </style>
 </head>
 <body>
@@ -145,7 +164,7 @@ footer { margin-top: 40px; font-size: .82rem; color: var(--muted); text-align: c
       <nav class="switcher" id="track-switcher" aria-label="Choose track" hidden></nav>
     </div>
     <nav class="tools" aria-label="Main">
-      <a class="btn" href="#/revise">↻ Revise list</a>
+      <a class="btn" id="revise-link" href="#/revise" aria-label="Revise list">↻<span class="rev-label"> Revise<span class="long"> list</span></span></a>
       <a class="btn chip" id="sync-chip" href="#/account" hidden>Sign in to sync</a>
       <button id="theme-btn" title="Toggle dark mode" aria-label="Toggle dark mode">◐</button>
     </nav>
@@ -351,7 +370,7 @@ function renderChip() {
   document.getElementById("footer-sync").hidden = !sync.enabled || !!sync.user;
   chip.className = "btn chip";
   if (!sync.user) {
-    chip.textContent = "☁️ Sign in to sync";
+    chip.innerHTML = "☁️ Sign in<span class=\"long\"> to sync</span>";
     chip.title = "Your progress is saved on this device. Sign in to keep it in sync across devices.";
     return;
   }
@@ -616,7 +635,9 @@ function renderSearchView(query) {
   bindCards(card => refreshCard(card));
 }
 const searchInput = document.getElementById("global-search");
-const DEFAULT_PLACEHOLDER = searchInput.placeholder;
+const narrowScreen = matchMedia("(max-width: 560px)");
+const placeholderFor = topicName => topicName ? `Search in ${topicName}…`
+  : (narrowScreen.matches ? "Search questions…" : "Search all questions and answers…");
 let searchTimer;
 function clearSearch() { searchInput.value = ""; route(); }
 searchInput.addEventListener("input", () => {
@@ -703,7 +724,7 @@ function renderTopic(file, focusN) {
   const t = topics[file], meta = topicOrder.find(x => x.file === file);
   if (!t || !meta) { app.innerHTML = `<div class="empty">Topic not found. <a href="#/">Go home</a></div>`; return; }
   currentView = "topic"; currentTopic = file;
-  searchInput.placeholder = `Search in ${meta.name}…`;
+  searchInput.placeholder = placeholderFor(meta.name);
   const idx = topicOrder.indexOf(meta), prev = topicOrder[idx - 1], next = topicOrder[idx + 1];
   const st = topicStats(file);
   const match = q => { const s = getMark(questionKey(file, q.title));
@@ -889,7 +910,7 @@ function repoPath() {
 // ===================== Router & boot =====================
 function route() {
   searchInput.value = "";                      // navigating anywhere closes search
-  searchInput.placeholder = DEFAULT_PLACEHOLDER;  // topic pages override this
+  searchInput.placeholder = placeholderFor(null);  // topic pages override this
   const raw = location.hash.replace(/^#/, "") || "/";
   const h = decodeURIComponent(raw);
   const m = h.match(/^\/t\/(topics\/[^/]+\.md)(?:\/(\d+))?$/);
