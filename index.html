@@ -741,7 +741,7 @@ function questionCard(file, q, showSource, query) {
   const snippet = query ? snippetFor(q, query) : "";
   return `<article class="card q ${s}" id="q-${q.n}" data-file="${esc(file)}" data-n="${q.n}">
     <div class="qt"><span class="num">${q.n}.</span><div class="title">${query ? highlight(inline(q.title), query) : inline(q.title)}</div>
-      ${speech.supported ? `<button class="listen-btn" title="Listen to this question and answer" aria-label="Listen to this question and answer">🔊</button>` : ""}</div>
+      ${speech.supported ? `<button class="listen-btn" title="Listen to just this question" aria-label="Listen to just this question">🔊</button>` : ""}</div>
     ${meta ? `<div class="src"><a href="#/t/${encodeURIComponent(file)}/${q.n}">${esc(meta.name)} · Q${q.n}</a></div>` : ""}
     ${snippet ? `<div class="snippet">${highlight(esc(snippet), query)}</div>` : ""}
     <div class="actions">
@@ -820,7 +820,7 @@ function renderTopic(file, focusN) {
       ${[["all", "All"], ["todo", "Not started"], ["revise", "Revise"], ["done", "Done"]].map(([v, l]) =>
         `<button data-f="${v}" aria-pressed="${topicFilter === v}">${l}</button>`).join("")}
       <button id="expand-all">Expand all answers</button>
-      ${speech.supported ? `<button id="listen-all">🔊 Listen</button>` : ""}
+      ${speech.supported ? `<button id="listen-all" title="Read every question shown here, one after another">🔊 ${topicFilter === "all" ? "Listen to topic" : `Listen to ${t.questions.filter(match).length} ${{ todo: "not started", revise: "Revise", done: "Done" }[topicFilter]}`}</button>` : ""}
     </div>`;
   let section = null, shown = 0;
   for (const q of t.questions) {
