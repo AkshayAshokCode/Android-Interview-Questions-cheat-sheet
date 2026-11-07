@@ -42,6 +42,11 @@ a:hover { text-decoration: underline; }
 header.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
 header.top h1 { font-size: 1.3rem; margin: 0; }
 header.top h1 a { color: var(--text); }
+.brand { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.switcher { display: inline-flex; border: 1px solid var(--border); border-radius: 99px; padding: 3px; background: var(--surface); }
+.switcher a, .switcher span { font-size: .85rem; padding: 4px 14px; border-radius: 99px; color: var(--muted); }
+.switcher a:hover { color: var(--text); text-decoration: none; }
+.switcher [aria-current="page"] { background: var(--text); color: var(--bg); font-weight: 600; }
 .tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 button, .btn { font: inherit; font-size: .88rem; border: 1px solid var(--border); background: var(--surface);
   color: var(--text); border-radius: 8px; padding: 6px 12px; cursor: pointer; display: inline-block; }
@@ -135,7 +140,10 @@ footer { margin-top: 40px; font-size: .82rem; color: var(--muted); text-align: c
 <body>
 <div class="wrap">
   <header class="top">
-    <h1><a href="#/" id="site-title">Interview Prep Tracker</a></h1>
+    <div class="brand">
+      <h1><a href="#/" id="site-title">Interview Prep Tracker</a></h1>
+      <nav class="switcher" id="track-switcher" aria-label="Choose track" hidden></nav>
+    </div>
     <nav class="tools" aria-label="Main">
       <a class="btn" href="#/revise">↻ Revise list</a>
       <a class="btn chip" id="sync-chip" href="#/account" hidden>Sign in to sync</a>
@@ -261,6 +269,22 @@ const topics = {};
 let topicOrder = [];
 let shortTitle = "Interview Prep";
 
+// Sibling trackers hosted on the same GitHub Pages site (same origin → sign-in is shared).
+const TRACKS = [
+  { name: "Android", repo: "Android-Interview-Questions-cheat-sheet" },
+  { name: "iOS", repo: "iOS-Interview-Questions-cheat-sheet" }
+];
+function renderSwitcher() {
+  const el = document.getElementById("track-switcher");
+  const current = TRACKS.find(t => t.repo === TRACKER_ID) || TRACKS.find(t => site && site.title.startsWith(t.name));
+  if (!current) return;
+  const base = location.hostname.endsWith("github.io") ? "/" : "https://akshayashokcode.github.io/";
+  el.innerHTML = TRACKS.map(t => t === current
+    ? `<span aria-current="page">${esc(t.name)}</span>`
+    : `<a href="${base}${t.repo}/" title="Switch to the ${esc(t.name)} tracker">${esc(t.name)}</a>`).join("");
+  el.hidden = false;
+}
+
 async function loadAll() {
   const res = await fetch("README.md", { cache: "no-cache" });
   if (!res.ok) throw new Error("Couldn't load README.md");
@@ -269,6 +293,7 @@ async function loadAll() {
   shortTitle = site.title.replace(/ – Cheat Sheet$/, "").replace(/ Questions$/, "");
   document.getElementById("site-title").textContent = shortTitle + " Tracker";
   document.title = shortTitle + " Tracker";
+  renderSwitcher();
   await Promise.all(topicOrder.map(async t => {
     const r = await fetch(t.file, { cache: "no-cache" });
     topics[t.file] = r.ok ? parseTopic(await r.text()) : { title: t.name, covers: "", questions: [] };
