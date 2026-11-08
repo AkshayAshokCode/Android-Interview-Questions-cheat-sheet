@@ -1,6 +1,6 @@
 # Android Interview Questions – Cheat Sheet
 
-A revision guide for Android developer interviews: **660+ questions with interview-ready answers**, split into 26 topics, from Kotlin basics to Compose, architecture, system design and what's new in Android.
+A revision guide for Android developer interviews: **680+ questions with interview-ready answers**, split into 27 topics, from Kotlin basics to Compose, architecture, system design and what's new in Android.
 
 Every answer is hidden in a collapsible block, so you can **test yourself first** and then click to check.
 
@@ -77,6 +77,7 @@ Every answer is hidden in a collapsible block, so you can **test yourself first*
 | 23 | [Android System Design](topics/23-system-design.md) | 22 | Framework + designs: image loader, chat, feed, offline sync, downloader, analytics SDK |
 | 24 | [What's New & Trending](topics/24-whats-new-trending.md) | 21 | Android 14/15/16 changes, edge-to-edge, predictive back, KMP, Compose updates, on-device AI |
 | 25 | [Coding, Scenarios & Behavioral](topics/25-coding-scenarios.md) | 25 | LRU cache, debounce, pagination, debugging scenarios, STAR answers |
+| 27 | [Company-Wise Questions](topics/27-company-wise-questions.md) | 22 | What Google, Meta, Amazon, Uber, Netflix and Indian product companies ask; machine coding; UPI app, quick commerce, order tracking, super-app, Reels-style feed |
 
 ---
 
@@ -99,7 +100,7 @@ Every answer is hidden in a collapsible block, so you can **test yourself first*
 | 11 | 19 Performance + 20 Testing |
 | 12 | 21 Security + 22 Build & Release + 05 Java |
 | 13 | 23 System Design + 24 What's New |
-| 14 | 07 Design Patterns + 25 Coding & Behavioral + Last-Minute Revision |
+| 14 | 07 Design Patterns + 25 Coding & Behavioral + 27 Company-Wise (your target companies) + Last-Minute Revision |
 
 **2 days before:** Coroutines (03), Flow (04), Compose (11), Architecture (12), Lifecycle (09), Performance (19), System Design (23) and the list below.
 

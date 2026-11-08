@@ -147,4 +147,4 @@ This replaces older hacks of overriding the `Configuration` locale in `attachBas
 
 ---
 
-[⬅ Previous: Coding & Scenarios](25-coding-scenarios.md) · [⬅ Back to index](../README.md)
+[⬅ Previous: Coding & Scenarios](25-coding-scenarios.md) · [⬅ Back to index](../README.md) · [Next: Company-Wise Questions ➡](27-company-wise-questions.md)
