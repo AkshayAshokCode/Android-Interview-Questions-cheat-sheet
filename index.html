@@ -6,7 +6,7 @@
 <title>Interview Prep Tracker</title>
 <meta name="description" content="Study the interview questions in this repo and track your progress per topic. No account needed.">
 <meta name="theme-color" content="#2f6fde">
-<script>/* track colour: green for Android, blue for iOS */ if (/^\/Android/i.test(location.pathname)) document.querySelector('meta[name="theme-color"]').content = "#1f9d55";</script>
+<script>/* track colour: green for Android, blue for iOS, purple for System Design */ const tc = /^\/Android/i.test(location.pathname) ? "#1f9d55" : /^\/System-Design/i.test(location.pathname) ? "#7c3aed" : ""; if (tc) document.querySelector('meta[name="theme-color"]').content = tc;</script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
@@ -50,9 +50,10 @@ header.top h1 { font-size: 1.3rem; margin: 0; }
 header.top h1 a { color: var(--text); }
 .brand { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .switcher { display: inline-flex; border: 1px solid var(--border); border-radius: 99px; padding: 3px; background: var(--surface); }
-.switcher a, .switcher span { font-size: .85rem; padding: 4px 0; min-width: 76px; text-align: center; border-radius: 99px; color: var(--muted); }
+.switcher > a, .switcher > span { font-size: .85rem; padding: 4px 10px; min-width: 76px; white-space: nowrap; text-align: center; border-radius: 99px; color: var(--muted); }
+.short { display: none; }
 .switcher a:hover { color: var(--text); text-decoration: none; }
-.switcher [aria-current="page"] { background: var(--text); color: var(--bg); font-weight: 600; }
+.switcher > [aria-current="page"] { background: var(--text); color: var(--bg); font-weight: 600; }
 .tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 button, .btn { font: inherit; font-size: .88rem; border: 1px solid var(--border); background: var(--surface);
   color: var(--text); border-radius: 8px; padding: 6px 12px; cursor: pointer; display: inline-block; }
@@ -195,8 +196,9 @@ footer { margin-top: 40px; font-size: .82rem; color: var(--muted); text-align: c
   #theme-btn { grid-area: theme; justify-self: end; }
   #revise-link { grid-area: revise; }
   #sync-chip { grid-area: chip; }
-  .switcher a, .switcher span { min-width: 62px; }
+  .switcher > a, .switcher > span { min-width: 0; padding: 4px 9px; font-size: .8rem; }
   .long { display: none; }
+  .short { display: inline; }
   .q .actions, .q .src, .snippet { padding-left: 0; }
   .q .actions button { padding: 6px 10px; }
   .card { padding: 14px 12px; }
@@ -206,7 +208,8 @@ footer { margin-top: 40px; font-size: .82rem; color: var(--muted); text-align: c
   .player .ctrls { gap: 4px; }
   .player button { min-width: 36px; padding: 6px 8px; }
 }
-@media (max-width: 360px) { .rev-label { display: none; } .q .actions button { padding: 6px 8px; font-size: .85rem; } }
+@media (max-width: 420px) { .rev-label { display: none; } #revise-link { padding-left: 10px; padding-right: 10px; } }
+@media (max-width: 360px) { .switcher > a, .switcher > span { padding: 4px 6px; } #sync-chip { white-space: nowrap; padding-left: 8px; padding-right: 8px; } header.top { gap: 10px 5px; } .switcher .short { display: none; } .q .actions button { padding: 6px 8px; font-size: .85rem; } }
 </style>
 </head>
 <body>
@@ -365,7 +368,8 @@ let shortTitle = "Interview Prep";
 // Sibling trackers hosted on the same GitHub Pages site (same origin → sign-in is shared).
 const TRACKS = [
   { name: "Android", repo: "Android-Interview-Questions-cheat-sheet" },
-  { name: "iOS", repo: "iOS-Interview-Questions-cheat-sheet" }
+  { name: "iOS", repo: "iOS-Interview-Questions-cheat-sheet" },
+  { name: "System Design", label: '<span class="long">System</span><span class="short">Sys</span> Design', repo: "System-Design-Interview-Questions-cheat-sheet" }
 ];
 function renderSwitcher() {
   const el = document.getElementById("track-switcher");
@@ -373,8 +377,8 @@ function renderSwitcher() {
   if (!current) return;
   const base = location.hostname.endsWith("github.io") ? "/" : "https://akshayashokcode.github.io/";
   el.innerHTML = TRACKS.map(t => t === current
-    ? `<span aria-current="page">${esc(t.name)}</span>`
-    : `<a href="${base}${t.repo}/" title="Switch to the ${esc(t.name)} tracker">${esc(t.name)}</a>`).join("");
+    ? `<span aria-current="page">${t.label || esc(t.name)}</span>`
+    : `<a href="${base}${t.repo}/" title="Switch to the ${esc(t.name)} tracker">${t.label || esc(t.name)}</a>`).join("");
   el.hidden = false;
   // In an installed (home-screen) app, switch tracks with a script navigation so iOS keeps it inside the app.
   const standalone = navigator.standalone || matchMedia("(display-mode: standalone)").matches;
@@ -928,13 +932,27 @@ function questionCard(file, q, showSource, query) {
     <div class="answer" hidden></div>
   </article>`;
 }
+// Point links inside answers at tracker pages: other topics, questions in this topic, the index; open external links in a new tab.
+function fixLinks(root, file) {
+  root.querySelectorAll("a[href]").forEach(a => {
+    const href = a.getAttribute("href");
+    if (/^https?:/i.test(href)) { a.target = "_blank"; a.rel = "noopener"; return; }
+    const m = href.match(/^(?:\.\/|topics\/)?([\w.-]+\.md)?(?:#(\d+)-[\w-]*)?$/);
+    if (!m || (!m[1] && !m[2])) return;
+    if (m[1] === "README.md" || /^\.\.\/README\.md/.test(href)) { a.setAttribute("href", "#/"); return; }
+    const target = m[1] ? "topics/" + m[1] : file;
+    if (!topics[target]) return;
+    a.setAttribute("href", `#/t/${encodeURIComponent(target)}${m[2] ? "/" + m[2] : ""}`);
+  });
+  root.querySelectorAll('a[href^="../README.md"]').forEach(a => a.setAttribute("href", "#/"));
+}
 function bindCards(onChange) {
   app.querySelectorAll("article.q").forEach(card => {
     const file = card.dataset.file, n = Number(card.dataset.n);
     const q = topics[file].questions.find(x => x.n === n);
     const ans = card.querySelector(".answer"), show = card.querySelector(".show-btn");
     show.onclick = () => {
-      if (!ans.dataset.rendered) { ans.innerHTML = marked.parse(q.answer); ans.dataset.rendered = "1"; renderDiagrams(ans); }
+      if (!ans.dataset.rendered) { ans.innerHTML = marked.parse(q.answer); ans.dataset.rendered = "1"; fixLinks(ans, file); renderDiagrams(ans); }
       ans.hidden = !ans.hidden;
       show.textContent = ans.hidden ? "Show answer" : "Hide answer";
       show.setAttribute("aria-expanded", String(!ans.hidden));
