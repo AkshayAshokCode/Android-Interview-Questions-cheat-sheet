@@ -52,6 +52,18 @@ header.top h1 a { color: var(--text); }
 .switcher { display: inline-flex; border: 1px solid var(--border); border-radius: 99px; padding: 3px; background: var(--surface); }
 .switcher > a, .switcher > span { font-size: .85rem; padding: 4px 10px; min-width: 76px; white-space: nowrap; text-align: center; border-radius: 99px; color: var(--muted); }
 .short { display: none; }
+.track-pick { position: relative; display: inline-flex; align-items: center; gap: 6px; }
+.swap-btn { border: 1px solid var(--border); background: var(--surface); color: var(--muted); border-radius: 99px; width: 32px; height: 32px; padding: 0; font-size: 1rem; line-height: 1; }
+.swap-btn:hover, .swap-btn[aria-expanded="true"] { color: var(--text); border-color: var(--accent); }
+.track-menu { position: absolute; top: calc(100% + 6px); left: 0; z-index: 50; min-width: 240px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.18); padding: 8px; }
+.track-menu p { margin: 4px 6px 8px; font-size: .82rem; color: var(--muted); }
+.track-menu button { display: flex; width: 100%; justify-content: space-between; align-items: center; gap: 12px; background: none; border: 0;
+  border-radius: 8px; padding: 9px 10px; font-size: .92rem; color: var(--text); text-align: left; }
+.track-menu button:hover:not([disabled]) { background: var(--accent-bg); }
+.track-menu button[disabled] { cursor: default; }
+.track-menu .tag { font-size: .75rem; color: var(--muted); }
+.track-menu .tag.on { color: var(--accent); font-weight: 600; }
 .switcher a:hover { color: var(--text); text-decoration: none; }
 .switcher > [aria-current="page"] { background: var(--text); color: var(--bg); font-weight: 600; }
 .tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
@@ -196,7 +208,7 @@ footer { margin-top: 40px; font-size: .82rem; color: var(--muted); text-align: c
   #theme-btn { grid-area: theme; justify-self: end; }
   #revise-link { grid-area: revise; }
   #sync-chip { grid-area: chip; white-space: nowrap; }
-  .switcher > a, .switcher > span { min-width: 0; padding: 4px 9px; font-size: .8rem; }
+  .switcher > a, .switcher > span { min-width: 44px; padding: 4px 9px; font-size: .8rem; }
   .long { display: none; }
   .short { display: inline; }
   .q .actions, .q .src, .snippet { padding-left: 0; }
@@ -209,7 +221,7 @@ footer { margin-top: 40px; font-size: .82rem; color: var(--muted); text-align: c
   .player button { min-width: 36px; padding: 6px 8px; }
 }
 @media (max-width: 480px) { .rev-label { display: none; } #revise-link { padding-left: 10px; padding-right: 10px; } }
-@media (max-width: 360px) { .switcher > a, .switcher > span { padding: 4px 6px; } #sync-chip { white-space: nowrap; padding-left: 8px; padding-right: 8px; } header.top { gap: 10px 5px; } .switcher .short { display: none; } .q .actions button { padding: 6px 8px; font-size: .85rem; } }
+@media (max-width: 360px) { .switcher > a, .switcher > span { padding: 4px 6px; } #sync-chip { white-space: nowrap; padding-left: 8px; padding-right: 8px; } header.top { gap: 10px 5px; } .q .actions button { padding: 6px 8px; font-size: .85rem; } }
 </style>
 </head>
 <body>
@@ -217,7 +229,7 @@ footer { margin-top: 40px; font-size: .82rem; color: var(--muted); text-align: c
   <header class="top">
     <div class="brand">
       <h1><a href="#/" id="site-title">Interview Prep Tracker</a></h1>
-      <nav class="switcher" id="track-switcher" aria-label="Choose track" hidden></nav>
+      <div class="track-pick" id="track-switcher" hidden></div>
     </div>
     <nav class="tools" aria-label="Main">
       <a class="btn" id="revise-link" href="#/revise" aria-label="Revise list">↻<span class="rev-label"> Revise<span class="long"> list</span></span></a>
@@ -372,18 +384,61 @@ const TRACKS = [
   { name: "System Design", label: '<span class="long">System</span><span class="short">Sys</span> Design', repo: "System-Design-Interview-Questions-cheat-sheet" },
   { name: "AI", repo: "AI-Interview-Questions-cheat-sheet" }
 ];
+// The toggle shows only two tracks (the current one + one partner) to keep the focus; ⇄ swaps the partner.
+// The pair is stored on this origin, so all four trackers share it.
+const PAIR_KEY = "iq-track-pair";
+const DEFAULT_PARTNER = { "Android": "iOS", "iOS": "Android", "System Design": "Android", "AI": "System Design" };
+function trackPair(current) {
+  let pair = null;
+  try { pair = JSON.parse(localStorage.getItem(PAIR_KEY)); } catch (e) {}
+  pair = Array.isArray(pair) ? pair.map(r => TRACKS.find(t => t.repo === r)).filter(Boolean) : [];
+  if (pair.length !== 2 || pair[0] === pair[1]) pair = [current, TRACKS.find(t => t.name === DEFAULT_PARTNER[current.name])];
+  else if (!pair.includes(current)) pair = [pair[0], current];   // opened another track directly: it takes the second slot
+  return pair;
+}
+function saveTrackPair(pair) { try { localStorage.setItem(PAIR_KEY, JSON.stringify(pair.map(t => t.repo))); } catch (e) {} }
 function renderSwitcher() {
   const el = document.getElementById("track-switcher");
   const current = TRACKS.find(t => t.repo === TRACKER_ID) || TRACKS.find(t => site && site.title.startsWith(t.name));
   if (!current) return;
   const base = location.hostname.endsWith("github.io") ? "/" : "https://akshayashokcode.github.io/";
-  el.innerHTML = TRACKS.map(t => t === current
-    ? `<span aria-current="page">${t.label || esc(t.name)}</span>`
-    : `<a href="${base}${t.repo}/" title="Switch to the ${esc(t.name)} tracker">${t.label || esc(t.name)}</a>`).join("");
+  const pair = trackPair(current);
+  saveTrackPair(pair);
+  const partner = pair.find(t => t !== current);
+  el.innerHTML = `<nav class="switcher" aria-label="Choose track">${pair.map(t => t === current
+      ? `<span aria-current="page">${t.label || esc(t.name)}</span>`
+      : `<a href="${base}${t.repo}/" title="Switch to the ${esc(t.name)} tracker">${t.label || esc(t.name)}</a>`).join("")}</nav>
+    <button class="swap-btn" type="button" aria-haspopup="true" aria-expanded="false" title="Change the second topic" aria-label="Change the second topic">⇄</button>
+    <div class="track-menu" role="menu" hidden>
+      <p>Keep two topics in the toggle so you stay focused. Pick the one to pair with ${esc(current.name)}:</p>
+      ${TRACKS.map(t => `<button type="button" role="menuitemradio" aria-checked="${t === partner}" data-repo="${t.repo}" ${t === current ? "disabled" : ""}>
+        <span>${esc(t.name)}</span><span class="tag ${t === partner ? "on" : ""}">${t === current ? "You're here" : t === partner ? "✓ In toggle" : ""}</span></button>`).join("")}
+    </div>`;
   el.hidden = false;
+  const btn = el.querySelector(".swap-btn"), menu = el.querySelector(".track-menu");
+  const close = () => { menu.hidden = true; btn.setAttribute("aria-expanded", "false"); };
+  btn.onclick = e => {
+    e.stopPropagation();
+    menu.hidden = !menu.hidden; btn.setAttribute("aria-expanded", String(!menu.hidden));
+    if (!menu.hidden) (menu.querySelector('[aria-checked="true"]') || menu.querySelector("button:not([disabled])")).focus();
+  };
+  menu.querySelectorAll("button[data-repo]").forEach(b => b.onclick = () => {
+    const chosen = TRACKS.find(t => t.repo === b.dataset.repo);
+    if (chosen && chosen !== current) {
+      saveTrackPair(pair.map(t => t === current ? t : chosen));   // replace the partner, keep the current track's slot
+      renderSwitcher();
+      toast(`${chosen.name} is now in your toggle`);
+    } else close();
+  });
+  menu.onclick = e => e.stopPropagation();
+  if (!renderSwitcher.bound) {
+    renderSwitcher.bound = true;
+    document.addEventListener("click", () => { const m = document.querySelector(".track-menu"); if (m && !m.hidden) { m.hidden = true; document.querySelector(".swap-btn").setAttribute("aria-expanded", "false"); } });
+    document.addEventListener("keydown", e => { const m = document.querySelector(".track-menu"); if (e.key === "Escape" && m && !m.hidden) { m.hidden = true; const b = document.querySelector(".swap-btn"); b.setAttribute("aria-expanded", "false"); b.focus(); } });
+  }
   // In an installed (home-screen) app, switch tracks with a script navigation so iOS keeps it inside the app.
   const standalone = navigator.standalone || matchMedia("(display-mode: standalone)").matches;
-  if (standalone) el.querySelectorAll("a").forEach(a => a.onclick = e => { e.preventDefault(); location.href = a.href; });
+  if (standalone) el.querySelectorAll(".switcher a").forEach(a => a.onclick = e => { e.preventDefault(); location.href = a.href; });
 }
 
 async function loadAll() {
