@@ -6,7 +6,7 @@
 <title>Interview Prep Tracker</title>
 <meta name="description" content="Study the interview questions in this repo and track your progress per topic. No account needed.">
 <meta name="theme-color" content="#2f6fde">
-<script>/* track colour: green for Android, blue for iOS, purple for System Design */ const tc = /^\/Android/i.test(location.pathname) ? "#1f9d55" : /^\/System-Design/i.test(location.pathname) ? "#7c3aed" : ""; if (tc) document.querySelector('meta[name="theme-color"]').content = tc;</script>
+<script>/* track colour: green for Android, blue for iOS, purple for System Design, teal for AI */ const tc = /^\/Android/i.test(location.pathname) ? "#1f9d55" : /^\/System-Design/i.test(location.pathname) ? "#7c3aed" : /^\/AI-Interview/i.test(location.pathname) ? "#0d9488" : ""; if (tc) document.querySelector('meta[name="theme-color"]').content = tc;</script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
@@ -195,7 +195,7 @@ footer { margin-top: 40px; font-size: .82rem; color: var(--muted); text-align: c
   #track-switcher { grid-area: switch; }
   #theme-btn { grid-area: theme; justify-self: end; }
   #revise-link { grid-area: revise; }
-  #sync-chip { grid-area: chip; }
+  #sync-chip { grid-area: chip; white-space: nowrap; }
   .switcher > a, .switcher > span { min-width: 0; padding: 4px 9px; font-size: .8rem; }
   .long { display: none; }
   .short { display: inline; }
@@ -208,7 +208,7 @@ footer { margin-top: 40px; font-size: .82rem; color: var(--muted); text-align: c
   .player .ctrls { gap: 4px; }
   .player button { min-width: 36px; padding: 6px 8px; }
 }
-@media (max-width: 420px) { .rev-label { display: none; } #revise-link { padding-left: 10px; padding-right: 10px; } }
+@media (max-width: 480px) { .rev-label { display: none; } #revise-link { padding-left: 10px; padding-right: 10px; } }
 @media (max-width: 360px) { .switcher > a, .switcher > span { padding: 4px 6px; } #sync-chip { white-space: nowrap; padding-left: 8px; padding-right: 8px; } header.top { gap: 10px 5px; } .switcher .short { display: none; } .q .actions button { padding: 6px 8px; font-size: .85rem; } }
 </style>
 </head>
@@ -369,7 +369,8 @@ let shortTitle = "Interview Prep";
 const TRACKS = [
   { name: "Android", repo: "Android-Interview-Questions-cheat-sheet" },
   { name: "iOS", repo: "iOS-Interview-Questions-cheat-sheet" },
-  { name: "System Design", label: '<span class="long">System</span><span class="short">Sys</span> Design', repo: "System-Design-Interview-Questions-cheat-sheet" }
+  { name: "System Design", label: '<span class="long">System</span><span class="short">Sys</span> Design', repo: "System-Design-Interview-Questions-cheat-sheet" },
+  { name: "AI", repo: "AI-Interview-Questions-cheat-sheet" }
 ];
 function renderSwitcher() {
   const el = document.getElementById("track-switcher");
