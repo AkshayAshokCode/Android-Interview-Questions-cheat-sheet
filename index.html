@@ -1022,8 +1022,16 @@ function bindCards(onChange) {
       const sp = document.getElementById("start-panel"); if (sp) sp.remove();
       playItems([{ file, n }], 0, "single");
     };
-    card.querySelector(".done-btn").onclick = () => { setMark(file, q, "done"); onChange(card, file, q); };
-    card.querySelector(".rev-btn").onclick = () => { setMark(file, q, "revise"); onChange(card, file, q); };
+    // Marking usually happens right after reading, so fold the answer away (only when a mark is set, not cleared).
+    const collapseAfterMark = () => {
+      if (!getMark(questionKey(file, q.title)) || ans.hidden) return;
+      ans.hidden = true;
+      show.textContent = "Show answer";
+      show.setAttribute("aria-expanded", "false");
+      if (card.isConnected && card.getBoundingClientRect().top < 0) card.scrollIntoView({ block: "start" });   // keep the marked card in view
+    };
+    card.querySelector(".done-btn").onclick = () => { setMark(file, q, "done"); collapseAfterMark(); onChange(card, file, q); };
+    card.querySelector(".rev-btn").onclick = () => { setMark(file, q, "revise"); collapseAfterMark(); onChange(card, file, q); };
   });
 }
 function refreshCard(card) {
