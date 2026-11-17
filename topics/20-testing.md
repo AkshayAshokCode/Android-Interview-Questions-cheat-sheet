@@ -237,6 +237,20 @@ Find the cause: timing (replace sleeps with idling resources or test dispatchers
 
 </details>
 
+### 20. What end-to-end UI testing tools and device farms are used besides Espresso?
+
+<details>
+<summary>Answer</summary>
+
+- **Maestro** – UI flows written in simple YAML, runs on Android and iOS, tolerant of timing issues; popular for end-to-end smoke tests.
+- **Appium** – WebDriver-based, cross-platform, tests in many languages; slower and more brittle, common in QA teams.
+- **UI Automator** – Google's tool for cross-app and system UI interactions (permissions dialogs, notifications).
+- **Device farms** – Firebase Test Lab, AWS Device Farm, BrowserStack/Sauce Labs run tests on many real devices and OS versions; **Gradle Managed Devices** run emulators reproducibly in CI.
+
+Strategy: many fast unit tests, a moderate number of component/UI tests (Espresso/Compose), and a small set of end-to-end flows (login, checkout) on a device farm before releases.
+
+</details>
+
 ---
 
 [⬅ Previous: Performance & Memory](19-performance-memory.md) · [⬅ Back to index](../README.md) · [Next: Security & Permissions ➡](21-security-permissions.md)

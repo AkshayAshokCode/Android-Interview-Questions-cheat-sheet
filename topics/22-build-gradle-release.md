@@ -298,6 +298,38 @@ Key points: use `tasks.register` (**lazy**, configuration avoidance) instead of 
 
 </details>
 
+### 23. How do in-app updates and in-app reviews work?
+
+<details>
+<summary>Answer</summary>
+
+**In-app updates** (Play Core library, `AppUpdateManager`):
+- Check `appUpdateInfo` for availability, **update priority** (set when publishing) and **staleness** (days since an update became available).
+- **Flexible** – downloads in the background while the user keeps using the app; you prompt to restart when downloaded.
+- **Immediate** – a full-screen flow that blocks the app until the update is installed; for critical fixes.
+- Combine with a server-side **minimum supported version** check for forced upgrades.
+
+**In-app review** (`ReviewManager`):
+- `requestReviewFlow()` then `launchReviewFlow()` shows the Play review card inside the app.
+- Google applies a **quota** – the dialog may not appear, and you get no result telling you whether the user reviewed.
+- Ask at a natural positive moment (after completing a task), never from a button that promises a review, and never gate features on it.
+
+</details>
+
+### 24. How do you create and publish an Android library?
+
+<details>
+<summary>Answer</summary>
+
+- Create a module with the **`com.android.library`** plugin; it builds an **AAR**.
+- **AAR vs JAR** – a JAR contains only compiled classes and resources-free files; an AAR also contains Android **resources, the manifest, consumer ProGuard/R8 rules, native libraries (`.so`) and assets**.
+- **Consumer rules** – ship `consumerProguardFiles` so apps that use R8 keep what your library needs.
+- **Publishing** – use the `maven-publish` plugin with `android { publishing { singleVariant("release") { withSourcesJar() } } }`, then publish to Maven Central, GitHub Packages, an internal repository, or JitPack.
+- **API hygiene** – minimise the public surface (Kotlin `explicitApi()` mode), keep binary compatibility (binary-compatibility validator), use semantic versioning, avoid forcing heavy transitive dependencies (`implementation` vs `api`), and document `minSdk`.
+- Test with a sample app and in a clean consumer project.
+
+</details>
+
 ---
 
 [⬅ Previous: Security & Permissions](21-security-permissions.md) · [⬅ Back to index](../README.md) · [Next: Android System Design ➡](23-system-design.md)

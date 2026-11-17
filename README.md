@@ -1,6 +1,6 @@
 # Android Interview Questions – Cheat Sheet
 
-A revision guide for Android developer interviews: **680+ questions with interview-ready answers**, split into 27 topics, from Kotlin basics to Compose, architecture, system design and what's new in Android.
+A revision guide for Android developer interviews: **698 questions with interview-ready answers**, split into 27 topics, from Kotlin basics to Compose, architecture, system design and what's new in Android.
 
 Every answer is hidden in a collapsible block, so you can **test yourself first** and then click to check.
 
@@ -29,7 +29,7 @@ Every answer is hidden in a collapsible block, so you can **test yourself first*
 | 01 | [Kotlin Fundamentals](topics/01-kotlin-basics.md) | 44 | val/var/const, null safety, data/sealed classes, object, lateinit vs lazy, collections, extension & infix functions |
 | 02 | [Kotlin Advanced](topics/02-kotlin-advanced.md) | 28 | Scope functions, inline/reified, generics & variance, delegation, Jvm annotations, DSLs, K2 |
 | 03 | [Kotlin Coroutines](topics/03-coroutines.md) | 34 | suspend internals, dispatchers, scopes, Job vs SupervisorJob, cancellation, exception handling |
-| 04 | [Kotlin Flow](topics/04-flow.md) | 23 | Cold vs hot, StateFlow vs SharedFlow vs LiveData, stateIn, operators, one-time events |
+| 04 | [Kotlin Flow](topics/04-flow.md) | 24 | Cold vs hot, StateFlow vs SharedFlow vs LiveData, stateIn, operators, one-time events |
 | 05 | [Java for Android](topics/05-java.md) | 41 | String pool, equals/hashCode, HashMap internals, JVM memory, references, multithreading |
 
 ### 🟢 Fundamentals & Design
@@ -38,14 +38,14 @@ Every answer is hidden in a collapsible block, so you can **test yourself first*
 |---|---|---|---|
 | 06 | [OOP & SOLID](topics/06-oop-solid.md) | 16 | OOP pillars, composition vs inheritance, SOLID with Android examples |
 | 07 | [Design Patterns](topics/07-design-patterns.md) | 26 | Creational/structural/behavioral patterns and where Android uses each one |
-| 08 | [Android Fundamentals](topics/08-android-fundamentals.md) | 37 | ART/Dalvik, JIT/AOT, GC, DEX, components, Context, Manifest, Intents, Binder, app launch flow |
+| 08 | [Android Fundamentals](topics/08-android-fundamentals.md) | 39 | ART/Dalvik, JIT/AOT, GC, DEX, components, Context, Manifest, Intents, Binder, app launch flow, FileProvider, manifest merging |
 | 09 | [Activity, Fragment & Lifecycle](topics/09-activity-fragment.md) | 29 | Lifecycles, config change vs process death, launch modes, fragment transactions, back handling |
 
 ### 🔵 UI
 
 | # | Topic | Questions | Key areas |
 |---|---|---|---|
-| 10 | [UI – Views, XML & RecyclerView](topics/10-ui-views.md) | 32 | Measure/layout/draw, custom views, RecyclerView recycling & DiffUtil, touch events, insets |
+| 10 | [UI – Views, XML & RecyclerView](topics/10-ui-views.md) | 34 | Measure/layout/draw, custom views, RecyclerView recycling & DiffUtil, touch events, insets, view size before layout, widgets |
 | 11 | [Jetpack Compose](topics/11-jetpack-compose.md) | 42 | Recomposition, state & hoisting, side effects, stability & strong skipping, lazy lists, navigation |
 | 26 | [Accessibility & Localization](topics/26-accessibility-localization.md) | 10 | TalkBack, Compose semantics, touch targets, font scaling, plurals, RTL, per-app language, formatting |
 
@@ -66,16 +66,16 @@ Every answer is hidden in a collapsible block, so you can **test yourself first*
 | # | Topic | Questions | Key areas |
 |---|---|---|---|
 | 19 | [Performance & Memory](topics/19-performance-memory.md) | 23 | Memory leaks, LRU cache, bitmaps, jank, startup, Baseline Profiles, app size, vitals |
-| 20 | [Testing](topics/20-testing.md) | 19 | Test pyramid, fakes vs mocks, ViewModel/coroutine/Flow tests, Espresso, Compose tests |
-| 21 | [Security & Permissions](topics/21-security-permissions.md) | 22 | Runtime permissions by version, Keystore, pinning, Play Integrity, passkeys |
-| 22 | [Build, Gradle & Release](topics/22-build-gradle-release.md) | 22 | Build variants, api vs implementation, version catalogs, KSP, AAB, CI/CD, 16 KB pages |
+| 20 | [Testing](topics/20-testing.md) | 20 | Test pyramid, fakes vs mocks, ViewModel/coroutine/Flow tests, Espresso, Compose tests |
+| 21 | [Security & Permissions](topics/21-security-permissions.md) | 23 | Runtime permissions by version, Keystore, pinning, Play Integrity, passkeys, tapjacking |
+| 22 | [Build, Gradle & Release](topics/22-build-gradle-release.md) | 24 | Build variants, api vs implementation, version catalogs, KSP, AAB, CI/CD, 16 KB pages, in-app updates/reviews, publishing libraries |
 
 ### ⭐ Interview Rounds
 
 | # | Topic | Questions | Key areas |
 |---|---|---|---|
-| 23 | [Android System Design](topics/23-system-design.md) | 22 | Framework + designs: image loader, chat, feed, offline sync, downloader, analytics SDK |
-| 24 | [What's New & Trending](topics/24-whats-new-trending.md) | 21 | Android 14/15/16 changes, edge-to-edge, predictive back, KMP, Compose updates, on-device AI |
+| 23 | [Android System Design](topics/23-system-design.md) | 24 | Framework + designs: image loader, chat, feed, offline sync, downloader, analytics SDK, music player, photo backup |
+| 24 | [What's New & Trending](topics/24-whats-new-trending.md) | 22 | Android 14/15/16 changes, edge-to-edge, predictive back, KMP, Compose updates, on-device AI, Android 17 |
 | 25 | [Coding, Scenarios & Behavioral](topics/25-coding-scenarios.md) | 25 | LRU cache, debounce, pagination, debugging scenarios, STAR answers |
 | 27 | [Company-Wise Questions](topics/27-company-wise-questions.md) | 22 | What Google, Meta, Amazon, Uber, Netflix and Indian product companies ask; machine coding; UPI app, quick commerce, order tracking, super-app, Reels-style feed |
 

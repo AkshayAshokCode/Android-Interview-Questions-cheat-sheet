@@ -404,6 +404,50 @@ The design lesson: an **offline-first architecture**, preloaded reference data, 
 
 </details>
 
+### 23. Design a music or podcast player app that keeps playing in the background.
+
+<details>
+<summary>Answer</summary>
+
+```mermaid
+flowchart TD
+    UI["UI (Compose) + MediaController"] <-->|"commands / state"| SVC["MediaSessionService<br/>(foreground service: mediaPlayback)"]
+    SVC --> P["ExoPlayer (Media3)"]
+    SVC --> MS["MediaSession<br/>(notification, lock screen,<br/>Bluetooth, Android Auto, Wear)"]
+    P --> SRC["Streaming (HLS/progressive)<br/>+ download cache for offline"]
+    SVC --> DB[("Room: library, queue,<br/>playback positions")]
+```
+
+**Key parts**
+- **Media3**: `ExoPlayer` for playback, a **`MediaSessionService`** that owns the player and a **`MediaSession`**, and a **`MediaController`** in the UI. The session automatically exposes playback to the system notification, lock screen, headphones buttons, Bluetooth, Android Auto and Wear OS.
+- **Foreground service** with `foregroundServiceType="mediaPlayback"` (and the matching permission) so playback survives the app going to the background; Media3 manages the media notification.
+- **Audio focus and noisy events** – set audio attributes with focus handling so playback ducks or pauses for calls and other apps; pause when headphones are unplugged ("becoming noisy").
+- **Offline** – download episodes with Media3's download manager into a cache; WorkManager for scheduled downloads on Wi-Fi.
+- **State** – persist queue and positions (resume podcasts where the user stopped); restore the session after process death.
+- **Battery and data** – adaptive streaming, caching, no wakelocks beyond what the player needs.
+- Newer Android versions tighten background audio (e.g. Android 17 blocks audio playback and focus requests from apps not in a valid foreground/service state), so always play from the media session service.
+
+</details>
+
+### 24. Design a photo backup / upload app (like Google Photos backup).
+
+<details>
+<summary>Answer</summary>
+
+**Requirements** – back up new photos and videos automatically, resume after interruptions, respect battery and mobile data, avoid duplicates, show progress.
+
+**Design**
+- **Access to media** – request `READ_MEDIA_IMAGES` / `READ_MEDIA_VIDEO` (Android 13+), and handle **partial access** (`READ_MEDIA_VISUAL_USER_SELECTED`, Android 14+) when the user only selects some photos. For one-off uploads, use the **Photo Picker** (no permission needed).
+- **Detecting new media** – query `MediaStore` for items newer than the last synced timestamp/generation; a `ContentObserver` can trigger a sync while the app runs, and a periodic WorkManager job catches up otherwise.
+- **Local state** – Room table of assets (MediaStore ID, content hash, status: pending/uploading/done/failed, bytes uploaded).
+- **Uploading** – WorkManager jobs with **constraints** (unmetered network, charging, battery not low – user-configurable); for large, user-visible transfers use long-running workers with a foreground notification or user-initiated data-transfer jobs.
+- **Resumable chunked uploads** – upload in chunks to a resumable endpoint (or pre-signed multipart URLs), persist the offset, resume after failures; retry with backoff.
+- **Deduplication** – hash files (or use server-side content hashes) so re-installs or duplicate files don't upload twice.
+- **Progress** – expose WorkManager progress to the UI and notification.
+- **Server side** – object storage with metadata DB; thumbnails generated after upload.
+
+</details>
+
 ---
 
 [⬅ Previous: Build, Gradle & Release](22-build-gradle-release.md) · [⬅ Back to index](../README.md) · [Next: What's New & Trending ➡](24-whats-new-trending.md)

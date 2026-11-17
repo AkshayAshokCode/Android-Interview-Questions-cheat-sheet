@@ -394,6 +394,17 @@ usersFlow.zip(moreUsersFlow) { a, b -> a + b }
 
 </details>
 
+### 24. How does cancellation work in Flow? What is the exception transparency rule?
+
+<details>
+<summary>Answer</summary>
+
+**Cancellation** – collecting a flow happens inside a coroutine, so cancelling the scope cancels collection. The `flow { }` builder checks for cancellation on each `emit`, but flows created from collections (`listOf(...).asFlow()`, `flowOf`) or busy loops may not – add **`.cancellable()`** or call `currentCoroutineContext().ensureActive()` in long loops. Operators like `take(n)` cancel the upstream once they have enough values.
+
+**Exception transparency** – a flow must not catch exceptions thrown **downstream** (by the collector) and continue emitting. Wrapping `emit()` in `try/catch` and swallowing errors breaks this rule and Flow throws an `IllegalStateException`. Handle upstream errors with the **`catch { }` operator** (it only sees upstream exceptions), use `onCompletion` for cleanup, and handle collector errors in the collector itself.
+
+</details>
+
 ---
 
 [⬅ Previous: Coroutines](03-coroutines.md) · [⬅ Back to index](../README.md) · [Next: Java for Android ➡](05-java.md)

@@ -277,6 +277,19 @@ Apps **can't** use `READ_SMS` for OTPs (it's a restricted Play policy permission
 
 </details>
 
+### 23. What is tapjacking, and how do you prevent it?
+
+<details>
+<summary>Answer</summary>
+
+**Tapjacking** is when a malicious app draws an overlay (e.g. a fake dialog) on top of your app so the user's taps land on a sensitive button underneath – granting a permission, confirming a payment. Defences:
+- Set **`android:filterTouchesWhenObscured="true"`** (or `setFilterTouchesWhenObscured(true)`) on sensitive views so touches are ignored when another window covers them.
+- Check `MotionEvent.FLAG_WINDOW_IS_OBSCURED` / `FLAG_WINDOW_IS_PARTIALLY_OBSCURED` in `onFilterTouchEventForSecurity()` for custom handling.
+- On Android 12+, use **`setHideOverlayWindows(true)`** (with the `HIDE_OVERLAY_WINDOWS` permission) to hide non-system overlays on sensitive screens.
+- Android 12+ also blocks most untrusted touches passing through overlays by default, but don't rely on that alone for older devices.
+
+</details>
+
 ---
 
 [⬅ Previous: Testing](20-testing.md) · [⬅ Back to index](../README.md) · [Next: Build, Gradle & Release ➡](22-build-gradle-release.md)

@@ -282,6 +282,32 @@ A good interview answer: "It depends on team skills, the performance and UX bar,
 
 </details>
 
+### 22. What are the key changes in Android 17 (API 37)?
+
+<details>
+<summary>Answer</summary>
+
+Android 17 reached platform stability in March 2026 (Beta 3). Highlights for developers:
+
+**For all apps**
+- **Memory limits** based on device RAM; affected apps can detect it via `ApplicationExitInfo` (description contains `MemoryLimiter`).
+- **SMS OTP protection** – messages containing one-time codes are hidden from apps that aren't the intended recipient for a few hours; use the SMS Retriever or SMS User Consent APIs.
+- **Background audio hardening** – playback, audio focus requests and volume changes fail when the app isn't in a valid state.
+- Keystore limits on the number of keys per app; IME visibility isn't restored after rotation unless you handle it.
+
+**For apps targeting Android 17**
+- **Large screens** – on devices ≥ 600dp, `screenOrientation`, `resizeableActivity` and aspect-ratio restrictions are ignored, with no opt-out (games exempt): apps must be fully adaptive.
+- **Local network access** requires the new runtime permission **`ACCESS_LOCAL_NETWORK`** (in the Nearby devices group).
+- **Certificate Transparency** on by default, and Encrypted Client Hello used where supported.
+- **Background activity launch** protections extend to `IntentSender`; widget `RemoteViews` bitmap memory limits are enforced.
+- Content capture can no longer be disabled programmatically – use `FLAG_SECURE`.
+
+**New APIs** – a **contact picker** (`ACTION_PICK_CONTACTS`) that shares only selected fields without `READ_CONTACTS`; **Handoff** of activities between devices; `ProfilingManager` triggers (cold start, OOM, anomalies); an `AlarmManager` exact alarm with a listener callback; **post-quantum (ML-DSA) hybrid APK signing**; Advanced Protection Mode detection; semantic colors for Live Update notifications.
+
+Also announced: automatic URI grants for `ACTION_SEND`/`ACTION_IMAGE_CAPTURE` will stop in Android 18 – grant URI permissions explicitly now.
+
+</details>
+
 ---
 
 [⬅ Previous: System Design](23-system-design.md) · [⬅ Back to index](../README.md) · [Next: Coding & Scenario Questions ➡](25-coding-scenarios.md)

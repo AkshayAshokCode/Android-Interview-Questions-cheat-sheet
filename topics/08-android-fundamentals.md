@@ -577,6 +577,38 @@ adb push / pull, adb reverse tcp:8080 tcp:8080, adb pair (wireless debugging)
 
 </details>
 
+### 38. How do you share files with other apps securely? What is FileProvider?
+
+<details>
+<summary>Answer</summary>
+
+Since Android 7.0, sharing a `file://` URI outside your app throws `FileUriExposedException`. Instead, use **`FileProvider`**, a ContentProvider that serves your files through **`content://` URIs** with temporary permissions:
+1. Declare `androidx.core.content.FileProvider` in the manifest with an `authorities` value and `exported="false"`, `grantUriPermissions="true"`.
+2. List shareable directories in `res/xml/file_paths.xml` (e.g. `<cache-path>`, `<files-path>`).
+3. Get a URI with `FileProvider.getUriForFile(context, authority, file)`.
+4. Put it in an Intent (e.g. `ACTION_SEND` or `ACTION_VIEW`) and add **`FLAG_GRANT_READ_URI_PERMISSION`** (and write if needed).
+
+The receiving app can read only that file, only while the grant lasts. Always grant explicitly – Android 17 notes that automatic URI grants for `ACTION_SEND`/`ACTION_IMAGE_CAPTURE` will stop in Android 18.
+
+</details>
+
+### 39. How does manifest merging work, and how do you resolve conflicts?
+
+<details>
+<summary>Answer</summary>
+
+The final APK has **one manifest**, merged from the app module, build-type and flavor source sets, and every library's manifest. Priority (highest first): build variant / flavor manifests → main app manifest → library manifests (in dependency order). Libraries can add permissions, components and metadata you didn't write.
+
+Resolve conflicts with **merge rule markers** (namespace `tools`):
+- `tools:replace="android:theme"` – your value replaces the library's.
+- `tools:node="remove"` – remove an element a library added (e.g. an unwanted permission or provider).
+- `tools:remove="attr"` – remove a specific attribute.
+- `tools:overrideLibrary="com.example.lib"` – use a library whose `minSdk` is higher than yours (you must guard calls).
+
+Inspect the result in Android Studio's **Merged Manifest** tab, and review it before releases – it's where surprise permissions and exported components appear.
+
+</details>
+
 ---
 
 [⬅ Previous: Design Patterns](07-design-patterns.md) · [⬅ Back to index](../README.md) · [Next: Activity & Fragment ➡](09-activity-fragment.md)

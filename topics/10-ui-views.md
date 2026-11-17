@@ -458,6 +458,36 @@ Fix it by removing unnecessary backgrounds (especially when a parent and child a
 
 </details>
 
+### 33. How do you get a View's width or height before it has been laid out?
+
+<details>
+<summary>Answer</summary>
+
+In `onCreate()` the view hasn't been measured yet, so `width` and `height` are `0`. Options:
+- **`view.doOnLayout { }`** (core-ktx) – runs once after the view is laid out (immediately if it already is). The cleanest option.
+- **`view.doOnPreDraw { }`** – runs just before the next draw, after layout.
+- **`view.post { }`** – queues a runnable that usually runs after the first layout pass once the view is attached; simple but less explicit.
+- **`ViewTreeObserver.OnGlobalLayoutListener`** – fires after every layout pass; remember to **remove the listener** or it keeps firing (and can leak).
+- Override **`onSizeChanged()`** in a custom view to react to every size change.
+
+In Compose, use `Modifier.onSizeChanged { }` or `Modifier.onGloballyPositioned { }`, or `BoxWithConstraints` when the layout itself depends on available size.
+
+</details>
+
+### 34. How do you build home-screen widgets on Android?
+
+<details>
+<summary>Answer</summary>
+
+- A widget is an **`AppWidgetProvider`** (a BroadcastReceiver) declared in the manifest with an `appwidget-provider` XML (size, resize mode, preview, update period).
+- Widgets render in the launcher's process using **`RemoteViews`** – only a limited set of views, no custom views, and updates are sent across processes.
+- **Glance** lets you write widgets with Compose-style code (`GlanceAppWidget`), which Glance translates into RemoteViews; state lives in DataStore/Glance state.
+- **Updates**: `updatePeriodMillis` is at least 30 minutes; for fresher or conditional data, schedule updates with WorkManager or push them when data changes in the app.
+- **Interactivity**: buttons trigger `PendingIntent`s or Glance `actionRunCallback`; checkboxes/switches are supported on Android 12+.
+- Keep widget updates small: newer Android versions limit memory used by bitmaps in `RemoteViews` (Android 17 throws an exception for apps targeting it when the bitmap budget is exceeded).
+
+</details>
+
 ---
 
 [⬅ Previous: Activity & Fragment](09-activity-fragment.md) · [⬅ Back to index](../README.md) · [Next: Jetpack Compose ➡](11-jetpack-compose.md)
