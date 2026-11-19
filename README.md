@@ -1,10 +1,10 @@
-# Android Interview Questions – Cheat Sheet
+# Android Interview Questions & Answers
 
 A revision guide for Android developer interviews: **698 questions with interview-ready answers**, split into 27 topics, from Kotlin basics to Compose, architecture, system design and what's new in Android.
 
 Every answer is hidden in a collapsible block, so you can **test yourself first** and then click to check.
 
-> **📈 [Open the interactive study tracker](https://akshayashokcode.github.io/Android-Interview-Questions-cheat-sheet/)**: mark questions ✓ Done or ↻ Revise, see your progress per topic, search every question, listen to answers read aloud, and continue where you left off.
+> **📈 [Open the interactive study tracker](https://akshayashokcode.github.io/Android-Interview-Questions-and-Answers/)**: mark questions ✓ Done or ↻ Revise, see your progress per topic, search every question, listen to answers read aloud, and continue where you left off.
 >
 > **No account needed.** Your progress saves automatically on your device. Want to keep it safe and in sync across your devices? Sign in (optional).
 

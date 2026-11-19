@@ -171,6 +171,7 @@ body.playing .wrap { padding-bottom: 120px; }
 .answer th:first-child, .answer td:first-child { min-width: 72px; }
 .diagram { margin: 14px 0; overflow-x: auto; text-align: center; background: var(--surface-2); border-radius: 10px; padding: 10px; color: var(--muted); font-size: .85rem; }
 .diagram svg { height: auto; }
+.ico { width: 1em; height: 1em; vertical-align: -.14em; flex-shrink: 0; }
 .diagram.rendered { cursor: zoom-in; text-align: left; }
 .diagram .diagram-scroll { overflow-x: auto; display: flex; justify-content: center; }
 .diagram .diagram-scroll svg { flex-shrink: 0; }
@@ -232,7 +233,7 @@ footer { margin-top: 40px; font-size: .82rem; color: var(--muted); text-align: c
       <div class="track-pick" id="track-switcher" hidden></div>
     </div>
     <nav class="tools" aria-label="Main">
-      <a class="btn" id="revise-link" href="#/revise" aria-label="Revise list">↻<span class="rev-label"> Revise<span class="long"> list</span></span></a>
+      <a class="btn" id="revise-link" href="#/revise" aria-label="Revise list"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4.5L5 21V4a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span class="rev-label"> Revise<span class="long"> list</span></span></a>
       <a class="btn chip" id="sync-chip" href="#/account" hidden>Sign in to sync</a>
       <button id="theme-btn" title="Toggle dark mode" aria-label="Toggle dark mode">◐</button>
     </nav>
@@ -378,11 +379,12 @@ let topicOrder = [];
 let shortTitle = "Interview Prep";
 
 // Sibling trackers hosted on the same GitHub Pages site (same origin → sign-in is shared).
+const REV_ICON = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4.5L5 21V4a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>';
 const TRACKS = [
-  { name: "Android", repo: "Android-Interview-Questions-cheat-sheet" },
-  { name: "iOS", repo: "iOS-Interview-Questions-cheat-sheet" },
-  { name: "System Design", label: '<span class="long">System</span><span class="short">Sys</span> Design', repo: "System-Design-Interview-Questions-cheat-sheet" },
-  { name: "AI", repo: "AI-Interview-Questions-cheat-sheet" }
+  { name: "Android", repo: "Android-Interview-Questions-and-Answers" },
+  { name: "iOS", repo: "iOS-Interview-Questions-and-Answers" },
+  { name: "System Design", label: '<span class="long">System</span><span class="short">Sys</span> Design', repo: "System-Design-Interview-Questions-and-Answers" },
+  { name: "AI", repo: "AI-Interview-Questions-and-Answers" }
 ];
 // The toggle shows only two tracks (the current one + one partner) to keep the focus; ⇄ swaps the partner.
 // The pair is stored on this origin, so all four trackers share it.
@@ -446,7 +448,7 @@ async function loadAll() {
   if (!res.ok) throw new Error("Couldn't load README.md");
   site = parseReadme(await res.text());
   topicOrder = site.categories.flatMap(c => c.topics).sort((a, b) => Number(a.num) - Number(b.num));
-  shortTitle = site.title.replace(/ – Cheat Sheet$/, "").replace(/ Questions$/, "");
+  shortTitle = site.title.replace(/ – .*$/, "").replace(/ Questions( & Answers)?$/, "");
   // Same heading on every track so the Android | iOS toggle never shifts; the tab title names the track.
   document.title = shortTitle + " Tracker";
   renderSwitcher();
@@ -643,7 +645,7 @@ function welcomeCard() {
   if (state.prefs.welcomeDismissed || sync.user || restoringSignIn()) return "";
   return `<section class="card notice" aria-labelledby="welcome-title">
     <h2 id="welcome-title">👋 Start studying. No account needed.</h2>
-    <p>Mark questions <b>✓ Done</b> or <b>↻ Revise</b> as you go. Your progress is saved automatically on this device.
+    <p>Mark questions <b>✓ Done</b> or <b>${REV_ICON} Revise</b> as you go. Your progress is saved automatically on this device.
     ${sync.enabled
       ? `Want to keep it safe and in sync on your phone and other computers? <b>Sign in</b>. It's optional.`
       : ""}</p>
@@ -983,7 +985,7 @@ function questionCard(file, q, showSource, query) {
     <div class="actions">
       <button class="show-btn" aria-expanded="false">Show answer</button>
       <button class="done-btn" aria-pressed="${s === "done"}">✓ Done</button>
-      <button class="rev-btn" aria-pressed="${s === "revise"}">↻ Revise</button>
+      <button class="rev-btn" aria-pressed="${s === "revise"}">${REV_ICON} Revise</button>
     </div>
     <div class="answer" hidden></div>
   </article>`;
@@ -1120,12 +1122,12 @@ function renderTopic(file, focusN) {
 
 function renderRevise() {
   currentView = "revise";
-  let html = `<div class="crumbs"><a href="#/">← All topics</a></div><h2>↻ Questions to revise</h2>`, count = 0;
+  let html = `<div class="crumbs"><a href="#/">← All topics</a></div><h2>${REV_ICON} Questions to revise</h2>`, count = 0;
   for (const t of topicOrder) for (const q of t.questions)
     if (getMark(questionKey(t.file, q.title)) === "revise") { html += questionCard(t.file, q, true); count++; }
-  if (!count) html += `<div class="empty">Nothing marked for revision yet. Use the ↻ Revise button on any question you want to come back to.</div>`;
-  else if (speech.supported) html = html.replace("<h2>↻ Questions to revise</h2>",
-    `<div class="row-btns" style="justify-content:space-between"><h2>↻ Questions to revise</h2><button id="listen-all">🔊 Listen to all</button></div>`);
+  if (!count) html += `<div class="empty">Nothing marked for revision yet. Use the ${REV_ICON} Revise button on any question you want to come back to.</div>`;
+  else if (speech.supported) html = html.replace(`<h2>${REV_ICON} Questions to revise</h2>`,
+    `<div class="row-btns" style="justify-content:space-between"><h2>${REV_ICON} Questions to revise</h2><button id="listen-all">🔊 Listen to all</button></div>`);
   app.innerHTML = html; liftCrumbs();
   const la = document.getElementById("listen-all");
   if (la) la.onclick = () => {

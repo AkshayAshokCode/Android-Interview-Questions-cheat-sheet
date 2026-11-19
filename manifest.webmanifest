@@ -2,7 +2,7 @@
   "name": "Android Interview Prep Tracker",
   "short_name": "Android Prep",
   "description": "Study Android interview questions and track your progress.",
-  "start_url": "/Android-Interview-Questions-cheat-sheet/",
+  "start_url": "/Android-Interview-Questions-and-Answers/",
   "scope": "/",
   "display": "standalone",
   "background_color": "#f7f7f5",
@@ -25,5 +25,5 @@
       "purpose": "maskable"
     }
   ],
-  "id": "/Android-Interview-Questions-cheat-sheet/"
+  "id": "/Android-Interview-Questions-and-Answers/"
 }
