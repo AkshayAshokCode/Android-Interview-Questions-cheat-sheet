@@ -2388,7 +2388,7 @@ When `multiplier(3)` runs, it creates a function object that stores `factor = 3`
 sequenceDiagram
     participant Caller
     participant multiplier
-    participant Lambda as "Lambda (factor=3)"
+    participant Lambda as Lambda (factor=3)
     Caller->>multiplier: multiplier(3)
     multiplier-->>Caller: returns lambda capturing factor
     Caller->>Lambda: triple(5)

@@ -306,10 +306,10 @@ override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 ```mermaid
 stateDiagram-v2
     [*] --> Created
-    Created --> Started: "onStart: block launched"
-    Started --> Stopped: "onStop: block cancelled"
-    Stopped --> Started: "onStart: block relaunched"
-    Stopped --> Destroyed: "onDestroy"
+    Created --> Started: onStart, block launched
+    Started --> Stopped: onStop, block cancelled
+    Stopped --> Started: onStart, block relaunched
+    Stopped --> Destroyed: onDestroy
     Destroyed --> [*]
 ```
 
@@ -380,8 +380,8 @@ val notifications: SharedFlow<Notification> = socket.messages()
 ```mermaid
 sequenceDiagram
     participant UI
-    participant VM as "stateIn (ViewModel)"
-    participant Repo as "Room / network"
+    participant VM as stateIn (ViewModel)
+    participant Repo as Room / network
     UI->>VM: collect (STARTED)
     VM->>Repo: start upstream
     Note over UI: rotation, old UI stops

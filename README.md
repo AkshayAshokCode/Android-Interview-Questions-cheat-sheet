@@ -1,8 +1,8 @@
 # Android Interview Questions & Answers
 
-A revision guide for Android developer interviews: **698 questions with interview-ready answers**, split into 27 topics, from Kotlin basics to Compose, architecture, system design and what's new in Android.
+A revision guide for Android developer interviews: **698 questions with fully explained answers**, split into 27 topics, from Kotlin basics to Compose, architecture, system design and what's new in Android.
 
-Every answer is hidden in a collapsible block, so you can **test yourself first** and then click to check.
+Every answer opens with a short **In short:** line you can say in the interview, then explains the concept in depth: how it works, code, comparison tables, diagrams, common pitfalls and likely follow-up questions. Answers are hidden in collapsible blocks, so you can **test yourself first** and then click to check.
 
 > **📈 [Open the interactive study tracker](https://akshayashokcode.github.io/Android-Interview-Questions-and-Answers/)**: mark questions ✓ Done or ↻ Revise, see your progress per topic, search every question, listen to answers read aloud, and continue where you left off.
 >
@@ -182,6 +182,6 @@ Every answer is hidden in a collapsible block, so you can **test yourself first*
 
 ## 🤝 Contributing
 
-Found a mistake or have a question you were asked in an interview? Open an issue or PR. Keep the format: a numbered `###` question + a `<details><summary>Answer</summary>` block, concise and interview-ready.
+Found a mistake or have a question you were asked in an interview? Open an issue or PR. Keep the format: a numbered `###` question + a `<details><summary>Answer</summary>` block that starts with an **In short:** line and then explains the answer in full.
 
 ⭐ If this helped you prepare, consider starring the repo!

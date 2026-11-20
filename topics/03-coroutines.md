@@ -1574,9 +1574,9 @@ fun main() = runBlocking {
 
 ```mermaid
 sequenceDiagram
-    participant RB as "runBlocking body"
-    participant L1 as "launch A"
-    participant L2 as "launch C"
+    participant RB as runBlocking body
+    participant L1 as launch A
+    participant L2 as launch C
     RB->>L1: schedule (not started yet)
     RB->>RB: print B
     RB->>L2: coroutineScope launches C, then suspends
