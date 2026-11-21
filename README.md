@@ -4,9 +4,11 @@ A revision guide for Android developer interviews: **698 questions with fully ex
 
 Every answer opens with a short **In short:** line you can say in the interview, then explains the concept in depth: how it works, code, comparison tables, diagrams, common pitfalls and likely follow-up questions. Answers are hidden in collapsible blocks, so you can **test yourself first** and then click to check.
 
-> **📈 [Open the interactive study tracker](https://akshayashokcode.github.io/Android-Interview-Questions-and-Answers/)**: mark questions ✓ Done or ↻ Revise, see your progress per topic, search every question, listen to answers read aloud, and continue where you left off.
+> **📈 [Open the interactive study tracker](https://akshayashokcode.github.io/Android-Interview-Questions-and-Answers/)**: mark questions ✓ Done or Revise, see your progress per topic, search every question, listen to answers read aloud, and continue where you left off.
 >
 > **No account needed.** Your progress saves automatically on your device. Want to keep it safe and in sync across your devices? Sign in (optional).
+
+Also see: **[iOS](https://github.com/AkshayAshokCode/iOS-Interview-Questions-and-Answers)** · **[System Design](https://github.com/AkshayAshokCode/System-Design-Interview-Questions-and-Answers)** · **[AI](https://github.com/AkshayAshokCode/AI-Interview-Questions-and-Answers)** · **[DSA](https://github.com/AkshayAshokCode/DSA-Interview-Questions-and-Answers)**
 
 ---
 

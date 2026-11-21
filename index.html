@@ -6,7 +6,7 @@
 <title>Interview Prep Tracker</title>
 <meta name="description" content="Study the interview questions in this repo and track your progress per topic. No account needed.">
 <meta name="theme-color" content="#2f6fde">
-<script>/* track colour: green for Android, blue for iOS, purple for System Design, teal for AI */ const tc = /^\/Android/i.test(location.pathname) ? "#1f9d55" : /^\/System-Design/i.test(location.pathname) ? "#7c3aed" : /^\/AI-Interview/i.test(location.pathname) ? "#0d9488" : ""; if (tc) document.querySelector('meta[name="theme-color"]').content = tc;</script>
+<script>/* track colour: green for Android, blue for iOS, purple for System Design, teal for AI, orange for DSA */ const tc = /^\/Android/i.test(location.pathname) ? "#1f9d55" : /^\/System-Design/i.test(location.pathname) ? "#7c3aed" : /^\/AI-Interview/i.test(location.pathname) ? "#0d9488" : /^\/DSA-Interview/i.test(location.pathname) ? "#ea580c" : ""; if (tc) document.querySelector('meta[name="theme-color"]').content = tc;</script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
@@ -157,6 +157,9 @@ body.playing .wrap { padding-bottom: 120px; }
 .q .actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; padding-left: calc(2.2em + 10px); }
 .q .actions .done-btn[aria-pressed="true"] { background: var(--done-bg); color: var(--done); border-color: var(--done); }
 .q .actions .rev-btn[aria-pressed="true"] { background: var(--revise-bg); color: var(--revise); border-color: var(--revise); }
+.q .tags { font-size: .8rem; color: var(--muted); padding-left: calc(2.2em + 10px); margin-top: 4px; }
+.q .tags strong { color: var(--text); }
+.level-filters { margin-top: -8px; }
 .q .src { font-size: .8rem; color: var(--muted); padding-left: calc(2.2em + 10px); margin-top: 4px; }
 .answer { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border); overflow-wrap: anywhere; }
 .answer :first-child { margin-top: 0; }
@@ -299,6 +302,10 @@ function parseTopic(md) {
     const start = text.indexOf("<summary>Answer</summary>");
     const end = text.lastIndexOf("</details>");
     q.answer = (start >= 0 && end > start) ? text.slice(start + "<summary>Answer</summary>".length, end).trim() : text.trim();
+    // Optional tag line above the answer, e.g. "**🟡 Medium** · ⭐ Product/FAANG favourite (reported at Amazon, Google)".
+    const pre = text.slice(0, Math.max(0, text.indexOf("<details>"))).trim();
+    const lvl = pre.match(/(Easy|Medium|Hard|Concept)\*\*/);
+    q.tags = pre; q.level = lvl ? lvl[1] : ""; q.star = pre.includes("⭐");
     questions.push(q); q = null; body = [];
   };
   for (const line of lines) {
@@ -384,12 +391,13 @@ const TRACKS = [
   { name: "Android", repo: "Android-Interview-Questions-and-Answers" },
   { name: "iOS", repo: "iOS-Interview-Questions-and-Answers" },
   { name: "System Design", label: '<span class="long">System</span><span class="short">Sys</span> Design', repo: "System-Design-Interview-Questions-and-Answers" },
-  { name: "AI", repo: "AI-Interview-Questions-and-Answers" }
+  { name: "AI", repo: "AI-Interview-Questions-and-Answers" },
+  { name: "DSA", repo: "DSA-Interview-Questions-and-Answers" }
 ];
 // The toggle shows only two tracks (the current one + one partner) to keep the focus; ⇄ swaps the partner.
-// The pair is stored on this origin, so all four trackers share it.
+// The pair is stored on this origin, so every tracker shares it.
 const PAIR_KEY = "iq-track-pair";
-const DEFAULT_PARTNER = { "Android": "iOS", "iOS": "Android", "System Design": "Android", "AI": "System Design" };
+const DEFAULT_PARTNER = { "Android": "iOS", "iOS": "Android", "System Design": "Android", "AI": "System Design", "DSA": "Android" };
 function trackPair(current) {
   let pair = null;
   try { pair = JSON.parse(localStorage.getItem(PAIR_KEY)); } catch (e) {}
@@ -972,7 +980,7 @@ document.addEventListener("keydown", e => {
   e.preventDefault(); searchInput.focus(); searchInput.select();
 });
 
-let topicFilter = "all";
+let topicFilter = "all", levelFilter = "any";
 function questionCard(file, q, showSource, query) {
   const s = getMark(questionKey(file, q.title));
   const meta = showSource && topicOrder.find(t => t.file === file);
@@ -980,6 +988,7 @@ function questionCard(file, q, showSource, query) {
   return `<article class="card q ${s}" id="q-${q.n}" data-file="${esc(file)}" data-n="${q.n}">
     <div class="qt"><span class="num">${q.n}.</span><div class="title">${query ? highlight(inline(q.title), query) : inline(q.title)}</div>
       ${speech.supported ? `<button class="listen-btn" title="Listen to just this question" aria-label="Listen to just this question">🔊</button>` : ""}</div>
+    ${q.tags ? `<div class="tags lvl-${esc(q.level.toLowerCase())}">${inline(q.tags)}</div>` : ""}
     ${meta ? `<div class="src"><a href="#/t/${encodeURIComponent(file)}/${q.n}">${esc(meta.name)} · Q${q.n}</a></div>` : ""}
     ${snippet ? `<div class="snippet">${highlight(esc(snippet), query)}</div>` : ""}
     <div class="actions">
@@ -1072,7 +1081,11 @@ function renderTopic(file, focusN) {
   const idx = topicOrder.indexOf(meta), prev = topicOrder[idx - 1], next = topicOrder[idx + 1];
   const st = topicStats(file);
   const match = q => { const s = getMark(questionKey(file, q.title));
-    return topicFilter === "all" || (topicFilter === "todo" && !s) || topicFilter === s; };
+    const lv = levelFilter === "any" || (levelFilter === "star" ? q.star : q.level === levelFilter);
+    return lv && (topicFilter === "all" || (topicFilter === "todo" && !s) || topicFilter === s); };
+  const levels = ["Easy", "Medium", "Hard"].filter(l => t.questions.some(q => q.level === l));
+  const hasStar = t.questions.some(q => q.star);
+  if (levelFilter !== "any" && !(levelFilter === "star" ? hasStar : levels.includes(levelFilter))) levelFilter = "any";
   let html = `<div class="crumbs"><a href="#/">← All topics</a></div>
     <section class="card topic-head"><h2>${esc(meta.num)} · ${esc(t.title || meta.name)}</h2>
       <div class="small muted">${inline(t.covers || meta.areas)}</div>
@@ -1084,8 +1097,12 @@ function renderTopic(file, focusN) {
       ${[["all", "All"], ["todo", "Not started"], ["revise", "Revise"], ["done", "Done"]].map(([v, l]) =>
         `<button data-f="${v}" aria-pressed="${topicFilter === v}">${l}</button>`).join("")}
       <button id="expand-all">Expand all answers</button>
-      ${speech.supported ? `<button id="listen-all" title="Read every question shown here, one after another">🔊 ${topicFilter === "all" ? "Listen to topic" : `Listen to ${t.questions.filter(match).length} ${{ todo: "not started", revise: "Revise", done: "Done" }[topicFilter]}`}</button>` : ""}
-    </div>`;
+      ${speech.supported ? `<button id="listen-all" title="Read every question shown here, one after another">🔊 ${topicFilter === "all" && levelFilter === "any" ? "Listen to topic" : `Listen to ${t.questions.filter(match).length} ${topicFilter === "all" ? "shown" : { todo: "not started", revise: "Revise", done: "Done" }[topicFilter]}`}</button>` : ""}
+    </div>
+    ${levels.length || hasStar ? `<div class="filters level-filters" role="group" aria-label="Filter by difficulty">
+      ${[["any", "Any level"], ...levels.map(l => [l, { Easy: "🟢 Easy", Medium: "🟡 Medium", Hard: "🔴 Hard" }[l]]), ...(hasStar ? [["star", "⭐ Product/FAANG"]] : [])].map(([v, l]) =>
+        `<button data-l="${v}" aria-pressed="${levelFilter === v}">${l}</button>`).join("")}
+    </div>` : ""}`;
   let section = null, shown = 0;
   for (const q of t.questions) {
     if (!match(q)) continue;
@@ -1098,6 +1115,7 @@ function renderTopic(file, focusN) {
     ${next ? `<a class="btn" href="#/t/${encodeURIComponent(next.file)}">${esc(next.name)} →</a>` : ""}</nav>`;
   app.innerHTML = html; liftCrumbs();
   app.querySelectorAll(".filters button[data-f]").forEach(b => b.onclick = () => { stopSpeech(); topicFilter = b.dataset.f; renderTopic(file); });
+  app.querySelectorAll(".filters button[data-l]").forEach(b => b.onclick = () => { stopSpeech(); levelFilter = b.dataset.l; renderTopic(file); });
   const la = document.getElementById("listen-all");
   if (la) la.onclick = () => {
     if (speech.playing && speech.mode === "list") { stopSpeech(); return; }
